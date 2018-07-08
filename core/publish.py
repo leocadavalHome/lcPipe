@@ -1,6 +1,7 @@
 
 from lcPipe.core.modelPublish import *
 from lcPipe.core.uvPublish import *
+from lcPipe.core.texPublish import *
 
 def skip(*args):
     for a in args:
@@ -76,12 +77,17 @@ class PublishWidget(object):
                         9.0: {'status': 'run', 'label': 'No Multiple UVmap', 'check': noMultipleUVsets,
                               'fix': [delMultipleUVsets, selMultipleUVsets]},
                         10.0: {'status': 'run', 'label': 'At least One UVmap', 'check': noMissingUVsets,
-                              'fix': [applyAutomaticUV, selMissingUVsets]},
+                               'fix': [applyAutomaticUV, selMissingUVsets]},
 
                         },
 
 
-            'textures': {},
+            'texture': {1.0: {'status': 'run', 'label': 'all textures on Default Work dir', 'check': imagesOnDir,
+                               'fix': [moveImagesToDir]},
+                         2.0: {'status': 'run', 'label': 'all textures on Default Work dir', 'check': noObjWithDefaultShader,
+                              'fix': [selObjWithDefaultShader]
+                        },
+},
             'xlo': {},
             'rig': {},
             'blendShape': {}, }

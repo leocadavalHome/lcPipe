@@ -105,7 +105,7 @@ class PublishWidget(publish.PublishWidget):
         item = database.getItemMData(task=self.task, code=self.code, itemType=self.type)
         # get path
         originalName = pm.sceneName()
-        path = database.getPath(item, location='publishLocation')
+        path = database.getPath(item, dirLocation='publishLocation')
         dirPath = path[0]
         filename = path[1]
 

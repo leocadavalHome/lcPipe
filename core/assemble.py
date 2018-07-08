@@ -7,7 +7,7 @@ reload(database)
 
 
 def referenceCache(componentMData):
-    path = database.getPath(componentMData, location='cacheLocation', ext='')
+    path = database.getPath(componentMData, dirLocation='cacheLocation', ext='')
     cachePath = os.path.join(*path)
 
     for cache_ns, cacheMData in componentMData['caches'].iteritems():
@@ -25,7 +25,7 @@ def referenceCache(componentMData):
 
 
 def importCaches(componentMData):
-    path = database.getPath(componentMData, location='cacheLocation', ext='')
+    path = database.getPath(componentMData, dirLocation='cacheLocation', ext='')
     cachePath = os.path.join(*path)
 
     for cache_ns, cacheMData in componentMData['caches'].iteritems():
@@ -47,7 +47,7 @@ def referenceXlos(componentMData):
     version = 0
     for ns, xlo in componentMData['components'].iteritems():
         xloMData = database.getItemMData(task='xlo', code=xlo['code'], itemType=xlo['type'])
-        path = database.getPath(xloMData, location='publishLocation')
+        path = database.getPath(xloMData, dirLocation='publishLocation')
 
         for xlo_ns, xloMData in componentMData['caches'].iteritems():
             if xloMData['ver'] == 0:
@@ -100,7 +100,7 @@ def assemble(itemType, task, code):
             parcial = True
             continue
 
-        path = database.getPath(componentMData, location='publishLocation')
+        path = database.getPath(componentMData, dirLocation='publishLocation')
         version = 'v%03d_' % componentMData['publishVer']
         componentPath = os.path.join(path[0], version + path[1])
 

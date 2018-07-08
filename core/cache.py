@@ -70,7 +70,7 @@ def cacheScene(task, code):
     if 'Abort' in choosen:
         return
 
-    path = database.getPath(shotMData, location='cacheLocation', ext='')
+    path = database.getPath(shotMData, dirLocation='cacheLocation', ext='')
     cachePath = os.path.join(*path)
 
     if not os.path.exists(cachePath):

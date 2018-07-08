@@ -485,10 +485,11 @@ def referenceInfo(refFile):
     return {'ver': ver, 'task': task, 'code': code}
 
 
-def getPath(item, location='workLocation', ext='ma'):
+def getPath(item, dirLocation='workLocation', ext='ma'):
     project = getProjectDict()
-
-    location = project[location]
+    print 'location entrada: %s' % dirLocation
+    location = project[dirLocation]
+    print location
     taskFolder = item['task']
     folderPath = os.path.join(*item['path'])
     phase = project['workflow'][item['workflow']][item['task']]['phase']
@@ -506,9 +507,13 @@ def getPath(item, location='workLocation', ext='ma'):
     return dirPath, filename
 
 
-def getImagesPath(item, location='worklocation'):
+def getSceneImagesPath(dirLocation='imagesWorkLocation'):
     project = getProjectDict()
+    location = project[dirLocation]
+    itemMData = getItemMData(task=pm.fileInfo['task'], code=pm.fileInfo['code'], itemType=pm.fileInfo['type'])
+    folderPath = os.path.join(*itemMData['path'])
+    filename = itemMData['filename']
+    dirPath = os.path.join(location,folderPath,filename)
 
-    location = project[location]
+    return dirPath
 
-    itemMData = getItemMData(task=pm.fileInfo['task'], code=pm.fileInfo['code'], type=pm.fileInfo['type'])

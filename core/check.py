@@ -67,7 +67,7 @@ def replaceRef(wrongRef):
             else:
                 version = 'v%03d_' % componentMData['publishVer']
 
-            path = database.getPath(componentMData, location='publishLocation')
+            path = database.getPath(componentMData, dirLocation='publishLocation')
             componentPath = os.path.join(path[0], version + path[1])
             ref.replaceWith(componentPath)
 
@@ -75,7 +75,7 @@ def replaceRef(wrongRef):
             source = [x for x in item['source'].itervalues()][0]
             componentMData = database.getItemMData(code=source['code'], task=source['task'], itemType=source['type'])
 
-            path = database.getPath(componentMData, location='cacheLocation', ext='')
+            path = database.getPath(componentMData, dirLocation='cacheLocation', ext='')
             # name=path[1]
             cachePath = os.path.join(*path)
             # pm.namespace( set=':'+componentMData['task'])
@@ -125,7 +125,7 @@ def addRef(refToAdd):
             source = [x for x in item['source'].itervalues()][0]
             componentMData = database.getItemMData(code=source['code'], task=source['task'], itemType=source['type'])
 
-            path = database.getPath(componentMData, location='cacheLocation', ext='')
+            path = database.getPath(componentMData, dirLocation='cacheLocation', ext='')
             cachePath = os.path.join(*path)
 
             pm.namespace(set=':' + componentMData['task'])
@@ -161,7 +161,7 @@ def addRef(refToAdd):
                 version = 'v%03d_' % componentMData['publishVer']
 
                 # use files
-            path = database.getPath(componentMData, location='publishLocation')
+            path = database.getPath(componentMData, dirLocation='publishLocation')
             componentPath = os.path.join(path[0], version + path[1])
 
             # import
@@ -266,7 +266,7 @@ def updateRefVersion(refToVerUpdate):
                                                    itemType=component['type'])
 
             ver = 'v%03d_' % component['ver']
-            path = database.getPath(componentMData, location='publishLocation')
+            path = database.getPath(componentMData, dirLocation='publishLocation')
             componentPath = os.path.join(path[0], ver + path[1])
             ref.replaceWith(componentPath)
 
@@ -274,7 +274,7 @@ def updateRefVersion(refToVerUpdate):
             source = [x for x in item['source'].itervalues()][0]
             componentMData = database.getItemMData(code=source['code'], task=source['task'], itemType=source['type'])
 
-            path = database.getPath(componentMData, location='cacheLocation', ext='')
+            path = database.getPath(componentMData, dirLocation='cacheLocation', ext='')
             cachePath = os.path.join(*path)
             cache_ns = component_ns
             cache = componentMData['caches'][cache_ns]
