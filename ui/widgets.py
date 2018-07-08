@@ -5,7 +5,7 @@ from lcPipe.core import assemble
 from lcPipe.core import database
 from lcPipe.core import publish
 from lcPipe.core import version
-from lcPipe.ui.componentListWidget import ComponentListWidget
+
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.itemListWidget import ItemListWidget
@@ -69,26 +69,6 @@ class itemBrowser:
 
         self.itemListWidget.task = newTaskToSearch
         self.itemListWidget.refreshList(path=self.itemListWidget.path, task=self.itemListWidget.task)
-
-class ShotManager:
-    def __init__(self, item):
-        self.item = item
-        self.infoWidget = None
-        self.compListWidget = None
-        self.projectName = None
-
-    def createShotManager(self):
-        win = pm.window(title='SHOT MANAGER', w=800, h=600)
-        pane = pm.paneLayout(configuration='horizontal2')
-        self.infoWidget = InfoWidget()
-        self.infoWidget.createInfo(pane)
-        self.infoWidget.putItemInfo(self.item)
-        self.compListWidget = ComponentListWidget()
-        self.compListWidget.projectName = self.projectName
-        self.compListWidget.createList(pane)
-
-        pm.showWindow(win)
-        self.compListWidget.refreshList(item=self.item)
 
 
 class PublishWidget(publish.PublishWidget):

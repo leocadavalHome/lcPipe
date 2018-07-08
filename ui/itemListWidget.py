@@ -5,14 +5,14 @@ from lcPipe.core import publish
 from lcPipe.core import version
 from lcPipe.ui.itemWidget import ItemWidget
 
-reload ( database )
-reload ( publish )
-reload ( assemble )
-reload ( version )
+reload(database)
+reload(publish)
+reload(assemble)
+reload(version)
 
 
-class ItemListWidget ( object ):
-    def __init__ (self):
+class ItemListWidget(object):
+    def __init__(self):
         self.parentWidget = None
         self.widgetName = None
 
@@ -25,21 +25,21 @@ class ItemListWidget ( object ):
         self.task = None
         self.path = None
 
-        proj = database.getProjectDict ()
+        proj = database.getProjectDict()
         self.projectName = proj['projectName']
 
-    def createList (self, parentWidget):
+    def createList(self, parentWidget):
         self.parentWidget = parentWidget
-        a = pm.scrollLayout ( p=self.parentWidget, childResizable=True, h=400 )
-        self.widgetName = pm.flowLayout ( p=a, backgroundColor=(.17, .17, .17), columnSpacing=5, h=1000, wrap=True )
-        pm.popupMenu ( parent=self.widgetName )
-        pm.menuItem ( l='add item', c=self.addItemCallBack )
+        a = pm.scrollLayout(p=self.parentWidget, childResizable=True, h=400)
+        self.widgetName = pm.flowLayout(p=a, backgroundColor=(.17, .17, .17), columnSpacing=5, h=1000, wrap=True)
+        pm.popupMenu(parent=self.widgetName)
+        pm.menuItem(l='add item', c=self.addItemCallBack)
 
-    def refreshList (self, path=None, task=None, code=None, item=None):
+    def refreshList(self, path=None, task=None, code=None, item=None):
         color = (0, 0, 0)
-        x=None
+        x = None
 
-        itemListProj = database.getProjectDict ( self.projectName )
+        itemListProj = database.getProjectDict(self.projectName)
 
         if item:
             self.path = item['path']
@@ -48,33 +48,33 @@ class ItemListWidget ( object ):
         else:
             self.path = path
             self.task = task
-            self.type = database.getTaskType ( task )
+            self.type = database.getTaskType(task)
 
-        collection = database.getCollection ( self.type )
+        collection = database.getCollection(self.type)
 
         if code:
-            result = collection.find ( {'path': self.path, 'code': code} )
+            result = collection.find({'path': self.path, 'code': code})
         else:
             if self.task == 'asset':
-                result = collection.find ( {'path': self.path, 'task': 'model'} )
+                result = collection.find({'path': self.path, 'task': 'model'})
             elif self.task == 'shot':
-                result = collection.find ( {'path': self.path, 'task': 'layout'} )
+                result = collection.find({'path': self.path, 'task': 'layout'})
             else:
-                result = collection.find ( {'path': self.path, 'task': task} )
+                result = collection.find({'path': self.path, 'task': task})
 
-        childs = pm.flowLayout ( self.widgetName, q=True, ca=True )
+        childs = pm.flowLayout(self.widgetName, q=True, ca=True)
         if childs:
             for i in childs:
-                pm.deleteUI ( i )
+                pm.deleteUI(i)
 
         self.itemList = []
         self.selectedItem = None
 
         for item in result:
-            itemName = database.templateName ( item )
+            itemName = database.templateName(item)
             if not code and (task == 'asset' or task == 'shot'):
                 templ = [x for x in itemListProj['assetNameTemplate'] if x != '$task']
-                itemLabel = database.templateName ( item, template=templ )
+                itemLabel = database.templateName(item, template=templ)
                 createdColor = (0, .2, .50)
                 notCreatedColor = (0, .2, .50)
             else:
@@ -89,9 +89,9 @@ class ItemListWidget ( object ):
                 color = createdColor
 
             if self.type == 'asset':
-                x = ItemWidget ( itemName, u'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/dino.jpg', itemLabel, self,color )
+                x = ItemWidget(itemName, u'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/dino.jpg', itemLabel, self, color)
             elif self.type == 'shot':
-                x = ItemWidget ( itemName, u'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/robot.jpg', itemLabel, self,color )
+                x = ItemWidget(itemName, u'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/robot.jpg', itemLabel, self, color)
 
             x.infoWidget = self.infoWidget
 
@@ -105,71 +105,70 @@ class ItemListWidget ( object ):
                 x.publishVer = 0
 
             x.code = item['code']
-            self.itemList.append ( x )
-            x.addToLayout ()
+            self.itemList.append(x)
+            x.addToLayout()
 
-    def addItemCallBack (self, *args):
+    def addItemCallBack(self, *args):
         if not self.path:
-            return pm.confirmDialog ( title='error', ma='center',
-                                      message='please choose a folder where to create the asset', button=['OK'],
-                                      defaultButton='OK', dismissString='OK' )
+            return pm.confirmDialog(title='error', ma='center',
+                                    message='please choose a folder where to create the asset', button=['OK'],
+                                    defaultButton='OK', dismissString='OK')
 
-        pm.layoutDialog ( ui=lambda: self.createAssetPrompt () )
-        self.refreshList ( path=self.path, task=self.task )
+        pm.layoutDialog(ui=lambda: self.createAssetPrompt())
+        self.refreshList(path=self.path, task=self.task)
 
-    def createAssetPrompt (self):
-        code=''
+    def createAssetPrompt(self):
+        code = ''
 
-        proj = database.getProjectDict ( self.projectName )
+        proj = database.getProjectDict(self.projectName)
         if self.type == 'asset':
             code = "%04d" % proj['nextAsset']
         elif self.type == 'shot':
             code = "%04d" % proj['nextShot']
 
-        form = pm.setParent ( q=True )
-        f = pm.formLayout ( form, e=True, width=150 )
-        row = pm.rowLayout ( nc=2, adj=2 )
-        pm.picture ( image='sphere.png', w=50, h=50 )
-        col = pm.columnLayout ( adjustableColumn=True )
-        nameField = pm.textFieldGrp ( 'CrAsset_nameField', label='Name', cw=(1, 70), text='', adj=2,
-                                      cat=[(1, 'left', 5), (2, 'left', 5)], editable=True )
-        codeField = pm.textFieldGrp ( 'CrAsset_codeField', label='Code', cw=(1, 70), text=code, adj=2,
-                                      cat=[(1, 'left', 5), (2, 'left', 5)], editable=True )
-        workflow = pm.optionMenuGrp ( 'CrAsset_workflowOpt', label='Workflow', cw=(1, 70),
-                                      cat=[(1, 'left', 5), (2, 'left', 5)] )
-        proj = database.getProjectDict ( self.projectName )
+        form = pm.setParent(q=True)
+        f = pm.formLayout(form, e=True, width=150)
+        row = pm.rowLayout(nc=2, adj=2)
+        pm.picture(image='sphere.png', w=50, h=50)
+        col = pm.columnLayout(adjustableColumn=True)
+        nameField = pm.textFieldGrp('CrAsset_nameField', label='Name', cw=(1, 70), text='', adj=2,
+                                    cat=[(1, 'left', 5), (2, 'left', 5)], editable=True)
+        codeField = pm.textFieldGrp('CrAsset_codeField', label='Code', cw=(1, 70), text=code, adj=2,
+                                    cat=[(1, 'left', 5), (2, 'left', 5)], editable=True)
+        workflow = pm.optionMenuGrp('CrAsset_workflowOpt', label='Workflow', cw=(1, 70),
+                                    cat=[(1, 'left', 5), (2, 'left', 5)])
+        proj = database.getProjectDict(self.projectName)
 
         for key in proj['workflow']:
-            context = set ( [proj['workflow'][key][x]['type'] for x in proj['workflow'][key]] )
+            context = set([proj['workflow'][key][x]['type'] for x in proj['workflow'][key]])
             if self.type in context:
-                pm.menuItem ( label=key )
+                pm.menuItem(label=key)
 
-        b1 = pm.button ( p=f, l='Cancel', c=self.abortCreateCallback )
-        b2 = pm.button ( p=f, l='OK', c=self.createAssetCallBack )
+        b1 = pm.button(p=f, l='Cancel', c=self.abortCreateCallback)
+        b2 = pm.button(p=f, l='OK', c=self.createAssetCallBack)
 
         spacer = 5
         top = 5
         edge = 5
-        pm.formLayout ( form, edit=True, attachForm=[(row, 'right', edge), (row, 'top', top), (row, 'left', edge),
-                                                     (row, 'right', edge), (b1, 'right', edge), (b1, 'bottom', edge),
-                                                     (b2, 'left', edge), (b2, 'bottom', edge)],
-                        attachNone=[],
-                        attachControl=[],
-                        attachPosition=[(b1, 'right', spacer, 90), (b2, 'left', spacer, 10)] )
+        pm.formLayout(form, edit=True,
+                      attachForm=[(row, 'right', edge), (row, 'top', top), (row, 'left', edge), (row, 'right', edge),
+                                  (b1, 'right', edge), (b1, 'bottom', edge), (b2, 'left', edge), (b2, 'bottom', edge)],
+                      attachNone=[], attachControl=[],
+                      attachPosition=[(b1, 'right', spacer, 90), (b2, 'left', spacer, 10)])
 
-    def abortCreateCallback (self, *args):
-        pm.layoutDialog ( dismiss="Abort" )
+    def abortCreateCallback(self, *args):
+        pm.layoutDialog(dismiss="Abort")
 
-    def createAssetCallBack (self, *args):
-        name = pm.textFieldGrp ( 'CrAsset_nameField', q=True, tx=True )
+    def createAssetCallBack(self, *args):
+        name = pm.textFieldGrp('CrAsset_nameField', q=True, tx=True)
         if not name:
-            return pm.confirmDialog ( title='error', ma='center', message='please choose a name for the asset',
-                                      button=['OK'], defaultButton='OK', dismissString='OK' )
-        workflow = pm.optionMenuGrp ( 'CrAsset_workflowOpt', q=True, v=True )
-        code = pm.textFieldGrp ( 'CrAsset_codeField', q=True, tx=True )
+            return pm.confirmDialog(title='error', ma='center', message='please choose a name for the asset',
+                                    button=['OK'], defaultButton='OK', dismissString='OK')
+        workflow = pm.optionMenuGrp('CrAsset_workflowOpt', q=True, v=True)
+        code = pm.textFieldGrp('CrAsset_codeField', q=True, tx=True)
 
-        itemDict = database.createItem ( self.type, name, self.path, workflow, code )
+        itemDict = database.createItem(self.type, name, self.path, workflow, code)
         if itemDict == 'codeExists':
-            return pm.confirmDialog ( title='error', ma='center', message='this code already exists', button=['OK'],
-                                      defaultButton='OK', dismissString='OK' )
-        pm.layoutDialog ( dismiss='ok' )
+            return pm.confirmDialog(title='error', ma='center', message='this code already exists', button=['OK'],
+                                    defaultButton='OK', dismissString='OK')
+        pm.layoutDialog(dismiss='ok')
