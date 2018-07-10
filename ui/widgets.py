@@ -1,21 +1,13 @@
 import os.path
 
 import pymel.core as pm
-from lcPipe.core import assemble
 from lcPipe.core import database
 from lcPipe.core import publish
 from lcPipe.core import version
-
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.itemListWidget import ItemListWidget
 from lcPipe.ui.projectSelectWidget import ProjectSelectWidget
-
-reload(database)
-reload(publish)
-reload(assemble)
-reload(version)
-
 
 class itemBrowser:
     def __init__(self):
@@ -107,4 +99,7 @@ class PublishWidget(publish.PublishWidget):
         # save scene
         pm.saveAs(fullPath)
         pm.renameFile(originalName)
+
+        version.takeSnapShot(item)
+
         self.closeWin()

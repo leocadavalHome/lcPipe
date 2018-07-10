@@ -31,6 +31,7 @@ def copyImagesToDir(*args):
             fileNode.setAttr('fileTextureName', os.path.join(workPath, imageName))
     return 'ok'
 
+
 def noObjWithDefaultShader(*args):
     defaultShaderSG = pm.PyNode ('initialShadingGroup')
 
@@ -46,8 +47,6 @@ def selObjWithDefaultShader(*args):
     pm.select(geoList)
     return 'select'
 
-
-selObjWithDefaultShader()
 
 # todo no unnused shaders nodes
 # todo valid shader name convention

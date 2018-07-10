@@ -109,13 +109,15 @@ def editProject(projectName, **projectSettings):
 def getProjectDict(projectName=None):
     global db
     global currentProject
+    print 'getProjectDict: current project: %s' % currentProject
     if projectName:
-        proj = db.projects.find_one({'projectName': projectName})
+        returnProject = db.projects.find_one({'projectName': projectName})
     elif currentProject:
-        proj = db.projects.find_one({'projectName': currentProject})
+        returnProject = db.projects.find_one({'projectName': currentProject})
     else:
-        proj = db.projects.find_one()
-    return proj
+        returnProject = db.projects.find_one()
+    print 'getProjectDict: retuned proj:', returnProject
+    return returnProject
 
 
 def putProjectDict(projDict, projectName=None):

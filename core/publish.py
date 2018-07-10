@@ -83,16 +83,20 @@ class PublishWidget(object):
 
 
             'texture': {1.0: {'status': 'run', 'label': 'all textures on Default Work dir', 'check': imagesOnDir,
-                               'fix': [moveImagesToDir]},
+                               'fix': [copyImagesToDir]},
                          2.0: {'status': 'run', 'label': 'all textures on Default Work dir', 'check': noObjWithDefaultShader,
-                              'fix': [selObjWithDefaultShader]
+                              'fix': [selObjWithDefaultShader]},
                         },
-},
             'xlo': {},
             'rig': {},
-            'blendShape': {}, }
+            'blendShape': {},
+        }
 
-        self.checksDict = self.checkProcedures[task]
+        if task in self.checkProcedures.keys():
+            self.checksDict = self.checkProcedures[task]
+        else:
+            self.checksDict = {}
+
         self.checksWidgets = {}
 
     def createWin(self):

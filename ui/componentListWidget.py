@@ -13,7 +13,6 @@ reload(publish)
 reload(assemble)
 reload(version)
 
-
 class ComponentListWidget(ItemListWidget):
     def __init__(self):
         self.item = None
@@ -36,12 +35,6 @@ class ComponentListWidget(ItemListWidget):
         pm.menuItem(l='add item', c=self.addItemCallBack)
 
     def refreshList(self, path=None, task=None, code=None, item=None):
-        """
-
-
-        :type path: object
-        :type item: dict
-        """
         color = (0, 0, 0)
         createdColor = (.5, .5, .20)
 

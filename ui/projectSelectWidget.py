@@ -49,7 +49,6 @@ class ProjectSelectWidget:
         pm.textFieldButtonGrp(self.widgetName, e=True, text=projName)
 
         if self.projectName != projName:
-
             self.projectName = projName
             database.setCurrentProject(self.projectName)
 

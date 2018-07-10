@@ -1,5 +1,4 @@
 import pymel.core as pm
-from lcPipe.ui.componentListWidget import ComponentListWidget
 from lcPipe.ui.infoWidget import InfoWidget
 
 
@@ -16,7 +15,6 @@ class ShotManager:
         self.infoWidget = InfoWidget()
         self.infoWidget.createInfo(pane)
         self.infoWidget.putItemInfo(self.item)
-        self.compListWidget = ComponentListWidget()
         self.compListWidget.projectName = self.projectName
         self.compListWidget.createList(pane)
 

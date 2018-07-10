@@ -1,3 +1,5 @@
 import lcPipe.main as pipe
 reload (pipe)
-pipe.browser()
+
+x = pipe.Session()
+x.createMenu()

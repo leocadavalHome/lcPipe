@@ -1,15 +1,7 @@
 import pymel.core as pm
-from lcPipe.core import assemble
 from lcPipe.core import database
-from lcPipe.core import publish
-from lcPipe.core import version
 from lcPipe.ui.itemWidget import ItemWidget
-
-reload(database)
-reload(publish)
-reload(assemble)
-reload(version)
-
+from lcPipe.core import version
 
 class ItemListWidget(object):
     def __init__(self):
@@ -33,13 +25,13 @@ class ItemListWidget(object):
         a = pm.scrollLayout(p=self.parentWidget, childResizable=True, h=400)
         self.widgetName = pm.flowLayout(p=a, backgroundColor=(.17, .17, .17), columnSpacing=5, h=1000, wrap=True)
         pm.popupMenu(parent=self.widgetName)
-        pm.menuItem(l='add item', c=self.addItemCallBack)
+        pm.menuItem(label='add item', c=self.addItemCallBack)
 
     def refreshList(self, path=None, task=None, code=None, item=None):
         color = (0, 0, 0)
         x = None
 
-        itemListProj = database.getProjectDict(self.projectName)
+        itemListProj = database.getProjectDict()
 
         if item:
             self.path = item['path']
@@ -62,23 +54,25 @@ class ItemListWidget(object):
             else:
                 result = collection.find({'path': self.path, 'task': task})
 
-        childs = pm.flowLayout(self.widgetName, q=True, ca=True)
-        if childs:
-            for i in childs:
+        flowChilds = pm.flowLayout(self.widgetName, q=True, ca=True)
+        if flowChilds:
+            for i in flowChilds:
                 pm.deleteUI(i)
 
         self.itemList = []
         self.selectedItem = None
 
         for item in result:
-            itemName = database.templateName(item)
+
             if not code and (task == 'asset' or task == 'shot'):
-                templ = [x for x in itemListProj['assetNameTemplate'] if x != '$task']
-                itemLabel = database.templateName(item, template=templ)
+                templateToUse = [x for x in itemListProj['assetNameTemplate'] if x != '$task']
+                name = database.templateName(item, template=templateToUse)
+                taskLabel = task.upper()
                 createdColor = (0, .2, .50)
                 notCreatedColor = (0, .2, .50)
             else:
-                itemLabel = itemName
+                name = database.templateName(item)
+                taskLabel = item['task'].upper()
                 notCreatedColor = (.2, .2, .2)
                 createdColor = (1, .8, .20)
 
@@ -88,11 +82,9 @@ class ItemListWidget(object):
             elif status == 'created':
                 color = createdColor
 
-            if self.type == 'asset':
-                x = ItemWidget(itemName, u'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/dino.jpg', itemLabel, self, color)
-            elif self.type == 'shot':
-                x = ItemWidget(itemName, u'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/robot.jpg', itemLabel, self, color)
-
+            thumbPath = version.getThumb(item)
+            x = ItemWidget(name=name, itemName=item['name'], imgPath=thumbPath, label=taskLabel, status=item['status'],
+                           parentWidget=self, color=color)
             x.infoWidget = self.infoWidget
 
             if code:
@@ -120,7 +112,7 @@ class ItemListWidget(object):
     def createAssetPrompt(self):
         code = ''
 
-        proj = database.getProjectDict(self.projectName)
+        proj = database.getProjectDict()
         if self.type == 'asset':
             code = "%04d" % proj['nextAsset']
         elif self.type == 'shot':
@@ -137,7 +129,7 @@ class ItemListWidget(object):
                                     cat=[(1, 'left', 5), (2, 'left', 5)], editable=True)
         workflow = pm.optionMenuGrp('CrAsset_workflowOpt', label='Workflow', cw=(1, 70),
                                     cat=[(1, 'left', 5), (2, 'left', 5)])
-        proj = database.getProjectDict(self.projectName)
+        proj = database.getProjectDict()
 
         for key in proj['workflow']:
             context = set([proj['workflow'][key][x]['type'] for x in proj['workflow'][key]])
