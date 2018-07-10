@@ -109,14 +109,12 @@ def editProject(projectName, **projectSettings):
 def getProjectDict(projectName=None):
     global db
     global currentProject
-    print 'getProjectDict: current project: %s' % currentProject
     if projectName:
         returnProject = db.projects.find_one({'projectName': projectName})
     elif currentProject:
         returnProject = db.projects.find_one({'projectName': currentProject})
     else:
         returnProject = db.projects.find_one()
-    print 'getProjectDict: retuned proj:', returnProject
     return returnProject
 
 
@@ -489,9 +487,7 @@ def referenceInfo(refFile):
 
 def getPath(item, dirLocation='workLocation', ext='ma'):
     project = getProjectDict()
-    print 'location entrada: %s' % dirLocation
     location = project[dirLocation]
-    print location
     taskFolder = item['task']
     folderPath = os.path.join(*item['path'])
     phase = project['workflow'][item['workflow']][item['task']]['phase']

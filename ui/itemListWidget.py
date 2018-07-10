@@ -10,13 +10,12 @@ class ItemListWidget(object):
 
         self.folderTreeWidget = None
         self.infoWidget = None
-
         self.itemList = []
         self.selectedItem = None
         self.type = None
         self.task = None
         self.path = None
-
+        self.viewOption = 2
         proj = database.getProjectDict()
         self.projectName = proj['projectName']
 
@@ -98,7 +97,7 @@ class ItemListWidget(object):
 
             x.code = item['code']
             self.itemList.append(x)
-            x.addToLayout()
+            x.addToLayout(self.viewOption)
 
     def addItemCallBack(self, *args):
         if not self.path:

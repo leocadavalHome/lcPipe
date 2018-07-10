@@ -25,12 +25,15 @@ class itemBrowser:
         pm.dockControl(label='SHOT INFO', w=600, area='left', content=win, allowedArea=allowedAreas)
 
         self.projectSelectWidget.createProjectSelect(col2)
-        self.typeOpt = pm.optionMenuGrp(label='Item Type', changeCommand=self.changeTypeCallback)
+        pm.rowLayout(nc=3, adj=1)
+        self.typeOpt = pm.optionMenuGrp(label='Item Type', changeCommand=self.changeTypeCallback, cat=[[1,'left',45],[2,'left',-20]])
         types = ['asset', 'shot', 'model', 'uvs', 'texture', 'blendShape', 'rig', 'layout', 'animation',
                  'shotFinalizing', 'lightining', 'render']
         for assetType in types:
             pm.menuItem(label=assetType)
 
+        pm.symbolButton (i = r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/small.png', c=lambda x, y=2: self.changeViewCallback(y))
+        pm.symbolButton( i = r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/big.png', c=lambda x, y=1: self.changeViewCallback(y))
         pane = pm.paneLayout(p=col2, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)])
 
         self.folderTreeWidget.createFolderTree(pane)
@@ -62,6 +65,9 @@ class itemBrowser:
         self.itemListWidget.task = newTaskToSearch
         self.itemListWidget.refreshList(path=self.itemListWidget.path, task=self.itemListWidget.task)
 
+    def changeViewCallback(self, opt):
+        self.itemListWidget.viewOption = opt
+        self.itemListWidget.refreshList(path=self.itemListWidget.path, task=self.itemListWidget.task)
 
 class PublishWidget(publish.PublishWidget):
     def __init__(self, task=None, code=None, assetType=None):

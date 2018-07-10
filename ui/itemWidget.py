@@ -26,7 +26,6 @@ class ItemWidget(object):
 
     def getItem(self):
         projName = self.parentWidget.projectName
-        print projName
         itemType = database.getTaskType(self.task)
         collection = database.getCollection(itemType, projName)
 
@@ -102,19 +101,33 @@ class ItemWidget(object):
         shotMng.projectName = self.parentWidget.projectName
         shotMng.createShotManager()
 
-    def addToLayout(self):
-        self.widgetName = pm.rowLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color, nc=2, w=200, h=100, dragCallback=self.dragCallback)
+    def addToLayout(self, option):
+        if option ==1:
+            self.widgetName = pm.rowLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color, nc=2, w=200, h=100, dragCallback=self.dragCallback)
 
-        pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack, doubleClickCommand=self.dClickCallBack)
-        pm.columnLayout()
-        pm.text(label=self.label)
-        pm.separator(h=10)
-        pm.text(label=self.itemName,  font="boldLabelFont")
-        pm.separator(h=12, st='in')
-        pm.text(label='code:%s' % self.code)
-        pm.text(label='user: non')
-        pm.text(label=self.status, font = "smallObliqueLabelFont")
+            pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack, doubleClickCommand=self.dClickCallBack)
+            pm.columnLayout()
+            pm.text(label=self.label)
+            pm.separator(h=10)
+            pm.text(label=self.itemName,  font="boldLabelFont")
+            pm.separator(h=12, st='in')
+            pm.text(label='code:%s' % self.code)
+            pm.text(label='user: non')
+            pm.text(label=self.status, font = "smallObliqueLabelFont")
+        elif option == 2:
+            self.widgetName = pm.rowLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color, nc=2,
+                                           w=140, h=50, dragCallback=self.dragCallback)
 
+            pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack,
+                              doubleClickCommand=self.dClickCallBack,h=50,w=50)
+            pm.columnLayout()
+            pm.text(label=self.label)
+            pm.separator(h=5)
+            pm.text(label=self.itemName, font="boldLabelFont")
+            #pm.separator(h=12, st='in')
+            #pm.text(label='code:%s' % self.code)
+            #pm.text(label='user: non')
+            #pm.text(label=self.status, font="smallObliqueLabelFont")
 
         pm.popupMenu(parent=self.widgetName)
 
