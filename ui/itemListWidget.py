@@ -1,41 +1,28 @@
 import pymel.core as pm
 from lcPipe.core import database
-from lcPipe.ui.itemWidget import ItemWidget
 from lcPipe.core import version
+from lcPipe.ui.itemWidget import ItemWidget
 
-class ItemListWidget(object):
+from lcPipe.ui.itemListBase import ItemListBase
+
+class ItemListWidget(ItemListBase):
     def __init__(self):
-        self.parentWidget = None
-        self.widgetName = None
+        super(ItemListWidget, self).__init__()
 
-        self.folderTreeWidget = None
-        self.infoWidget = None
-        self.itemList = []
-        self.selectedItem = None
-        self.type = None
-        self.task = None
-        self.path = None
-        self.viewOption = 1
-        proj = database.getProjectDict()
-        self.projectName = proj['projectName']
-
-    def createList(self, parentWidget):
-        self.parentWidget = parentWidget
-        a = pm.scrollLayout(p=self.parentWidget, childResizable=True, h=400)
-        self.widgetName = pm.flowLayout(p=a, backgroundColor=(.17, .17, .17), columnSpacing=5, h=1000, wrap=True)
+    def addMenus(self):
         pm.popupMenu(parent=self.widgetName)
         pm.menuItem(label='add item', c=self.addItemCallBack)
 
-    def refreshList(self, path=None, task=None, code=None, item=None):
+    def refreshList(self, path=None, task=None, code=None, itemMData=None):
         color = (0, 0, 0)
         x = None
 
         itemListProj = database.getProjectDict()
 
-        if item:
-            self.path = item['path']
-            self.task = item['task']
-            self.type = item['type']
+        if itemMData:
+            self.path = itemMData['path']
+            self.task = itemMData['task']
+            self.type = itemMData['type']
         else:
             self.path = path
             self.task = task
@@ -61,41 +48,41 @@ class ItemListWidget(object):
         self.itemList = []
         self.selectedItem = None
 
-        for item in result:
+        for itemMData in result:
 
             if not code and (task == 'asset' or task == 'shot'):
                 templateToUse = [x for x in itemListProj['assetNameTemplate'] if x != '$task']
-                name = database.templateName(item, template=templateToUse)
+                name = database.templateName(itemMData, template=templateToUse)
                 taskLabel = task.upper()
                 createdColor = (0, .2, .50)
                 notCreatedColor = (0, .2, .50)
             else:
-                name = database.templateName(item)
-                taskLabel = item['task'].upper()
+                name = database.templateName(itemMData)
+                taskLabel = itemMData['task'].upper()
                 notCreatedColor = (.2, .2, .2)
                 createdColor = (1, .8, .20)
 
-            status = item['status']
+            status = itemMData['status']
             if status == 'notCreated':
                 color = notCreatedColor
             elif status == 'created':
                 color = createdColor
 
-            thumbPath = version.getThumb(item)
-            x = ItemWidget(name=name, itemName=item['name'], imgPath=thumbPath, label=taskLabel, status=item['status'],
+            thumbPath = version.getThumb(itemMData)
+            x = ItemWidget(name=name, itemName=itemMData['name'], imgPath=thumbPath, label=taskLabel, status=itemMData['status'],
                            parentWidget=self, color=color)
             x.infoWidget = self.infoWidget
 
             if code:
-                x.task = item['task']
-                x.workVer = item['workVer']
-                x.publishVer = item['publishVer']
+                x.task = itemMData['task']
+                x.workVer = itemMData['workVer']
+                x.publishVer = itemMData['publishVer']
             else:
                 x.task = self.task
                 x.workVer = 0
                 x.publishVer = 0
 
-            x.code = item['code']
+            x.code = itemMData['code']
             self.itemList.append(x)
             x.addToLayout(self.viewOption)
 

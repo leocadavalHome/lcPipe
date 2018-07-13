@@ -1,20 +1,25 @@
 import pymel.core as pm
 from lcPipe.core import database
+from lcPipe.core import version
 from lcPipe.ui.componentWidget import ComponentWidget
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
-from lcPipe.ui.itemListWidget import ItemListWidget
+from lcPipe.ui.itemListBase import ItemListBase
 
 
-class ComponentListWidget(ItemListWidget):
+class ComponentListWidget(ItemListBase):
     def __init__(self):
         self.item = None
         super(ComponentListWidget, self).__init__()
 
+    def addMenus(self):
+        pm.popupMenu(parent=self.widgetName)
+        pm.menuItem(label='add item', c=self.addItemCallBack)
+
     def dropCallback(self, dragControl, dropControl, messages, x, y, dragType):
         if messages[0] == 'rig' or messages[0] == 'uvs':
             database.addComponent(self.item, 'ref', messages[0], messages[1], 'reference')
-            self.refreshList(item=self.item)
+            self.refreshList(itemMData=self.item)
         else:
             pm.confirmDialog(title='error', ma='center', message='please choose rigs or uvs!', button=['OK'],
                              defaultButton='OK', dismissString='OK')
@@ -25,16 +30,16 @@ class ComponentListWidget(ItemListWidget):
         self.widgetName = pm.flowLayout(p=a, backgroundColor=(.17, .17, .17), columnSpacing=5, h=1000, wrap=True,
                                         dropCallback=self.dropCallback)
         pm.popupMenu(parent=self.widgetName)
-        pm.menuItem(l='add item', c=self.addItemCallBack)
+        pm.menuItem(label='add item', c=self.addItemCallBack)
 
-    def refreshList(self, path=None, task=None, code=None, item=None):
+    def refreshList(self, path=None, task=None, code=None, itemMData=None):
         color = (0, 0, 0)
         createdColor = (.5, .5, .20)
 
-        if not item:
+        if not itemMData:
             print 'ERROR: No search item!!'
 
-        self.item = item
+        self.item = itemMData
 
         childs = pm.flowLayout(self.widgetName, q=True, ca=True)
         if childs:
@@ -43,7 +48,7 @@ class ComponentListWidget(ItemListWidget):
 
         self.itemList = []
         self.selectedItem = None
-        for ns, component in item['components'].iteritems():
+        for ns, component in itemMData['components'].iteritems():
             type = component['type']
             collection = database.getCollection(type, self.projectName)
             result = collection.find_one({'task': component['task'], 'code': component['code']})
@@ -52,7 +57,7 @@ class ComponentListWidget(ItemListWidget):
                 print 'component %s %s missing!' % (component['task'], component['code'])
                 continue
 
-            itemName = ns + ':' + database.getTaskShort(result['task']) + result['code'] + '_' + result['name']
+            name = ns + ':' + database.getTaskShort(result['task']) + result['code'] + '_' + result['name']
 
             if result['task'] == 'rig':
                 createdColor = (0, .5, .20)
@@ -67,7 +72,10 @@ class ComponentListWidget(ItemListWidget):
             elif status == 'created':
                 color = createdColor
 
-            x = ComponentWidget(itemName, 'cube.png', itemName, self, color)
+            thumbPath = version.getThumb(result)
+            x = ComponentWidget(name=name, itemName=result['name'], imgPath=thumbPath, label=result['task'],
+                                status=result['status'], parentWidget=self, color=color)
+
             self.itemList.append(x)
             x.task = result['task']
             x.code = result['code']
@@ -75,15 +83,15 @@ class ComponentListWidget(ItemListWidget):
 
     def addItemCallBack(self, *args):
         pm.layoutDialog(ui=lambda: self.createAssetPrompt())
-        self.refreshList(item=self.item)
+        self.refreshList(itemMData=self.item)
 
     def createAssetPrompt(self):
         form = pm.setParent(q=True)
         f = pm.formLayout(form, e=True, width=150)
 
         col2 = pm.columnLayout(p=f, adjustableColumn=True)
-        # nsField = pm.textFieldGrp ( 'nsFieldPrompt', l='Name Space', tx='ref' )
-        # refModeField = pm.optionMenuGrp ( l='Assemble Mode' )
+        nsField = pm.textFieldGrp ( 'nsFieldPrompt', l='Name Space', tx='ref' )
+        refModeField = pm.optionMenuGrp ( l='Assemble Mode' )
         pm.menuItem(l='reference')
         pm.menuItem(l='cache')
         pm.menuItem(l='import')
@@ -95,7 +103,7 @@ class ComponentListWidget(ItemListWidget):
         folderTreeWidget.type = 'asset'
         folderTreeWidget.getFolderTree()
 
-        itemListWidget = ItemListWidget()
+        itemListWidget = ItemListBase()
         itemListWidget.projectName = self.projectName
         itemListWidget.createList(pane)
         itemListWidget.refreshList(path=[], task='rig')

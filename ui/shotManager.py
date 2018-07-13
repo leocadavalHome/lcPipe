@@ -1,8 +1,7 @@
 import pymel.core as pm
 from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.componentListWidget import ComponentListWidget
-import lcPipe.core.database as database
-reload (database)
+
 
 class ShotManager:
     def __init__(self, itemMData):
@@ -22,12 +21,4 @@ class ShotManager:
         self.compListWidget.createList(pane)
 
         pm.showWindow(win)
-        self.compListWidget.refreshList(item=self.itemMData)
-
-database.mongoConnect()
-item = database.getItemMData(projName='mais', task='layout', code='0001', itemType='shot', fromScene=False)
-
-
-s = ShotManager(item)
-s.projectName = 'mais'
-s.createShotManager(
+        self.compListWidget.refreshList(itemMData=self.itemMData)
