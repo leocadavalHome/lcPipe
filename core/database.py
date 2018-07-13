@@ -109,6 +109,7 @@ def editProject(projectName, **projectSettings):
 def getProjectDict(projectName=None):
     global db
     global currentProject
+    print projectName
     if projectName:
         returnProject = db.projects.find_one({'projectName': projectName})
     elif currentProject:
@@ -135,9 +136,12 @@ def getAllProjects():
 
 
 def getCollection(itemType, projectName=None):
+    global db
     global currentProject
-
+    print 'project: %s' % projectName
+    print db
     if projectName:
+        print (projectName + '_' + itemType)
         collection = db.get_collection(projectName + '_' + itemType)
     else:
         collection = db.get_collection(currentProject + '_' + itemType)
@@ -147,7 +151,9 @@ def getCollection(itemType, projectName=None):
 
 ##DATABASE
 def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=False):
+    print projName
     if fromScene:
+        print 'fromScene'
         projName = pm.fileInfo.get('projectName')
         task = pm.fileInfo.get('task')
         code = pm.fileInfo.get('code')

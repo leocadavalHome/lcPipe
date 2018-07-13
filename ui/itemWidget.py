@@ -48,15 +48,15 @@ class ItemWidget(object):
 
     def clickCallBack(self, *args):
         if self.selected:
-            pm.iconTextButton(self.name, e=True, backgroundColor=self.color)
+            pm.rowLayout(self.name, e=True, backgroundColor=self.color)
             self.parentWidget.selectedItem = None
             self.selected = False
         else:
             if self.parentWidget.selectedItem:
-                pm.iconTextButton(self.parentWidget.selectedItem.name, e=True,
+                pm.rowLayout(self.parentWidget.selectedItem.name, e=True,
                                   backgroundColor=self.parentWidget.selectedItem.color)
                 self.parentWidget.selectedItem.selected = False
-            pm.iconTextButton(self.name, e=True, backgroundColor=(.27, .27, .27))
+            pm.rowLayout(self.name, e=True, backgroundColor=(.27, .27, .27))
             self.parentWidget.selectedItem = self
             self.selected = True
             if self.infoWidget:
@@ -102,7 +102,7 @@ class ItemWidget(object):
         shotMng.createShotManager()
 
     def addToLayout(self, option):
-        if option ==1:
+        if option == 1:
             self.widgetName = pm.rowLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color, nc=2, w=200, h=100, dragCallback=self.dragCallback)
 
             pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack, doubleClickCommand=self.dClickCallBack)

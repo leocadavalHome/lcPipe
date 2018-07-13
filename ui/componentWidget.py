@@ -5,11 +5,6 @@ from lcPipe.core import publish
 from lcPipe.core import version
 from lcPipe.ui.itemWidget import ItemWidget
 
-reload(database)
-reload(publish)
-reload(assemble)
-reload(version)
-
 
 class ComponentWidget(ItemWidget):
     def __init__(self, name, imgPath, label, parentWidget, color=(0, .2, .50)):
@@ -22,10 +17,31 @@ class ComponentWidget(ItemWidget):
         pm.evalDeferred('pm.deleteUI("' + self.widgetName + '")')
         self.parentWidget.itemList.remove(self)
 
-    def addToLayout(self):
-        self.widgetName = pm.iconTextButton(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color,
-                                            style='iconAndTextHorizontal', image=self.imgPath, label=self.label, h=80,
-                                            w=160, doubleClickCommand=self.dClickCallBack, command=self.clickCallBack,
-                                            dragCallback=self.dragCallback)
+    def addToLayout(self, option):
+        if option == 1:
+            self.widgetName = pm.rowLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color, nc=2, w=200, h=100,
+                                           dragCallback=self.dragCallback)
+
+            pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack, doubleClickCommand=self.dClickCallBack)
+            pm.columnLayout()
+            pm.text(label=self.label)
+            pm.separator(h=10)
+            pm.text(label=self.itemName,  font="boldLabelFont")
+            pm.separator(h=12, st='in')
+            pm.text(label='code:%s' % self.code)
+            pm.text(label='user: non')
+            pm.text(label=self.status, font = "smallObliqueLabelFont")
+
+        elif option == 2:
+            self.widgetName = pm.rowLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color, nc=2,
+                                           w=140, h=50, dragCallback=self.dragCallback)
+
+            pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack,
+                              doubleClickCommand=self.dClickCallBack, h=50, w=50)
+            pm.columnLayout()
+            pm.text(label=self.label)
+            pm.separator(h=5)
+            pm.text(label=self.itemName, font="boldLabelFont")
+
         pm.popupMenu(parent=self.widgetName)
-        pm.menuItem(l='remove component', c=self.removeComponentCallBack)
+        pm.menuItem(label='remove component', c=self.removeComponentCallBack)

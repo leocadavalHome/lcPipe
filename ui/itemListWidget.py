@@ -15,7 +15,7 @@ class ItemListWidget(object):
         self.type = None
         self.task = None
         self.path = None
-        self.viewOption = 2
+        self.viewOption = 1
         proj = database.getProjectDict()
         self.projectName = proj['projectName']
 

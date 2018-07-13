@@ -1,17 +1,10 @@
 import pymel.core as pm
-from lcPipe.core import assemble
 from lcPipe.core import database
-from lcPipe.core import publish
-from lcPipe.core import version
 from lcPipe.ui.componentWidget import ComponentWidget
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.itemListWidget import ItemListWidget
 
-reload(database)
-reload(publish)
-reload(assemble)
-reload(version)
 
 class ComponentListWidget(ItemListWidget):
     def __init__(self):
@@ -78,7 +71,7 @@ class ComponentListWidget(ItemListWidget):
             self.itemList.append(x)
             x.task = result['task']
             x.code = result['code']
-            x.addToLayout()
+            x.addToLayout(self.viewOption)
 
     def addItemCallBack(self, *args):
         pm.layoutDialog(ui=lambda: self.createAssetPrompt())
