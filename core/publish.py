@@ -2,6 +2,7 @@
 from lcPipe.core.modelPublish import *
 from lcPipe.core.uvPublish import *
 from lcPipe.core.texPublish import *
+from lcPipe.core.shotFinalizingPublish import *
 
 def skip(*args):
     for a in args:
@@ -84,18 +85,30 @@ class PublishWidget(object):
 
             'texture': {1.0: {'status': 'run', 'label': 'all textures on Default Work dir', 'check': imagesOnDir,
                                'fix': [copyImagesToDir]},
-                         2.0: {'status': 'run', 'label': 'all textures on Default Work dir', 'check': noObjWithDefaultShader,
+                         2.0: {'status': 'run', 'label': 'No object with default shader', 'check': noObjWithDefaultShader,
                               'fix': [selObjWithDefaultShader]},
                         },
             'xlo': {},
             'rig': {},
             'blendShape': {},
-        }
+            }
+
+        self.prePublishProcedures = {
+                                'texture': {1.0: {'prePublish': importReferences}},
+                                'rig': {1.0: {'prePublish': importReferences}},
+                                'shotFinalizing': {1.0: {'prePublish': cacheAnimation}}
+                                }
+
 
         if task in self.checkProcedures.keys():
             self.checksDict = self.checkProcedures[task]
         else:
             self.checksDict = {}
+
+        if task in self.prePublishProcedures.keys():
+            self.prePublishDict = self.prePublishProcedures[task]
+        else:
+            self.prePublishDict = {}
 
         self.checksWidgets = {}
 
@@ -155,7 +168,7 @@ class PublishWidget(object):
 
         if sucess:
             print 'item valid!'
-            pm.button(self.btn, e=True, l='PUBLISH', c=self.publishFile)
+            self.runPrePublish()
 
     def runFix(self, fix, id):
         x = fix()
@@ -170,6 +183,25 @@ class PublishWidget(object):
                               label=self.checksDict[id]['label'] + ' skipped')
 
             self.checksDict[id]['status'] = 'skip'
+
+    def runPrePublish(self, *args):
+        error = False
+
+        order = self.prePublishDict.keys()
+        order.sort()
+        for id in order:
+            resp = self.prePublishDict[id]['prePublish']()
+            if resp:
+                error = True
+
+        if not error:
+            print 'prePublish succeeded'
+            pm.button(self.btn, e=True, label='PUBLISH', c=self.publishFile)
+        else:
+            resp = pm.confirmDialog(title='Warning', ma='center',
+                                    message='Error: Pre Publish Procedure Failled !' ,
+                                    button=['Ok'], defaultButton='ok', dismissString='ok')
+            print 'prePublish failed'
 
     def publishFile(self, *args):
         pass

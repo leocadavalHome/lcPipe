@@ -1,1 +1,1 @@
-__all__ = ['assemble','cache', 'check', 'database', 'publish', 'shaderPreset', 'version']
+__all__ = ['sceneBuild', 'cache', 'check', 'database', 'publish', 'shaderPreset', 'version']

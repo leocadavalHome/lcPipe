@@ -47,7 +47,7 @@ def cachePromptChangeList(*args):
 def cacheScene(task, code):
     ver = 0
 
-    collection = database.getCollection('_shot')
+    collection = database.getCollection('shot')
     shotMData = database.getItemMData(task=task, code=code, itemType='shot')
 
     if 'caches' not in shotMData:
@@ -121,7 +121,7 @@ def cacheScene(task, code):
                   '-attr rotateY -attr rotateZ -attr scaleX -attr scaleY -attr scaleZ -attr visibility'
         jobOptions = " -worldSpace -uv -writeVisibility"
 
-        # assemble cache arguments
+        # build cache arguments
         jobArg = jobFrameRange + jobOptions + jobAttr + jobGeos + jobFile
 
         # do caching

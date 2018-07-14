@@ -18,6 +18,7 @@ class Session:
         pm.menuItem(label="Browser", command=self.browserCallback)
         pm.menuItem(label="Publish Scene", command=self.publishCallback)
 
+
     def browserCallback(self, *args):
         self.browser()
 

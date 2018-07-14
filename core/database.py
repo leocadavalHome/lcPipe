@@ -18,10 +18,10 @@ def mongoConnect():
         db = client.lcPipeline
 
     except:
-        pm.confirmDialog(title='Error', message='No Database Connection Found!', button=['OK'], defaultButton='Ok',
+        resp = pm.confirmDialog(title='Error', message='No Database Connection Found!', button=['OK'], defaultButton='Ok',
                          dismissString='Ok')
-        sys.exit()
-
+        if resp == 'Ok':
+            sys.exit()
     # return db
 
 
@@ -36,47 +36,70 @@ def getDefaultDict():
                 'assetFolders': {'character': '', 'props': '', 'sets': '', 'primary': 'character'}, 'shotFolders': {},
                 'assetNameTemplate': ['$prefix', '$code', '_', '$name', '_', '$task'],
                 'cacheNameTemplate': ['$prefix', '$code', '$task'], 'nextAsset': 1, 'nextShot': 1, 'renderer': 'vray',
-                'fps': 24, 'resolution': [1920, 1080], 'workflow': {
-            'rig': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod', 'components': []},
-                    'uvs': {'type': 'asset', 'phase': 'preProd', 'short': 'uvs', 'components': [('model', 'import')]},
-                    'blendShape': {'type': 'asset', 'phase': 'preProd', 'short': 'bsp',
-                                   'components': [('model', 'import')]},
-                    'texture': {'type': 'asset', 'phase': 'preProd', 'short': 'tex',
-                                'components': [('uvs', 'reference')]},
-                    'xlo': {'type': 'asset', 'phase': 'preProd', 'short': 'xlo', 'components': [('uvs', 'import')]},
-                    'rig': {'type': 'asset', 'phase': 'preProd', 'short': 'rig',
-                            'components': [('uvs', 'import'), ('blendShape', 'import')]}},
+                'fps': 24,
+                'resolution': [1920, 1080],
+                'workflow': {
+                                'rig': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
+                                                  'source': []},
+                                        'uvs': {'type': 'asset', 'phase': 'preProd', 'short': 'uvs',
+                                                'source': [('model', 'import')]},
+                                        'blendShape': {'type': 'asset', 'phase': 'preProd', 'short': 'bsp',
+                                                       'source': [('model', 'import')]},
+                                        'texture': {'type': 'asset', 'phase': 'preProd', 'short': 'tex',
+                                                    'source': [('uvs', 'reference')]},
+                                        'xlo': {'type': 'asset', 'phase': 'preProd', 'short': 'xlo',
+                                                'source': [('texture', 'import')]},
+                                        'rig': {'type': 'asset', 'phase': 'preProd', 'short': 'rig',
+                                                'source': [('uvs', 'reference'),('blendShape', 'import')]}},
 
-            'static': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod', 'components': []},
-                       'uvs': {'type': 'asset', 'phase': 'preProd', 'short': 'uvs',
-                               'components': [('model', 'import')]},
-                       'texture': {'type': 'asset', 'phase': 'preProd', 'short': 'tex',
-                                   'components': [('uvs', 'reference')]}},
+                                'static': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
+                                                     'source': []},
+                                           'uvs': {'type': 'asset', 'phase': 'preProd', 'short': 'uvs',
+                                                   'source': [('model', 'import')]},
+                                           'texture': {'type': 'asset', 'phase': 'preProd', 'short': 'tex',
+                                                       'source': [('uvs', 'reference')]}},
+                                'camera': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
+                                                     'source': []},
+                                           'rig': {'type': 'asset', 'phase': 'preProd', 'short': 'rig', 'source': []}},
 
-            'shot': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay', 'components': []},
-                     'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani', 'components': [('layout', 'copy')]},
-                     'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
-                                'components': [('shotFinalizing', 'cache')]},
-                     'shotFinalizing': {'type': 'shot', 'phase': 'prod', 'short': 'sfh',
-                                        'components': [('animation', 'copy')]}},
+                                'shotCache': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay','source': [],
+                                                         'components': {'cam': {'code': '9999', 'ver': 1,
+                                                                        'updateMode': 'last', 'task': 'rig',
+                                                                        'assembleMode': 'reference',
+                                                                        'type': 'asset'}}},
+                                             'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
+                                                           'source': [('layout', 'copy')]},
+                                             'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
+                                                        'source': [('shotFinalizing', 'cache')]},
+                                             'shotFinalizing': {'type': 'shot', 'phase': 'prod', 'short': 'sfh',
+                                                                'source': [('animation', 'copy')]}},
 
-            'shotXlo': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay', 'components': []},
-                        'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
-                                      'components': [('layout', 'copy')]},
-                        'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
-                                   'components': [('shotFinalizing', 'xlo')]},
-                        'shotFinalizing': {'type': 'shot', 'phase': 'prod', 'short': 'sfh',
-                                           'components': [('animation', 'copy')]}},
+                                'shotXlo': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay', 'source': [],
+                                                       'components': { 'cam': {'code': '9999', 'ver': 1, 'updateMode': 'last',
+                                                                       'task': 'rig', 'assembleMode': 'reference',
+                                                                       'type': 'asset'}}},
+                                            'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
+                                                          'source': [('layout', 'copy')]},
+                                            'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
+                                                       'source': [('shotFinalizing', 'xlo')]},
+                                            'shotFinalizing': {'type': 'shot', 'phase': 'prod', 'short': 'sfh',
+                                                               'source': [('animation', 'copy')]}},
 
-            'keyLightShot': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay', 'components': []},
-                             'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
-                                           'components': [('layout', 'copy')]},
-                             'lighting': {'type': 'shot', 'phase': 'postProd', 'short': 'lit',
-                                          'components': [('shotFinalizing', 'reference')]},
-                             'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
-                                        'components': [('shotFinalizing', 'cache')]},
-                             'shotFinalizing': {'type': 'shot', 'phase': 'prod', 'short': 'sfh',
-                                                'components': [('animation', 'copy')]}}}}
+                                'keyLightShot': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay',
+                                                            'source': [],
+                                                            'components': [{'code': '9999', 'ver': 1,
+                                                                            'updateMode': 'last', 'task': 'rig',
+                                                                            'assembleMode': 'reference',
+                                                                            'type': 'asset'}]},
+                                                 'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
+                                                               'source': [('layout', 'copy')]},
+                                                 'lighting': {'type': 'shot', 'phase': 'postProd', 'short': 'lit',
+                                                              'source': [('shotFinalizing', 'reference')]},
+                                                 'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
+                                                            'source': [('shotFinalizing', 'cache')]},
+                                                 'shotFinalizing': {'type': 'shot', 'phase': 'prod', 'short': 'sfh',
+                                                                    'source': [('animation', 'copy')]}}}
+                }
     return projDict
 
 
@@ -109,7 +132,6 @@ def editProject(projectName, **projectSettings):
 def getProjectDict(projectName=None):
     global db
     global currentProject
-    print projectName
     if projectName:
         returnProject = db.projects.find_one({'projectName': projectName})
     elif currentProject:
@@ -138,10 +160,7 @@ def getAllProjects():
 def getCollection(itemType, projectName=None):
     global db
     global currentProject
-    print 'project: %s' % projectName
-    print db
     if projectName:
-        print (projectName + '_' + itemType)
         collection = db.get_collection(projectName + '_' + itemType)
     else:
         collection = db.get_collection(currentProject + '_' + itemType)
@@ -151,7 +170,6 @@ def getCollection(itemType, projectName=None):
 
 ##DATABASE
 def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=False):
-    print projName
     if fromScene:
         print 'fromScene'
         projName = pm.fileInfo.get('projectName')
@@ -338,17 +356,12 @@ def incrementNextCode(itemType, fromBegining=False):
     db.projects.find_one_and_update({'projectName': currentProject},
                                     {'$set': {'next' + itemType.capitalize(): nextCode}})
 
-
-def createItem(itemType, name, path, workflow, code=None):
-    global db
-    global currentProject
-
+def codeCheck(code, itemType):
     proj = getProjectDict()
-    collection = getCollection(itemType)
-
     if code:
         code = ("%04d" % int(code))
         nextItem = False
+        collection = getCollection(itemType)
         result = collection.find({'code': code})
         codeExists = [x for x in result]
 
@@ -362,27 +375,42 @@ def createItem(itemType, name, path, workflow, code=None):
         nextItem = True
         code = "%04d" % proj['next' + itemType.capitalize()]
 
+    return code, nextItem
+
+def createItem(itemType, name, path, workflow, code=None):
+    global db
+    global currentProject
+
+    codeTest = codeCheck(code, itemType)
+    validatedCode = codeTest[0]
+    if validatedCode == 'codeExists':
+        return 'codeExists'
+
+    proj = getProjectDict()
+    collection = getCollection(itemType)
     itemWorkflow = proj['workflow'][workflow]
     itemsDict = {}
 
-    for task, value in itemWorkflow.iteritems():
-        itemsDict[task] = {'name': name, 'code': code, 'task': task, 'type': itemType, 'workflow': workflow,
-                           'projPrefix': proj['prefix'], 'workVer': 0, 'publishVer': 0, 'path': path, 'filename': 'tmp',
-                           'status': 'notCreated', 'components': {}}
+    for task in itemWorkflow.iterkeys():
+        itemsDict[task] = {'name': name, 'code': validatedCode, 'task': task, 'type': itemType, 'workflow': workflow,
+                           'projPrefix': proj['prefix'], 'workVer': 0, 'publishVer': 0, 'path': path, 'filename': '',
+                           'status': 'notCreated', 'source': {}, 'components': {}}
 
         fileName = templateName(itemsDict[task])
         itemsDict[task]['filename'] = fileName
 
     for task, value in itemWorkflow.iteritems():
-        for component in value['components']:
-            itemsDict[task]['components'][component[0]] = {'code': itemsDict[component[0]]['code'], 'ver': 1,
-                                                           'updateMode': 'last', 'task': component[0],
-                                                           'assembleMode': component[1],
-                                                           'type': itemsDict[component[0]]['type']}
+        for sourceTask in value['source']:
+            itemsDict[task]['source'][sourceTask[0]] = {'code': validatedCode, 'ver': 1,
+                                                           'updateMode': 'last', 'task': sourceTask[0],
+                                                           'assembleMode': sourceTask[1],
+                                                           'type': itemType}
+        if 'components' in value.keys():
+            itemsDict[task]['components'] = value['components']
 
     itemList = [x for x in itemsDict.itervalues()]
     collection.insert_many(itemList)
-    incrementNextCode(itemType, fromBegining=not nextItem)
+    incrementNextCode(itemType, fromBegining=not codeTest[1])
 
     return itemsDict
 
@@ -394,7 +422,7 @@ def removeItem(itemType, code):
 
 
 # Items
-def addComponent(item, ns, componentTask, componentCode, assembleMode):
+def addComponent(item, ns, componentTask, componentCode, assembleMode, update=True):
     itemType = getTaskType(componentTask)
     compCollection = getCollection(itemType)
 
@@ -410,11 +438,12 @@ def addComponent(item, ns, componentTask, componentCode, assembleMode):
         ns = nsBase + str(index)
         index += 1
 
-    itemCollection = getCollection(item['type'])
-    item['components'][ns] = componentDict
-    result = itemCollection.find_one_and_update({'task': item['task'], 'code': item['code']}, {'$set': item})
+    if update:
+        itemCollection = getCollection(item['type'])
+        item['components'][ns] = componentDict
+        result = itemCollection.find_one_and_update({'task': item['task'], 'code': item['code']}, {'$set': item})
 
-    return result
+    return item
 
 
 def removeComponent(item, ns):

@@ -1,6 +1,6 @@
 import pymel.core as pm
 from lcPipe.core import version
-from lcPipe.core import assemble
+from lcPipe.core import sceneBuild
 from lcPipe.core import database
 from lcPipe.ui.itemBase import ItemBase
 from lcPipe.ui.shotManager import ShotManager
@@ -21,23 +21,23 @@ class ItemWidget(ItemBase):
         itemMData = self.getItem()
 
         if itemMData['status'] == 'notCreated':
-            return pm.confirmDialog(title='error', ma='center', message='This scene is not assembled yet',
+            return pm.confirmDialog(title='error', ma='center', message='This scene is not build yet',
                                     button=['OK'], defaultButton='OK', dismissString='OK')
 
         version.open(type=itemMData['type'], task=itemMData['task'], code=itemMData['code'])
 
-    def assembleCallback(self, *args):
-        print 'assemble'
+    def buildCallback(self, *args):
+        print 'build'
         itemMData = self.getItem()
         itemType = database.getTaskType(self.task)
         if itemMData['status'] == 'notCreated':
-            assemble.assemble(itemType, self.task, self.code)
+            sceneBuild.build(itemType, self.task, self.code)
         else:
             resp = pm.confirmDialog(title='Confirm',
-                                    message='This item is already assembled \n Do you want to reassemble?',
+                                    message='This item is already built \n Do you want to rebuild?',
                                     button=['Yes', 'No'], defaultButton='Yes', cancelButton='No', dismissString='No')
             if resp == 'Yes':
-                assemble.assemble(itemType, self.task, self.code)
+                sceneBuild.build(itemType, self.task, self.code)
 
     def shotManagerCallback(self, *args):
         itemMData = self.getItem()
@@ -54,5 +54,5 @@ class ItemWidget(ItemBase):
             pm.menuItem(label='shot manager', c=self.shotManagerCallback)
             pm.menuItem(label='remove shot', c=self.removeCallback)
         else:
-            pm.menuItem(label='assemble', c=self.assembleCallback)
+            pm.menuItem(label='build', c=self.buildCallback)
             pm.menuItem(label='open', c=self.openCallback)

@@ -3,14 +3,12 @@ import os.path
 from lcPipe.core import database
 import copy
 
-reload(database)
 
-
-def referenceCache(componentMData):
-    path = database.getPath(componentMData, dirLocation='cacheLocation', ext='')
+def referenceCache(sourceMData):
+    path = database.getPath(sourceMData, dirLocation='cacheLocation', ext='')
     cachePath = os.path.join(*path)
 
-    for cache_ns, cacheMData in componentMData['caches'].iteritems():
+    for cache_ns, cacheMData in sourceMData['caches'].iteritems():
         if cacheMData['ver'] == 0:
             print 'Component %s not yet published!!' % (cache_ns + ':' + cacheMData['task'] + cacheMData['code'])
             continue
@@ -24,11 +22,11 @@ def referenceCache(componentMData):
                            type='Alembic')
 
 
-def importCaches(componentMData):
-    path = database.getPath(componentMData, dirLocation='cacheLocation', ext='')
+def importCaches(sourceMData):
+    path = database.getPath(sourceMData, dirLocation='cacheLocation', ext='')
     cachePath = os.path.join(*path)
 
-    for cache_ns, cacheMData in componentMData['caches'].iteritems():
+    for cache_ns, cacheMData in sourceMData['caches'].iteritems():
         if cacheMData['ver'] == 0:
             print 'Component %s not yet published!!' % (cache_ns + ':' + cacheMData['task'] + cacheMData['code'])
             continue
@@ -43,13 +41,13 @@ def importCaches(componentMData):
     return
 
 
-def referenceXlos(componentMData):
+def referenceXlos(sourceMData):
     version = 0
-    for ns, xlo in componentMData['components'].iteritems():
+    for ns, xlo in sourceMData['components'].iteritems():
         xloMData = database.getItemMData(task='xlo', code=xlo['code'], itemType=xlo['type'])
         path = database.getPath(xloMData, dirLocation='publishLocation')
 
-        for xlo_ns, xloMData in componentMData['caches'].iteritems():
+        for xlo_ns, xloMData in sourceMData['caches'].iteritems():
             if xloMData['ver'] == 0:
                 print 'Component %s not yet published!!' % (xlo_ns + ':' + xloMData['task'] + xloMData['code'])
                 # parcial = True
@@ -63,102 +61,90 @@ def referenceXlos(componentMData):
         pm.importFile(xloPath, namespace=ns)
 
 
-def assemble(itemType, task, code):
-    empty = True
+def build(itemType, task, code):
     parcial = False
-    fromSource = False
+    empty = True
 
     print 'start assembling'
 
-    # read from database
-    collection = database.getCollection(itemType)
     itemMData = database.getItemMData(task=task, code=code, itemType=itemType)
 
     if not itemMData:
         print 'ERROR: No metadata for this item'
         return
 
+    itemSources = itemMData['source']
+    if not itemSources:
+        itemSources = itemMData['components']
+
     pm.newFile(f=True, new=True)
 
-    if 'source' in itemMData:
-        fromSource = True
-        itemComponents = itemMData['source']
-    else:
-        itemComponents = itemMData['components']
-
-    for component_ns, component in itemComponents.iteritems():
+    for source_ns, source in itemSources.iteritems():
         # read components item
-        componentMData = database.getItemMData(code=component['code'], task=component['task'],
-                                               itemType=component['type'])
+        sourceMData = database.getItemMData(code=source['code'], task=source['task'],itemType=source['type'])
 
-        if not componentMData:
+        if not sourceMData:
             print 'ignoring...'
             continue
 
-        if componentMData['publishVer'] == 0:
-            print 'Component %s not yet published!!' % (component_ns + ':' + component['task'] + component['code'])
+        if sourceMData['publishVer'] == 0:
+            print 'Component %s not yet published!!' % (source_ns + ':' + source['task'] + source['code'])
             parcial = True
             continue
 
-        path = database.getPath(componentMData, dirLocation='publishLocation')
-        version = 'v%03d_' % componentMData['publishVer']
-        componentPath = os.path.join(path[0], version + path[1])
-
         empty = False
 
-        # use caches
-        if component['assembleMode'] == 'cache':
+        path = database.getPath(sourceMData, dirLocation='publishLocation')
+        version = 'v%03d_' % sourceMData['publishVer']
+        componentPath = os.path.join(path[0], version + path[1])
 
-            pm.namespace(add=component_ns)
-            pm.namespace(set=component_ns)
+        # import
+        if source['assembleMode'] == 'import':
+            pm.importFile(componentPath, defaultNamespace=True)
 
-            referenceCache(componentMData)
+            # reference, , ,
+        elif source['assembleMode'] == 'reference':
+            ns = source_ns
+            pm.createReference(componentPath, namespace=ns)
+            itemMData = database.addComponent(item=itemMData, ns=source_ns, componentTask=sourceMData['task'],
+                                              componentCode=sourceMData['code'], assembleMode='reference', update=False)
 
-            if not fromSource:
-                itemMData['source'] = copy.deepcopy(itemMData['components'])
+        # copy from another scene
+        elif source['assembleMode'] == 'copy':
+            pm.openFile(componentPath, force=True)
 
-            itemMData['components'] = copy.deepcopy(componentMData['caches'])
+            itemMData['components'] = copy.deepcopy(sourceMData['components'])
+            # pm.renameFile ( sceneFullPath )
+
+        elif source['assembleMode'] == 'cache':
+
+            pm.namespace(add=source_ns)
+            pm.namespace(set=source_ns)
+
+            referenceCache(sourceMData)
+
+            itemMData['components'] = copy.deepcopy(sourceMData['caches'])
 
             pm.namespace(set=':')
 
         # xlo
-        elif component['assembleMode'] == 'xlo':
-            referenceXlos(componentMData)
-            importCaches(componentMData)
+        elif source['assembleMode'] == 'xlo':
+            referenceXlos(sourceMData)
+            importCaches(sourceMData)
 
-            if not fromSource:
-                itemMData['source'] = copy.deepcopy(itemMData['components'])
-
-            itemMData['components'] = copy.deepcopy(componentMData['components'])
+            itemMData['components'] = copy.deepcopy(sourceMData['components'])
             # pm.namespace( set=':')
 
-        # import
-        elif component['assembleMode'] == 'import':
-            pm.importFile(componentPath, defaultNamespace=True)
-
-            # reference
-        elif component['assembleMode'] == 'reference':
-            ns = component_ns
-            pm.createReference(componentPath, namespace=ns)
-
-        # copy from another scene
-        elif component['assembleMode'] == 'copy':
-            pm.openFile(componentPath, force=True)
-
-            if not fromSource:
-                itemMData['source'] = copy.deepcopy(itemMData['components'])
-
-            itemMData['components'] = copy.deepcopy(componentMData['components'])
-            # pm.renameFile ( sceneFullPath )
-
     # update infos on scene and database
-    if not empty or not itemComponents:
+    if not empty or not itemSources:
         pm.fileInfo['projectName'] = database.getCurrentProject()
         pm.fileInfo['task'] = itemMData['task']
         pm.fileInfo['code'] = itemMData['code']
         pm.fileInfo['type'] = itemMData['type']
         itemMData['workVer'] = 1
         itemMData['status'] = 'created'
+
+        collection = database.getCollection(itemMData['type'])
         collection.find_one_and_update({'task': task, 'code': code}, {'$set': itemMData})
 
         itemPath = database.getPath(itemMData)
@@ -171,10 +157,16 @@ def assemble(itemType, task, code):
         pm.saveAs(sceneFullPath)
 
         if parcial:
-            print 'WARNING assemble: Some components have no publish to complete assemble this file!'
+            itemMData['status'] = 'partial'
+            pm.confirmDialog(title='Warning', ma='center', message='WARNING build: Some components have no publish to complete build this file!', button=['OK'],
+                             defaultButton='OK', dismissString='OK')
 
         else:
-            print '%s assembled sucessfully!' % itemMData['filename']
+            pm.confirmDialog(title='Warning', ma='center',
+                             message='%s assembled sucessfully!' % itemMData['filename'],
+                             button=['OK'], defaultButton='OK', dismissString='OK')
 
     else:
-        print 'ERROR assemble: No component published to assemble this file'
+        pm.confirmDialog(title='Warning', ma='center', message='ERROR build: No component published to build this file',
+                         button=['OK'], defaultButton='OK', dismissString='OK')
+

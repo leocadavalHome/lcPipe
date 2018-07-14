@@ -100,12 +100,18 @@ class PublishWidget(publish.PublishWidget):
             print ('creating:' + dirPath)
             os.makedirs(dirPath)
 
-        print 'publish ver %s, at %s' % (publishVer, fullPath)
-
         # save scene
         pm.saveAs(fullPath)
         pm.renameFile(originalName)
 
         version.takeSnapShot(item)
-
         self.closeWin()
+
+        print 'publish ver %s, at %s' % (publishVer, fullPath)
+        resp = pm.confirmDialog(title='Warning', ma='center', message='PUBLISH: %s %s \n Reopen working task?' % (item['name'], item['task']),
+                         button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
+
+        if resp == 'Ok':
+            version.open(type=item['type'], task=item['task'], code= item['code'])
+        else:
+            pm.newFile(f=True, new=True)

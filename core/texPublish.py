@@ -47,6 +47,15 @@ def selObjWithDefaultShader(*args):
     pm.select(geoList)
     return 'select'
 
+#PrePublish
+def importReferences(*args):
+    try:
+        refs = pm.getReferences()
+        for ref in refs.itervalues():
+            ref.importContents(removeNamespace=True)
+        return False
+    except:
+        return True
 
 # todo no unnused shaders nodes
 # todo valid shader name convention
