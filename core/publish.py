@@ -96,7 +96,8 @@ class PublishWidget(object):
         self.prePublishProcedures = {
                                 'texture': {1.0: {'prePublish': importReferences}},
                                 'rig': {1.0: {'prePublish': importReferences}},
-                                'shotFinalizing': {1.0: {'prePublish': cacheAnimation}}
+                                'shotFinalizing': {1.0: {'prePublish': cacheAnimation},
+                                                   2.0: {'prePublish': cacheCameraAnimation}}
                                 }
 
 

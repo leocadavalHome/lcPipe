@@ -18,4 +18,9 @@ def cacheAnimation(*args):
         raise
         return True
 
-cache.cacheScene(task=pm.fileInfo['task'], code=pm.fileInfo['code'])
+def cacheCameraAnimation(*args):
+    try:
+        cache.cacheCamera(task=pm.fileInfo['task'], code=pm.fileInfo['code'])
+    except:
+        raise
+        return True

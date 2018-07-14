@@ -131,3 +131,73 @@ def cacheScene(task, code):
 
     pm.confirmDialog(title='cache', ma='center', icon='information', message='Cache Ver: %s' % ver, button=['OK'],
                      defaultButton='OK', dismissString='ok')
+
+
+def cacheCamera(task, code):
+    ver = 0
+    collection = database.getCollection('shot')
+    shotMData = database.getItemMData(task=task, code=code, itemType='shot')
+
+    if 'caches' not in shotMData:
+        shotMData['caches'] = copy.deepcopy(shotMData['components'])
+
+        for item in shotMData['caches'].itervalues():
+            item['ver'] = 0
+            item['type'] = 'cache'
+            item['assembleMode'] = 'cache'
+            item['sourceSceneVer'] = 0
+            item['sourceVer'] = 0
+            item['name'] = ''
+
+    itemComponents = shotMData['components']
+    itemCaches = shotMData['caches']
+
+    cameras = pm.ls(type='camera', l=True)
+    startup_cameras = [camera for camera in cameras if pm.camera(camera.parent(0), startupCamera=True, q=True)]
+    cameraShape = list(set(cameras) - set(startup_cameras))
+    camera = map(lambda x: x.parent(0), cameraShape)[0]
+
+    path = database.getPath(shotMData, dirLocation='cacheLocation', ext='')
+    cachePath = os.path.join(*path)
+
+    if not os.path.exists(cachePath):
+        os.makedirs(cachePath)
+
+    # get all geometry on geo_group
+    jobCam = ' -root ' + camera
+
+    # make path and name for alembic file
+    cacheMData = itemCaches['cam']  # get the data for this component
+
+    # get version and increment
+    cacheMData['ver'] += 1
+    cacheMData['sourceSceneVer'] = shotMData['publishVer']
+    cacheMData['sourceVer'] = itemComponents['cam']['ver']
+
+    ver = cacheMData['ver']
+
+    # get cache publish path
+
+    cacheName = database.templateName(cacheMData) + '_cam'
+    cacheFileName = str('v%03d_' % ver) + cacheName
+    cacheFullPath = os.path.join(cachePath, cacheFileName)
+
+    jobFile = " -file " + cacheFullPath + ".abc "
+
+    # get scene frame range
+    ini = str(int(pm.playbackOptions(q=True, min=True)))
+    fim = str(int(pm.playbackOptions(q=True, max=True)))
+    jobFrameRange = ' -frameRange ' + ini + ' ' + fim
+
+    # set parameters for alembic cache
+    jobAttr = ' -attr translateX -attr translateY -attr translateZ -attr rotateX ' \
+              '-attr rotateY -attr rotateZ -attr scaleX -attr scaleY -attr scaleZ -attr visibility'
+    jobOptions = " -worldSpace -writeVisibility"
+
+    # build cache arguments
+    jobArg = jobFrameRange + jobOptions + jobAttr + jobCam + jobFile
+
+    # do caching
+    pm.AbcExport(j=jobArg)
+
+    collection.find_one_and_update({'task': task, 'code': code}, {'$set': shotMData})

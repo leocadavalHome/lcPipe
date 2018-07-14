@@ -42,24 +42,28 @@ def importCaches(sourceMData):
 
 
 def referenceXlos(sourceMData):
-    version = 0
-    for ns, xlo in sourceMData['components'].iteritems():
-        xloMData = database.getItemMData(task='xlo', code=xlo['code'], itemType=xlo['type'])
+    parcial=False
+    empty=True
+
+    for xlo_ns, xlo in sourceMData['components'].iteritems():
+        if xlo['code']=='9999':
+            xloMData = database.getItemMData(task=xlo['task'], code=xlo['code'], itemType=xlo['type'])
+        else:
+            xloMData = database.getItemMData(task='xlo', code=xlo['code'], itemType=xlo['type'])
+
+        print xloMData
+        if xloMData['publishVer'] == 0:
+            print 'Component %s not yet published!!' % (xlo_ns + ':' + xloMData['task'] + xloMData['code'])
+            parcial=True
+            continue
+        else:
+            version = 'v%03d_' % xloMData['publishVer']
+        empty=False
         path = database.getPath(xloMData, dirLocation='publishLocation')
-
-        for xlo_ns, xloMData in sourceMData['caches'].iteritems():
-            if xloMData['ver'] == 0:
-                print 'Component %s not yet published!!' % (xlo_ns + ':' + xloMData['task'] + xloMData['code'])
-                # parcial = True
-                continue
-
-            else:
-                version = 'v%03d_' % xloMData['publishVer']
-
         xloPath = os.path.join(path[0], version + path[1])
+        pm.createReference(xloPath, namespace=xlo_ns)
 
-        pm.importFile(xloPath, namespace=ns)
-
+    return empty,parcial
 
 def build(itemType, task, code):
     parcial = False
