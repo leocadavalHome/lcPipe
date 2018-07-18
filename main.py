@@ -1,8 +1,7 @@
 import pymel.core as pm
 from lcPipe.core import database
-reload(database)
+from lcPipe.core import check
 from lcPipe.ui import widgets
-reload(widgets)
 
 
 class Session:
@@ -17,7 +16,10 @@ class Session:
         pm.menu('PipeMenu', label='PipeMenu', p='MayaWindow', to=True)
         pm.menuItem(label="Browser", command=self.browserCallback)
         pm.menuItem(label="Publish Scene", command=self.publishCallback)
+        pm.menuItem(label="Update Scene", command=self.sceneCheckCallback)
 
+    def sceneCheckCallback(self,*args):
+        check.sceneRefCheck()
 
     def browserCallback(self, *args):
         self.browser()

@@ -22,7 +22,7 @@ class ItemListBase(object):
 
     def createList(self, parentWidget):
         self.parentWidget = parentWidget
-        a = pm.scrollLayout(p=self.parentWidget, childResizable=True, h=400)
+        a = pm.scrollLayout(p=self.parentWidget, childResizable=True, h=200)
         self.widgetName = pm.flowLayout(p=a, backgroundColor=(.17, .17, .17), columnSpacing=5, h=1000, wrap=True)
         self.addMenus()
 

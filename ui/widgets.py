@@ -19,14 +19,14 @@ class itemBrowser:
         self.typeOpt = None
 
     def createBrowser(self):
-        win = pm.window(w=800, h=600)
+        win = pm.window(w=200, h=200)
         col2 = pm.columnLayout(adjustableColumn=True)
         allowedAreas = ['right', 'left']
-        pm.dockControl(label='SHOT INFO', w=600, area='left', content=win, allowedArea=allowedAreas)
+        pm.dockControl(label='BROWSER', w=200, area='left', content=win, allowedArea=allowedAreas)
 
         self.projectSelectWidget.createProjectSelect(col2)
         pm.rowLayout(nc=3, adj=1)
-        self.typeOpt = pm.optionMenuGrp(label='Item Type', changeCommand=self.changeTypeCallback, cat=[[1,'left',45],[2,'left',-20]])
+        self.typeOpt = pm.optionMenuGrp(label='Item Type', changeCommand=self.changeTypeCallback, cat=[[1,'left',5],[2,'left',-80]])
         types = ['asset', 'shot', 'model', 'uvs', 'texture', 'blendShape', 'rig', 'layout', 'animation',
                  'shotFinalizing', 'lightining', 'render']
         for assetType in types:

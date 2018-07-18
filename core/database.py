@@ -31,11 +31,16 @@ def getDefaultDict():
                 'publishLocation': u'D:/JOBS/PIPELINE/pipeExemple/publishes',
                 'imagesWorkLocation': u'D:/JOBS/PIPELINE/pipeExemple/sourceimages',
                 'imagesPublishLocation': u'D:/JOBS/PIPELINE/pipeExemple/publishes/sourceimages',
-                'cacheLocation': u'D:/JOBS/PIPELINE/pipeExemple/cache/alembic', 'assetCollection': '_asset',
+                'cacheLocation': u'D:/JOBS/PIPELINE/pipeExemple/cache/alembic',
+                'assetCollection': '_asset',
                 'shotCollection': '_shot', 'status': 'active',
-                'assetFolders': {'character': '', 'props': '', 'sets': '', 'primary': 'character'}, 'shotFolders': {},
+                'assetFolders': {'character': '', 'props': '', 'sets': '', 'primary': 'character'},
+                'shotFolders': {},
                 'assetNameTemplate': ['$prefix', '$code', '_', '$name', '_', '$task'],
-                'cacheNameTemplate': ['$prefix', '$code', '$task'], 'nextAsset': 1, 'nextShot': 1, 'renderer': 'vray',
+                'cacheNameTemplate': ['$prefix', '$code', '$task'],
+                'nextAsset': 1,
+                'nextShot': 1,
+                'renderer': 'vray',
                 'fps': 24,
                 'resolution': [1920, 1080],
                 'workflow': {
@@ -196,8 +201,8 @@ def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=F
     return item
 
 
-def putItemMData(item, projName=None, task=None, code=None, itemType=None, fromScene=True):
-    if not item:
+def putItemMData(itemMData, projName=None, task=None, code=None, itemType=None, fromScene=True):
+    if not itemMData:
         print 'ERROR putItemData: no item metadata in function call:'
 
     if fromScene:
@@ -217,10 +222,12 @@ def putItemMData(item, projName=None, task=None, code=None, itemType=None, fromS
             itemType = getTaskType(task)
             print 'WARNING putItemData: getting type from task', task, itemType
 
-    collection = getCollection(projName, itemType)
-    item = collection.find_one_and_update({'task': task, 'code': code}, {'$set': item})
-
-    return item
+    collection = getCollection(itemType, projectName=projName)
+    print itemMData
+    itemOut = collection.find_one_and_update({'task': task, 'code': code}, {'$set': itemMData})
+    print itemOut
+    print 'saindo'
+    return itemOut
 
 
 # NAMEPROCESS
@@ -438,11 +445,13 @@ def addComponent(item, ns, componentTask, componentCode, assembleMode, update=Tr
         ns = nsBase + str(index)
         index += 1
 
+    item['components'][ns] = componentDict
+
     if update:
         itemCollection = getCollection(item['type'])
-        item['components'][ns] = componentDict
         result = itemCollection.find_one_and_update({'task': item['task'], 'code': item['code']}, {'$set': item})
 
+    print item
     return item
 
 
@@ -510,6 +519,64 @@ def getTaskShort(taskLong):
         print 'ERROR getTaskShort: no short name for this task!'
 
 
+def getGeoGroupMembers(geoGroup):
+    geosShape = geoGroup.getChildren(allDescendents=True, type='geometryShape')
+    geos = [x.getParent() for x in geosShape]
+    return geos
+
+
+def getAllConnectedAlembic (ref):
+    alembicList = pm.ls(type='AlembicNode')
+    if not alembicList:
+        print 'there is no cache assigned'
+        return
+    connectedAlembic = []
+    for alembic in alembicList:
+            alembicConnections = alembic.connections(s=False, type='transform')
+            geos = getGeoGroupMembers(geoGrp)
+            print alembicConnections
+            print geos
+            connectedGeos = []
+            for x in alembicConnections:
+                if x in geos:
+                    #return alembic
+                    # verificar se so uma conexao e suficiente para definir q o alembic esta nessa ref.
+                    connectedGeos.append(x)
+            if connectedGeos:
+                connectedAlembic.append(alembic)
+    return connectedAlembic
+
+
+def getCamera():
+    cameras = pm.ls(type='camera', l=True)
+    startup_cameras = [camera for camera in cameras if pm.camera(camera.parent(0), startupCamera=True, q=True)]
+    cameraShape = list(set(cameras) - set(startup_cameras))
+    camera = map(lambda x: x.parent(0), cameraShape)[0]
+    return camera
+
+
+def getConnectedAlembic(ref):
+    if pm.objExists(ref.namespace + ':geo_group'):
+        geoGrp = pm.PyNode(ref.namespace + ':geo_group')
+        geos = getGeoGroupMembers(geoGrp)
+    else:
+        geos = [getCamera()]
+        print geos
+        print 'ok'
+
+    alembicList = pm.ls(type='AlembicNode')
+    if not alembicList:
+        print 'there is no cache assigned'
+        return
+
+    for alembic in alembicList:
+            alembicConnections = alembic.connections(s=False, type='transform')
+            for x in alembicConnections:
+                if x in geos:
+                    return alembic
+    return
+
+
 def referenceInfo(refFile):
     fileName = os.path.basename(refFile.path).split('_', 1)
     ver = int(fileName[0][1:])
@@ -517,7 +584,19 @@ def referenceInfo(refFile):
     info = untemplateName(fileName[1])
     task = getTaskLong(info[1])
     code = info[2]
-    return {'ver': ver, 'task': task, 'code': code}
+
+    alembic = getConnectedAlembic(refFile)
+    print alembic
+    if alembic:
+        alembicFileName = alembic.getAttr('abc_File')
+        print alembicFileName
+        alembicBaseName = os.path.basename(alembicFileName).split('_', 1)
+        print alembicBaseName
+        cacheVer = int(alembicBaseName[0][1:])
+    else:
+        cacheVer = 0
+
+    return {'ver': ver, 'task': task, 'code': code, 'cacheVer': cacheVer}
 
 
 def getPath(item, dirLocation='workLocation', ext='ma'):

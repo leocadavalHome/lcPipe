@@ -29,7 +29,7 @@ class ProjectSelectWidget:
     def createProjectSelect(self, parent):
         self.parentWidget = parent
         self.widgetName = pm.textFieldButtonGrp('projectSel', p=self.parentWidget, label='ProjectName', text='projeto',
-                                                cat=(1, 'left', 20), adj=2, bl='...', bc=self.projectSettingsCallback)
+                                                cat=[[1, 'left',5],[2,'left',-50]] , adj=2, bl='...', bc=self.projectSettingsCallback)
         pm.separator(height=40, style='in')
         self.makePopup()
 

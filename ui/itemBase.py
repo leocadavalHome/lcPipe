@@ -68,29 +68,29 @@ class ItemBase(object):
 
     def addToLayout(self, option):
         if option == 1:
-            self.widgetName = pm.rowLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color, nc=2, w=200, h=100, dragCallback=self.dragCallback)
+            self.widgetName = pm.rowLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color, nc=2, w=140, h=70, dragCallback=self.dragCallback)
 
-            pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack, doubleClickCommand=self.dClickCallBack)
+            pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack, doubleClickCommand=self.dClickCallBack, h=70, w=70)
             pm.columnLayout()
-            pm.text(label=self.label)
-            pm.separator(h=10)
-            pm.text(label=self.itemName,  font="boldLabelFont")
-            pm.separator(h=12, st='in')
-            pm.text(label='code:%s' % self.code)
-            pm.text(label='user: non')
+            pm.text(label=self.label,  font="smallPlainLabelFont")
+            pm.separator(h=2)
+            pm.text(label=self.itemName,  font="smallBoldLabelFont")
+            pm.separator(h=2, st='in')
+            pm.text(label='code:%s' % self.code,   font="smallPlainLabelFont")
+            pm.text(label='user: non',  font="smallPlainLabelFont")
             pm.text(label=self.status, font = "smallObliqueLabelFont")
             self.addMenus()
 
         elif option == 2:
             self.widgetName = pm.rowLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color, nc=2,
-                                           w=140, h=50, dragCallback=self.dragCallback)
+                                           w=100, h=40, dragCallback=self.dragCallback)
 
             pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack,
-                              doubleClickCommand=self.dClickCallBack,h=50,w=50)
+                              doubleClickCommand=self.dClickCallBack,h=40,w=40)
             pm.columnLayout()
-            pm.text(label=self.label)
-            pm.separator(h=5)
-            pm.text(label=self.itemName, font="boldLabelFont")
+            pm.text(label=self.label,  font="smallPlainLabelFont")
+            pm.separator(h=3)
+            pm.text(label=self.itemName, font="smallBoldLabelFont")
             self.addMenus()
 
     def addMenus(self):

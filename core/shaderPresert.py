@@ -4,13 +4,7 @@ import pymel.core as pm
 def getGeoGroupMembers(geoGroup):
     geosShape = geoGroup.getChildren(allDescendents=True, type='geometryShape')
     geos = [x.getParent() for x in geosShape]
-    geoList = []
-    for geo in geos:
-        if '|' in geo:
-            print 'PROBLEM on geo names %s' % geo
-        else:
-            geoList.append(geo)
-    return geoList
+    return geos
 
 
 def selToDict(selList, useNS):

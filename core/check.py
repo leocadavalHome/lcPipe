@@ -4,8 +4,6 @@ import pymel.core as pm
 import os.path
 from lcPipe.core import database
 
-reload(database)
-
 
 def confirmPopUp(msg):
     return pm.confirmDialog(title='PopUp', ma='center', message=msg, button=['OK', 'Cancel'], defaultButton='OK',
@@ -83,7 +81,7 @@ def replaceRef(wrongRef):
             cache_ns = component_ns
             cache = componentMData['caches'][cache_ns]
 
-            if cache['ver'] == 0:
+            if cache['cacheVer'] == 0:
                 print 'Component not yet published!!'
                 continue
 
@@ -133,7 +131,7 @@ def addRef(refToAdd):
             cache_ns = component_ns
             cache = componentMData['caches'][cache_ns]
 
-            if cache['ver'] == 0:
+            if cache['cacheVer'] == 0:
                 print 'Component not yet published!!'
                 continue
 
@@ -183,67 +181,66 @@ def addRef(refToAdd):
 # version updated
 def checkVersions():
     currentProject = database.getCurrentProject()
-
     projName = pm.fileInfo.get('projectName')
 
     if currentProject != projName:
         print 'ERROR checkVersions: This file is from a project different from the current project'
         return
 
-    item = database.getItemMData(fromScene=True)
-    components = item['components']
+    itemMData = database.getItemMData(fromScene=True)
+    components = itemMData['components']
 
     for component_ns, component in components.iteritems():
-
-        if component['type'] == 'cache':
-            source = [x for x in item['source'].itervalues()][0]
-            componentMData = database.getItemMData(code=source['code'], task=source['task'], itemType=source['type'])
-
+        if component['assembleMode'] == 'reference' or component['assembleMode'] == 'xlo':
+            componentMData = database.getItemMData(code=component['code'], task=component['task'],
+                                                   itemType=component['type'])
             if not componentMData:
+                print 'missing data for %s : %s %s' % (component_ns, component['task'], component['code'])
+                print 'ignoring...'
+                continue
+
+            if componentMData['publishVer'] == 0:
+                print 'Component %s not yet published!!' % (component_ns + ':' + component['task'] + component['code'])
+                continue
+
+            if component['updateMode'] == 'last':
+                component['ver'] = componentMData['publishVer']
+                print 'Component %s version updated to %d' % (
+                    (component_ns + ':' + component['task'] + component['code']), component['ver'])
+            else:
+                component['ver'] = int(component['updateMode'])
+                print 'Component %s version fixed to %d' % (
+                    (component_ns + ':' + component['task'] + component['code']), component['ver'])
+
+        elif component['assembleMode'] == 'cache' or component['assembleMode'] == 'xlo':
+            source = [x for x in itemMData['source'].itervalues()][0]
+            sourceMData = database.getItemMData(code=source['code'], task=source['task'],
+                                                itemType=source['type'])
+            if not sourceMData:
                 print 'missing data for %s : %s %s' % (component_ns, component['task'], component['code'])
                 print 'ignoring...'
                 continue
 
             cache_ns = component_ns
-            cache = componentMData['caches'][cache_ns]
+            cache = sourceMData['caches'][cache_ns]
 
-            if cache['ver'] == 0:
+            if cache['cacheVer'] == 0:
                 print 'Component not yet published!!'
                 continue
-
             else:
-                if component['ver'] != cache['ver']:
-                    component['ver'] = cache['ver']
+                if component['cacheVer'] != cache['cacheVer']:
+                    component['cacheVer'] = cache['cacheVer']
                     print 'Component %s version updated to %d' % (
-                        (component_ns + ':' + component['task'] + component['code']), cache['ver'])
+                        (component_ns + ':' + component['task'] + component['code']), cache['cacheVer'])
 
                 else:
                     print 'Component %s version ok' % (component_ns + ':' + component['task'] + component['code'])
 
-        else:
-            componentMData = database.getItemMData(code=component['code'], task=component['task'],
-                                                   itemType=component['type'])
+    x = database.putItemMData(itemMData)
 
-            if not componentMData:
-                print 'missing data for %s : %s %s' % (component_ns, component['task'], component['code'])
-                print 'ignoring...'
-                continue
-
-            if componentMData['publishVer'] != 0:
-                if component['updateMode'] == 'last':
-                    component['ver'] = componentMData['publishVer']
-                    print 'Component %s version updated to %d' % (
-                        (component_ns + ':' + component['task'] + component['code']), componentMData['publishVer'])
-
-                else:
-                    component['ver'] = int(component['updateMode'])
-
-            else:
-                print 'Component %s not yet published!!' % (component_ns + ':' + component['task'] + component['code'])
-                continue
-
-    database.putItemMData(item)
-
+# todo implementar updateCacheVersion e possivelmente tirar da outra def.
+def updateCacheVersion(cacheToVerUpdata):
+    pass
 
 def updateRefVersion(refToVerUpdate):
     currentProject = database.getCurrentProject()
@@ -300,15 +297,16 @@ def sceneRefCheck():
     components = item['components']
 
     hasRefsOrCaches = [x for x in components if
-                       (components[x]['assembleMode'] == 'reference' or components[x]['assembleMode'] == 'cache')]
+                       (components[x]['assembleMode'] == 'reference' or components[x]['assembleMode'] == 'cache' or
+                        components[x]['assembleMode'] == 'xlo')]
+
     if not hasRefsOrCaches:
         return
 
     updated = True
 
-    # get reference list and components on item
+    # get reference list and components on i
     refOnSceneList = pm.getReferences()
-
     # Check consistency:
     refToAdd = [x for x in components if x not in refOnSceneList]
 
@@ -362,6 +360,22 @@ def sceneRefCheck():
         if x != 'Abort':
             refToVerUpdate = x.split(',')
             updateRefVersion(refToVerUpdate)
+
+
+# todo implementar updateCacheVersion
+
+    cacheToVerUpdate = [x for x in components if x not in refToAdd
+                        and x not in refToDelete and x not in wrongRef
+                        and components[x]['cacheVer'] != database.referenceInfo(refOnSceneList[x])['cacheVer']]
+
+    if cacheToVerUpdate:
+        mode = 'update Version'
+        x = pm.layoutDialog(ui=lambda: refCheckPrompt(refToVerUpdate, mode))
+        updated = False
+
+        if x != 'Abort':
+            cacheToVerUpdate = x.split(',')
+            updateCacheVersion(cacheToVerUpdate)
 
     if updated:
         print 'Scene References OK!!'

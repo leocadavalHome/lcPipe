@@ -57,8 +57,7 @@ def cacheScene(task, code):
             item['ver'] = 0
             item['type'] = 'cache'
             item['assembleMode'] = 'cache'
-            item['sourceSceneVer'] = 0
-            item['sourceVer'] = 0
+            item['cacheVer'] = 0
             item['name'] = ''
 
     itemComponents = shotMData['components']
@@ -97,11 +96,9 @@ def cacheScene(task, code):
         cacheMData = itemCaches[ns]  # get the data for this component
 
         # get version and increment
-        cacheMData['ver'] += 1
-        cacheMData['sourceSceneVer'] = shotMData['publishVer']
-        cacheMData['sourceVer'] = itemComponents[ns]['ver']
+        cacheMData['cacheVer'] += 1
 
-        ver = cacheMData['ver']
+        ver = cacheMData['cacheVer']
 
         # get cache publish path
 
@@ -145,8 +142,7 @@ def cacheCamera(task, code):
             item['ver'] = 0
             item['type'] = 'cache'
             item['assembleMode'] = 'cache'
-            item['sourceSceneVer'] = 0
-            item['sourceVer'] = 0
+            item['cacheVer'] = 0
             item['name'] = ''
 
     itemComponents = shotMData['components']
@@ -170,11 +166,9 @@ def cacheCamera(task, code):
     cacheMData = itemCaches['cam']  # get the data for this component
 
     # get version and increment
-    cacheMData['ver'] += 1
-    cacheMData['sourceSceneVer'] = shotMData['publishVer']
-    cacheMData['sourceVer'] = itemComponents['cam']['ver']
+    cacheMData['cacheVer'] += 1
 
-    ver = cacheMData['ver']
+    ver = cacheMData['cacheVer']
 
     # get cache publish path
 

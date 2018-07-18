@@ -11,7 +11,7 @@ class ShotManager:
         self.projectName = None
 
     def createShotManager(self):
-        win = pm.window(title='SHOT MANAGER', w=800, h=600)
+        win = pm.window(title='SHOT MANAGER', w=300, h=200)
         pane = pm.paneLayout(configuration='horizontal2')
         self.infoWidget = InfoWidget()
         self.infoWidget.createInfo(pane)
