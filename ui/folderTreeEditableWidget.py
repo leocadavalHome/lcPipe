@@ -71,6 +71,9 @@ class FolderTreeEditableWidget(FolderTreeBase):
     def addMultipleFoldersCallback(self, *args):
         pm.layoutDialog(ui=self.addMultiPromp)
 
+    def abortMultipleFolders (self, *args):
+        pm.layoutDialog(dismiss='cancel')
+
     def addMultiPromp(self):
         form = pm.setParent(q=True)
         f = pm.formLayout(form, e=True, width=150)
@@ -84,7 +87,7 @@ class FolderTreeEditableWidget(FolderTreeBase):
                                     cat=[(1, 'left', 10), (2, 'left', 5)],
                                     numberOfFields=1, value1=3)
 
-        b1 = pm.button(p=f, l='Cancel')
+        b1 = pm.button(p=f, l='Cancel', c= self.abortMultipleFolders)
         b2 = pm.button(p=f, l='OK', c= self.addMultipleFolders)
 
         spacer = 5

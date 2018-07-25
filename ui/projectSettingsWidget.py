@@ -1,4 +1,5 @@
 import pymel.core as pm
+import os.path
 from lcPipe.core import database
 from lcPipe.ui.folderTreeEditableWidget import FolderTreeEditableWidget
 
@@ -10,6 +11,12 @@ class ProjectSettingsWidget():
         self.projectName = projectName
         self.projDict = None
         self.new = False
+
+        self.workLocTxt = None
+        self.publishLocTxt = None
+        self.imgWorkLocTxt = None
+        self.imgPublishLocTxt = None
+        self.cacheLocTxt = None
 
     def okCallback(self, *args):
         self.putProjectSettings()
@@ -42,6 +49,25 @@ class ProjectSettingsWidget():
     def cancelCallback(self, *args):
         pm.deleteUI(self.win)
 
+    def browseCallback(self, opt, *args):
+        print 'browse'
+        resultDir = pm.fileDialog2(cap='choose directory', okCaption='Select', fm=3, dialogStyle=2)
+        if resultDir:
+            selectDir = os.path.normpath(resultDir[0])
+        else:
+            return
+
+        if opt == 1:
+            pm.textFieldGrp(self.workLocTxt, e=True, text=selectDir)
+        elif opt == 2:
+            pm.textFieldGrp(self.publishLocTxt, e=True, text=selectDir)
+        elif opt == 3:
+            pm.textFieldGrp(self.imgWorkLocTxt, e=True, text=selectDir)
+        elif opt == 4:
+            pm.textFieldGrp(self.imgPublishLocTxt, e=True, text=selectDir)
+        elif opt == 5:
+            pm.textFieldGrp( self.cacheLocTxt, e=True, text=selectDir)
+
     def createProjectSettingsWidget(self):
         if not self.projectName:
             self.projDict = database.getDefaultDict()
@@ -60,17 +86,17 @@ class ProjectSettingsWidget():
         pm.menuItem(label='current')
         pm.optionMenuGrp(self.statusOpt, e=True, v=self.projDict['status'])
         self.workLocTxt = pm.textFieldButtonGrp(label='Work Location', text=self.projDict['workLocation'],
-                                                buttonLabel='...', adj=2, cat=(1, 'left', 20))
+                                                buttonLabel='...', adj=2, cat=(1, 'left', 20), bc=lambda:self.browseCallback(1))
         self.publishLocTxt = pm.textFieldButtonGrp(label='Publish Location', text=self.projDict['publishLocation'],
-                                                   buttonLabel='...', adj=2, cat=(1, 'left', 20))
+                                                   buttonLabel='...', adj=2, cat=(1, 'left', 20), bc=lambda:self.browseCallback(2))
         self.imgWorkLocTxt = pm.textFieldButtonGrp(label='Images Work Location',
                                                    text=self.projDict['imagesWorkLocation'], buttonLabel='...', adj=2,
-                                                   cat=(1, 'left', 20))
+                                                   cat=(1, 'left', 20), bc=lambda:self.browseCallback(3))
         self.imgPublishLocTxt = pm.textFieldButtonGrp(label='Images Publish Location',
                                                       text=self.projDict['imagesPublishLocation'], buttonLabel='...',
-                                                      adj=2, cat=(1, 'left', 20))
+                                                      adj=2, cat=(1, 'left', 20),  bc=lambda:self.browseCallback(4))
         self.cacheLocTxt = pm.textFieldButtonGrp(label='Cache Location', text=self.projDict['cacheLocation'],
-                                                 buttonLabel='...', adj=2, cat=(1, 'left', 20))
+                                                 buttonLabel='...', adj=2, cat=(1, 'left', 20), bc=lambda:self.browseCallback(5))
         self.assetCollTxt = pm.textFieldGrp(label='Asset Collection', text=self.projDict['assetCollection'], adj=2,
                                             cat=(1, 'left', 20), editable=False)
         self.shotCollTxt = pm.textFieldGrp(label='Shot Collection', text=self.projDict['shotCollection'], adj=2,
