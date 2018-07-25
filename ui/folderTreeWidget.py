@@ -1,43 +1,17 @@
 import pymel.core as pm
 from lcPipe.core import database
+from lcPipe.ui.folderTreeBase import FolderTreeBase
 
 
-class FolderTreeWidget():
-    def __init__(self):
-        self.widgetName = None
-        self.parentWidget = None
-        self.type = 'asset'
-
-        self.itemListWidget = None
-
-        proj = database.getProjectDict()
-        self.projectName = proj['projectName']
+class FolderTreeWidget(FolderTreeBase):
+    def __init__(self, itemType='asset'):
+        super(FolderTreeWidget, self).__init__(itemType)
 
     def createFolderTree(self, parent):
         self.parentWidget = parent
         self.widgetName = pm.treeView(p=self.parentWidget, numberOfButtons=0, abr=False)
-        pm.treeView(self.widgetName, e=True, selectionChangedCommand=self.selChangedCallBack)
-        pm.popupMenu(parent=self.widgetName)
-        pm.menuItem(l='add folder', c=self.addFolderCallBack)
-        pm.menuItem(l='remove folder', c=self.removeFolderCallBack)
-        if self.projectName:
-            self.getFolderTree()
-
-    def addFolderCallBack(self, *args):
-        print 'add folder'
-        sel = pm.treeView(self.widgetName, q=True, si=True)
-        if sel:
-            pm.treeView(self.widgetName, e=True, addItem=('new Folder', sel[0]))
-        else:
-            pm.treeView(self.widgetName, e=True, addItem=('new Folder', ''))
-
-    def removeFolderCallBack(self, *args):
-        print 'remove folder'
-        sel = pm.treeView(self.widgetName, q=True, si=True)
-        if sel:
-            pm.treeView(self.widgetName, e=True, removeItem=sel[0])
-        else:
-            print 'select a folder to remove!!'
+        pm.treeView(self.widgetName, e=True, selectionChangedCommand=self.selChangedCallBack, allowDragAndDrop=False, editLabelCommand=self.editNameCallback)
+        self.getFolderTree()
 
     def selChangedCallBack(self, *args):
         sel = pm.treeView(self.widgetName, q=True, si=True)
@@ -53,36 +27,10 @@ class FolderTreeWidget():
         if sel:
             child = sel[0]
             parent = 'start'
-            path = [child]
+            path = [child.split('_')[-1]]
             while parent:
                 parent = pm.treeView(self.widgetName, q=True, ip=child)
                 child = parent
                 if child:
-                    path.append(child)
+                    path.append(child.split('_')[-1])
         return list(reversed(path))
-
-    def putFolderTree(self):
-        allItems = pm.treeView(self.widgetName, q=True, children=True)
-        folderTreeDict = {}
-        for item in allItems:
-            par = pm.treeView(self.widgetName, q=True, itemParent=item)
-            folderTreeDict[item] = par
-        return folderTreeDict
-
-    def getFolderTree(self):
-        proj = database.getProjectDict()
-        folderTreeDict = proj[self.type + 'Folders']
-
-        allKeys = folderTreeDict.keys()
-        parentList = [x for x in folderTreeDict if folderTreeDict[x] == '']
-        parentList.sort()
-        pm.treeView(self.widgetName, e=True, ra=True)
-        for item in parentList:
-            pm.treeView(self.widgetName, e=True, addItem=(item, ''))
-
-        while allKeys:
-            allKeys = [x for x in allKeys if not x in parentList]
-            parentList = [x for x in folderTreeDict if folderTreeDict[x] in parentList]
-            parentList.sort()
-            for item in parentList:
-                pm.treeView(self.widgetName, e=True, addItem=(item, folderTreeDict[item]))

@@ -34,8 +34,14 @@ def getDefaultDict():
                 'cacheLocation': u'D:/JOBS/PIPELINE/pipeExemple/cache/alembic',
                 'assetCollection': '_asset',
                 'shotCollection': '_shot', 'status': 'active',
-                'assetFolders': {'character': '', 'props': '', 'sets': '', 'primary': 'character'},
-                'shotFolders': {},
+                'assetFolders': {'character': {'parent': ''},
+                                 'props': {'parent': ''},
+                                 'sets': {'parent': ''},
+                                 'primary': {'parent': 'character'}},
+                'shotFolders': {'ep001': {'parent': ''},
+                                'ep002': {'parent': ''},
+                                'ep003': {'parent': ''},
+                                'seq0001': {'parent': 'ep001'}},
                 'assetNameTemplate': ['$prefix', '$code', '_', '$name', '_', '$task'],
                 'cacheNameTemplate': ['$prefix', '$code', '$task'],
                 'nextAsset': 1,
@@ -192,7 +198,11 @@ def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=F
             itemType = getTaskType(task)
             print 'WARNING getItemData: getting type from task', task, itemType
 
-    collection = getCollection(itemType, projName)
+    if projName:
+        collection = getCollection(itemType, projName)
+    else:
+        collection = getCollection(itemType)
+
     item = collection.find_one({'task': task, 'code': code})
 
     if not item:
@@ -223,11 +233,7 @@ def putItemMData(itemMData, projName=None, task=None, code=None, itemType=None, 
             print 'WARNING putItemData: getting type from task', task, itemType
 
     collection = getCollection(itemType, projectName=projName)
-    print itemMData
     itemOut = collection.find_one_and_update({'task': task, 'code': code}, {'$set': itemMData})
-    print itemOut
-    print 'saindo'
-    return itemOut
 
 
 # NAMEPROCESS
@@ -451,7 +457,6 @@ def addComponent(item, ns, componentTask, componentCode, assembleMode, update=Tr
         itemCollection = getCollection(item['type'])
         result = itemCollection.find_one_and_update({'task': item['task'], 'code': item['code']}, {'$set': item})
 
-    print item
     return item
 
 
@@ -525,28 +530,6 @@ def getGeoGroupMembers(geoGroup):
     return geos
 
 
-def getAllConnectedAlembic (ref):
-    alembicList = pm.ls(type='AlembicNode')
-    if not alembicList:
-        print 'there is no cache assigned'
-        return
-    connectedAlembic = []
-    for alembic in alembicList:
-            alembicConnections = alembic.connections(s=False, type='transform')
-            geos = getGeoGroupMembers(geoGrp)
-            print alembicConnections
-            print geos
-            connectedGeos = []
-            for x in alembicConnections:
-                if x in geos:
-                    #return alembic
-                    # verificar se so uma conexao e suficiente para definir q o alembic esta nessa ref.
-                    connectedGeos.append(x)
-            if connectedGeos:
-                connectedAlembic.append(alembic)
-    return connectedAlembic
-
-
 def getCamera():
     cameras = pm.ls(type='camera', l=True)
     startup_cameras = [camera for camera in cameras if pm.camera(camera.parent(0), startupCamera=True, q=True)]
@@ -561,8 +544,6 @@ def getConnectedAlembic(ref):
         geos = getGeoGroupMembers(geoGrp)
     else:
         geos = [getCamera()]
-        print geos
-        print 'ok'
 
     alembicList = pm.ls(type='AlembicNode')
     if not alembicList:
@@ -586,12 +567,9 @@ def referenceInfo(refFile):
     code = info[2]
 
     alembic = getConnectedAlembic(refFile)
-    print alembic
     if alembic:
         alembicFileName = alembic.getAttr('abc_File')
-        print alembicFileName
         alembicBaseName = os.path.basename(alembicFileName).split('_', 1)
-        print alembicBaseName
         cacheVer = int(alembicBaseName[0][1:])
     else:
         cacheVer = 0

@@ -1,74 +1,28 @@
 import pymel.core as pm
-import lcPipe.core.database as database
+def addMultiPromp():
+    form = pm.setParent(q=True)
+    f = pm.formLayout(form, e=True, width=150)
+    row = pm.columnLayout()
+    nameField = pm.textFieldGrp('addMulti_nameField', label='Name', cw=[(1, 80), (2, 20)], text='',
+                                cat=[(1, 'left', 10), (2, 'left', 5)], editable=True)
+    rangeField = pm.intFieldGrp('addMulti_rangeField', label= 'start-end-step', cw=(1, 80),
+                                cat=[(1, 'left', 10), (2, 'left', 5)], numberOfFields=3, value1=1, value2=10, value3=1)
+    rangeField = pm.intFieldGrp('addMulti_zeroField',label= 'zeroPad', cw=(1, 80), cat=[(1, 'left', 10), (2, 'left', 5)],
+                                numberOfFields=1, value1=3)
 
 
+    b1 = pm.button(p=f, l='Cancel')
+    b2 = pm.button(p=f, l='OK')
 
-for ref in refs.itervalues():
-    print ref
-    print database.referenceInfo(ref)
+    spacer = 5
+    top = 5
+    edge = 5
+    pm.formLayout(form, edit=True,
+                  attachForm=[(row, 'right', edge), (row, 'top', top), (row, 'left', edge),
+                              (row, 'right', edge),
+                              (b1, 'right', edge), (b1, 'bottom', edge), (b2, 'left', edge),
+                              (b2, 'bottom', edge)],
+                  attachNone=[], attachControl=[],
+                  attachPosition=[(b1, 'right', spacer, 90), (b2, 'left', spacer, 10)])
 
-# todo database.referenceInfo precisa retornar info do cache (alembic Node)
-# todo sceneCheck tem q ver se precisa update de cache tmb
-
-def getGeoGroupMembers(geoGroup):
-    geosShape = geoGroup.getChildren(allDescendents=True, type='geometryShape')
-    geos = [x.getParent() for x in geosShape]
-    return geos
-
-def getAllConnectedAlembic (ref):
-    alembicList = pm.ls(type='AlembicNode')
-    if not alembicList:
-        print 'there is no cache assigned'
-        return
-    connectedAlembic = []
-    for alembic in alembicList:
-            alembicConnections = alembic.connections(s=False, type='transform')
-            geos = getGeoGroupMembers(geoGrp)
-            print alembicConnections
-            print geos
-            connectedGeos = []
-            for x in alembicConnections:
-                if x in geos:
-                    #return alembic
-                    # verificar se so uma conexao e suficiente para definir q o alembic esta nessa ref.
-                    connectedGeos.append(x)
-            if connectedGeos:
-                connectedAlembic.append(alembic)
-    return connectedAlembic
-
-
-def getConnectedAlembic (ref):
-    alembicList = pm.ls(type='AlembicNode')
-    if not alembicList:
-        print 'there is no cache assigned'
-        return
-    connectedAlembic = []
-    for alembic in alembicList:
-            alembicConnections = alembic.connections(s=False, type='transform')
-            geos = getGeoGroupMembers(geoGrp)
-            print alembicConnections
-            print geos
-            connectedGeos = []
-            for x in alembicConnections:
-                if x in geos:
-                    return alembic
-    return
-
-refs = pm.getReferences()
-print refs
-for ref in refs.itervalues():
-    print ref
-    refN = ref.refNode
-    geoGrp = pm.PyNode(ref.namespace + ':geo_group')
-    print getGeoGroupMembers(geoGrp)
-
-
-x = getConnectedAlembic(ref)
-y = x.getAttr('abc_File')
-print y
-
-reload (database)
-refs = pm.getReferences()
-print refs
-for ref in refs.itervalues():
-    print database.referenceInfo(ref)
+print pm.layoutDialog(ui=addMultiPromp)

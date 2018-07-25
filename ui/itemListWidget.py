@@ -134,6 +134,7 @@ class ItemListWidget(ItemListBase):
                       attachNone=[], attachControl=[],
                       attachPosition=[(b1, 'right', spacer, 90), (b2, 'left', spacer, 10)])
 
+
     def abortCreateCallback(self, *args):
         pm.layoutDialog(dismiss="Abort")
 

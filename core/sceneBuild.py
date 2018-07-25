@@ -9,11 +9,11 @@ def referenceCache(sourceMData):
     cachePath = os.path.join(*path)
 
     for cache_ns, cacheMData in sourceMData['caches'].iteritems():
-        if cacheMData['ver'] == 0:
+        if cacheMData['cacheVer'] == 0:
             print 'Component %s not yet published!!' % (cache_ns + ':' + cacheMData['task'] + cacheMData['code'])
             continue
 
-        ver = 'v%03d_' % cacheMData['ver']
+        ver = 'v%03d_' % cacheMData['cacheVer']
         cacheName = database.templateName(cacheMData) + '_' + cache_ns
         cacheFileName = ver + cacheName + '.abc'
         cacheFullPath = os.path.join(cachePath, cacheFileName)
@@ -46,7 +46,7 @@ def referenceXlos(sourceMData):
     empty = True
 
     for xlo_ns, xlo in sourceMData['components'].iteritems():
-        if xlo['code']=='9999':
+        if xlo['code'] == '9999':
             xloMData = database.getItemMData(task=xlo['task'], code=xlo['code'], itemType=xlo['type'])
         else:
             xloMData = database.getItemMData(task='xlo', code=xlo['code'], itemType=xlo['type'])
@@ -83,6 +83,7 @@ def build(itemType, task, code):
         itemSources = itemMData['components']
 
     pm.newFile(f=True, new=True)
+    newComponentsDict = {}
 
     for source_ns, source in itemSources.iteritems():
         # read components item
@@ -107,39 +108,36 @@ def build(itemType, task, code):
         if source['assembleMode'] == 'import':
             pm.importFile(componentPath, defaultNamespace=True)
 
-            # reference, , ,
+        # reference,
         elif source['assembleMode'] == 'reference':
             ns = source_ns
             pm.createReference(componentPath, namespace=ns)
+            newComponentsDict[ns] = {'code': source['code'], 'ver': sourceMData['publishVer'], 'updateMode': 'last',
+                                     'task': source['task'], 'assembleMode': 'reference',
+                                     'type': database.getTaskType(source['task'])}
 
-            print itemMData
         # copy from another scene
         elif source['assembleMode'] == 'copy':
             pm.openFile(componentPath, force=True)
-            itemMData['components'] = copy.deepcopy(sourceMData['components'])
+            newComponentsDict = copy.deepcopy(sourceMData['components'])
             # pm.renameFile ( sceneFullPath )
 
         elif source['assembleMode'] == 'cache':
-            pm.namespace(add=source_ns)
-            pm.namespace(set=source_ns)
-
             referenceCache(sourceMData)
-
-            itemMData['components'] = copy.deepcopy(sourceMData['caches'])
-
-            pm.namespace(set=':')
+            newComponentsDict = copy.deepcopy(sourceMData['caches'])
 
         # xlo
         elif source['assembleMode'] == 'xlo':
             referenceXlos(sourceMData)
             importCaches(sourceMData)
 
-            itemMData['components'] = copy.deepcopy(sourceMData['components'])
+            newComponentsDict = copy.deepcopy(sourceMData['components'])
 
-            for ns, component in itemMData['components'].iteritems():
+            for ns, component in newComponentsDict.iteritems():
                 component['cacheVer'] = sourceMData['caches'][ns]['cacheVer']
-                component['task']= 'xlo'
-            # pm.namespace( set=':')
+                component['assembleMode'] = 'xlo'
+
+    itemMData['components'] = copy.deepcopy(newComponentsDict)
 
     # update infos on scene and database
     if not empty or not itemSources:

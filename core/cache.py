@@ -40,7 +40,6 @@ def cachePromptChangeList(*args):
     """
     sel = pm.textScrollList('cacheScrollList', q=True, si=True)
     selString = ','.join(sel)
-    print selString
     pm.layoutDialog(dismiss=selString)
 
 

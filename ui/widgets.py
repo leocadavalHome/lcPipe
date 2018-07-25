@@ -11,20 +11,22 @@ from lcPipe.ui.projectSelectWidget import ProjectSelectWidget
 
 class itemBrowser:
     def __init__(self):
-        self.projectSelectWidget = ProjectSelectWidget()
-        self.folderTreeWidget = FolderTreeWidget()
-        self.itemListWidget = ItemListWidget()
-        self.infoWidget = InfoWidget()
+        self.projectSelectWidget = None
+        self.folderTreeWidget = None
+        self.itemListWidget = None
+        self.infoWidget = None
         self.createBrowser()
         self.typeOpt = None
 
     def createBrowser(self):
-        win = pm.window(w=200, h=200)
+        win = pm.window(w=200)
         col2 = pm.columnLayout(adjustableColumn=True)
         allowedAreas = ['right', 'left']
         pm.dockControl(label='BROWSER', w=200, area='left', content=win, allowedArea=allowedAreas)
 
+        self.projectSelectWidget = ProjectSelectWidget()
         self.projectSelectWidget.createProjectSelect(col2)
+
         pm.rowLayout(nc=3, adj=1)
         self.typeOpt = pm.optionMenuGrp(label='Item Type', changeCommand=self.changeTypeCallback, cat=[[1,'left',5],[2,'left',-80]])
         types = ['asset', 'shot', 'model', 'uvs', 'texture', 'blendShape', 'rig', 'layout', 'animation',
@@ -34,15 +36,18 @@ class itemBrowser:
 
         pm.symbolButton(image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/small.png', c=lambda x, y=2: self.changeViewCallback(y))
         pm.symbolButton(image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/big.png', c=lambda x, y=1: self.changeViewCallback(y))
-        pane = pm.paneLayout(p=col2, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)])
 
+        pane = pm.paneLayout(p=col2, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)], shp = 0)
+
+        self.folderTreeWidget = FolderTreeWidget('asset')
         self.folderTreeWidget.createFolderTree(pane)
-        self.folderTreeWidget.type = 'asset'
         self.folderTreeWidget.getFolderTree()
 
+        self.itemListWidget = ItemListWidget()
         self.itemListWidget.createList(pane)
         self.itemListWidget.refreshList(path=[], task='asset')
 
+        self.infoWidget = InfoWidget()
         self.infoWidget.createInfo(pane)
 
         self.folderTreeWidget.itemListWidget = self.itemListWidget
@@ -68,6 +73,7 @@ class itemBrowser:
     def changeViewCallback(self, opt):
         self.itemListWidget.viewOption = opt
         self.itemListWidget.refreshList(path=self.itemListWidget.path, task=self.itemListWidget.task)
+
 
 class PublishWidget(publish.PublishWidget):
     def __init__(self, task=None, code=None, assetType=None):
