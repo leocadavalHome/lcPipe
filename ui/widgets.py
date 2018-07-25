@@ -20,7 +20,9 @@ class itemBrowser:
 
     def createBrowser(self):
         win = pm.window(w=200)
-        col2 = pm.columnLayout(adjustableColumn=True)
+
+        form = pm.formLayout(numberOfDivisions=100)
+        col2 = pm.columnLayout(p=form, adjustableColumn=True)
         allowedAreas = ['right', 'left']
         pm.dockControl(label='BROWSER', w=200, area='left', content=win, allowedArea=allowedAreas)
 
@@ -37,7 +39,7 @@ class itemBrowser:
         pm.symbolButton(image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/small.png', c=lambda x, y=2: self.changeViewCallback(y))
         pm.symbolButton(image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/big.png', c=lambda x, y=1: self.changeViewCallback(y))
 
-        pane = pm.paneLayout(p=col2, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)], shp = 0)
+        pane = pm.paneLayout(p=form, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)], shp = 0)
 
         self.folderTreeWidget = FolderTreeWidget('asset')
         self.folderTreeWidget.createFolderTree(pane)
@@ -56,6 +58,14 @@ class itemBrowser:
         self.projectSelectWidget.folderTreeWidget = self.folderTreeWidget
         self.projectSelectWidget.itemListWidget = self.itemListWidget
         self.itemListWidget.infoWidget = self.infoWidget
+
+        pm.formLayout(form, edit=True,
+                      attachForm=[(pane, 'left', 5), (pane, 'bottom', 5), (pane, 'right', 5),
+                                  (col2, 'top', 5), (col2, 'left', 5), (col2, 'right', 5)],
+                      attachControl=[(pane, 'top', 5, col2)],
+                      attachPosition=[],
+                      attachNone=()
+                      )
 
         pm.showWindow()
 

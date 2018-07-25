@@ -1,18 +1,26 @@
+
+
 import pymel.core as pm
 
+win = pm.window(w=200)
 
-def browseCallback(opt, *args):
-    print 'browse'
-    selectDir = pm.fileDialog2(cap='choose directory', okCaption='Select', fm=3, dialogStyle=2)
-    if opt == 1:
-        print opt
+form = pm.formLayout(numberOfDivisions=100)
+allowedAreas = ['right', 'left']
+pm.dockControl(label='BROWSER', w=200, area='left', content=win, allowedArea=allowedAreas)
 
+pane = pm.paneLayout(configuration='top3',ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)], shp=0)
 
-win = pm.window(w=800, h=600)
-col = pm.columnLayout(adjustableColumn=True, columnAlign='left', )
-workLocTxt = pm.textFieldButtonGrp(label='Work Location', text='teste',
-                                                buttonLabel='...', bc =lambda: browseCallback(1))
+pm.treeView(p=pane)
+
+pm.flowLayout(p=pane)
+
+pm.columnLayout(p=pane)
+
+pm.formLayout( form, edit=True,
+                 attachForm=[(pane, 'top', 5), (pane, 'left', 5), (pane, 'bottom', 5), (pane, 'right', 5)],
+                 attachControl=[],
+                 attachPosition=[],
+                 attachNone=()
+               )
+
 pm.showWindow()
-
-
-
