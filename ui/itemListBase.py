@@ -1,6 +1,6 @@
 import pymel.core as pm
-from core import database
-from core import version
+from lcPipe.core import database
+from lcPipe.core import version
 from lcPipe.ui.itemBase import ItemBase
 
 

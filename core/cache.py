@@ -2,7 +2,7 @@ import copy
 
 import pymel.core as pm
 import os.path
-from core import database
+from lcPipe.core import database
 
 reload(database)
 

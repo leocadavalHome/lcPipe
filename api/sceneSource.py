@@ -1,7 +1,9 @@
 import pymel.core as pm
 import os.path
-from api.source import Source
-from core import database
+from lcPipe.core import database
+from lcPipe.api.source import Source
+from lcPipe.api.cacheComponent import CacheComponent
+from lcPipe.api.xloComponent import XloComponent
 
 class SceneSource(Source):
     def __init__(self, ns, componentMData, parent=None):
@@ -22,40 +24,63 @@ class SceneSource(Source):
         componentPath = item.getPublishPath()
         pm.importFile(componentPath, defaultNamespace=True)
 
-        newComponentDict = {}
-
-        return newComponentDict
+        return {}
 
     def copyToScene(self):
         item = self.getItem()
         componentPath = item.getPublishPath()
         pm.openFile(componentPath, force=True)
 
-        newComponentDict = item.components
-
-        return newComponentDict
+        return item.components
 
     def addCacheToScene(self):
         item = self.getItem()
-
-        path = item.getPath(dirLocation='cacheLocation', ext='')
-        cachePath = os.path.join(*path)
-
         for cache_ns, cacheMData in item.caches.iteritems():
-            cache = CacheComponet(cache_ns, cacheMData, item)
+            cache = CacheComponent(cache_ns, cacheMData, item)
 
             if cache.cacheVer == 0:
                 print 'Component %s not yet published!!' % (cache_ns + ':' + cacheMData['task'] + cacheMData['code'])
                 continue
 
-            ver = 'v%03d_' % cacheMData['cacheVer']
-            cacheName = database.templateName(cacheMData) + '_' + cache_ns
-            cacheFileName = ver + cacheName + '.abc'
-            cacheFullPath = os.path.join(cachePath, cacheFileName)
-
+            cacheFullPath = cache.getPublishPath()
             pm.createReference(cacheFullPath, namespace=cache_ns, groupReference=True,
                                groupName='geo_group', type='Alembic')
 
-        newComponentsDict = item.caches
+        return item.caches
 
-        return newComponentsDict
+    def addXloToScene(self):
+        item = self.getItem()
+
+        for xlo_ns, xloMData in item.components.iteritems():
+            xlo = XloComponent (xlo_ns, xloMData, item)
+
+            if xlo.code == '9999':
+                xloMData = database.getItemMData (task=xlo['task'], code=xlo['code'], itemType=xlo['type'])
+            else:
+                xloMData = database.getItemMData (task='xlo', code=xlo['code'], itemType=xlo['type'])
+
+            if xloMData['publishVer'] == 0:
+                print 'Component %s not yet published!!' % (xlo_ns + ':' + xloMData['task'] + xloMData['code'])
+                parcial = True
+                continue
+            else:
+                version = 'v%03d_' % xloMData['publishVer']
+
+            empty = False
+            path = database.getPath (xloMData, dirLocation='publishLocation')
+            xloPath = os.path.join (path[0], version + path[1])
+            pm.createReference (xloPath, namespace=xlo_ns)
+
+
+        for cache_ns, cacheMData in item.caches.iteritems():
+            cache = CacheComponent(cache_ns, cacheMData, item)
+
+            if cache.cacheVer == 0:
+                print 'Component %s not yet published!!' % (cache_ns + ':' + cacheMData['task'] + cacheMData['code'])
+                continue
+
+            cacheFullPath = cache.getPublishPath()
+            pm.AbcImport(cacheFullPath, mode='import', fitTimeRange=True, setToStartFrame=True, connect='/')
+
+        return item.caches
+

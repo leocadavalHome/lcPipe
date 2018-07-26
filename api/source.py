@@ -1,4 +1,3 @@
-import pymel.core as pm
 from lcPipe.api.item import Item
 
 class Source(object):
@@ -35,15 +34,20 @@ class Source(object):
         return Item(task=self.task, code=self.code, itemType=self.type)
 
     def putToParent(self):
-        self.parent['components'][self.ns] = self.getDataDict()
+        item = self.getItem()
+        item.components[self.ns] = self.getDataDict()
 
     def checkForNewVersion(self):
         item = self.getItem()
-        if self.updateMode == 'last':
-            self.ver = item.publishVer
+        if self.ver != item.publishVer:
+            if self.updateMode == 'last':
+                self.ver = item.publishVer
+                print 'version %s updated to %s' % (self.ver, item.publishVer)
+            else:
+                self.ver = int(self.updateMode)
+            self.putToParent()
         else:
-            self.ver = int(self.updateMode)
-        self.putToParent()
+            print 'version %s ok' %  self.ver
 
     def addToScene(self):
         pass

@@ -252,8 +252,12 @@ def templateName(item, template=None):
             itemNameTemplate = proj['cacheNameTemplate']
 
     taskShort = getTaskShort(item['task'])
+
     code = item['code']
-    name = item['name']
+    if 'name' in item:
+        name = item['name']
+    else:
+        name = ''
     prefix = proj['prefix']
 
     fileNameList = itemNameTemplate

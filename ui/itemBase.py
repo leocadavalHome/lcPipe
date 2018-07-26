@@ -1,5 +1,5 @@
 import pymel.core as pm
-from core import database
+from lcPipe.core import database
 
 ### INTERFACE
 class ItemBase(object):

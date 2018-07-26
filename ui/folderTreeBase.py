@@ -1,5 +1,5 @@
 import pymel.core as pm
-from core import database
+from lcPipe.core import database
 
 class FolderTreeBase(object):
     def __init__(self, itemType='asset'):

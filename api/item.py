@@ -46,6 +46,9 @@ class Item(object):
         self.source = itemMData['source']
         self.components = itemMData['components']
 
+        if 'caches' in itemMData:
+            self.caches = itemMData['caches']
+
         return True
 
     def _putDataToDB(self):
@@ -71,6 +74,9 @@ class Item(object):
         itemMData['status'] = self.status
         itemMData['source'] = self.source
         itemMData['components'] = self.components
+
+        if 'caches' in itemMData:
+            itemMData['caches'] = self.caches
 
         return itemMData
 
@@ -129,10 +135,3 @@ class Item(object):
 
     def removeFiles (self, publishes=True, restore=True):
         pass
-
-x = Item(task='rig', code= '0001')
-
-x.status = 'test'
-
-print x.itemMData
-print x.status
