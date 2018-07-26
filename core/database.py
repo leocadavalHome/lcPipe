@@ -372,14 +372,15 @@ def incrementNextCode(itemType, fromBegining=False):
 def codeCheck(code, itemType):
     proj = getProjectDict()
     if code:
-        code = ("%04d" % int(code))
+        code = "%04d" % int(code)
         nextItem = False
         collection = getCollection(itemType)
         result = collection.find({'code': code})
         codeExists = [x for x in result]
 
         if codeExists:
-            return 'codeExists'
+            return ['codeExists']
+
         else:
             nextCode = "%04d" % proj['next' + itemType.capitalize()]
             if code == nextCode:
@@ -388,16 +389,19 @@ def codeCheck(code, itemType):
         nextItem = True
         code = "%04d" % proj['next' + itemType.capitalize()]
 
+    print code, nextItem
     return code, nextItem
+
 
 def createItem(itemType, name, path, workflow, code=None):
     global db
     global currentProject
 
     codeTest = codeCheck(code, itemType)
-    validatedCode = codeTest[0]
-    if validatedCode == 'codeExists':
+    if codeTest[0] == 'codeExists':
         return 'codeExists'
+
+    validatedCode = codeTest[0]
 
     proj = getProjectDict()
     collection = getCollection(itemType)

@@ -1,6 +1,6 @@
 import pymel.core as pm
 import os.path
-from lcPipe.core import database
+from core import database
 import copy
 
 
@@ -87,7 +87,7 @@ def build(itemType, task, code):
 
     for source_ns, source in itemSources.iteritems():
         # read components item
-        sourceMData = database.getItemMData(code=source['code'], task=source['task'],itemType=source['type'])
+        sourceMData = database.getItemMData(code=source['code'], task=source['task'], itemType=source['type'])
 
         if not sourceMData:
             print 'ignoring...'

@@ -1,8 +1,8 @@
 
-from lcPipe.core.modelPublish import *
-from lcPipe.core.uvPublish import *
-from lcPipe.core.texPublish import *
-from lcPipe.core.shotFinalizingPublish import *
+from lcPipe.publish.modelPublish import *
+from lcPipe.publish.uvPublish import *
+from lcPipe.publish.texPublish import *
+from lcPipe.publish.shotFinalizingPublish import *
 
 def skip(*args):
     for a in args:
@@ -99,7 +99,6 @@ class PublishWidget(object):
                                 'shotFinalizing': {1.0: {'prePublish': cacheAnimation},
                                                    2.0: {'prePublish': cacheCameraAnimation}}
                                 }
-
 
         if task in self.checkProcedures.keys():
             self.checksDict = self.checkProcedures[task]

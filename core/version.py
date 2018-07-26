@@ -1,6 +1,6 @@
 import pymel.core as pm
 import os.path
-from lcPipe.core import database
+from core import database
 
 def open (type, task, code):
     collection = database.getCollection ( type )

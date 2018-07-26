@@ -1,6 +1,6 @@
 import pymel.core as pm
-from lcPipe.core import database
-from lcPipe.core import check
+from core import database
+from core import check
 from lcPipe.ui import widgets
 
 

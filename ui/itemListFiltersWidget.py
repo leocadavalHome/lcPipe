@@ -2,17 +2,18 @@ import pymel.core as pm
 from core import database
 from core import version
 from lcPipe.ui.itemWidget import ItemWidget
+
 from lcPipe.ui.itemListBase import ItemListBase
 
-class ItemListWidget(ItemListBase):
+class ItemListFiltersWidget(ItemListBase):
     def __init__(self):
-        super(ItemListWidget, self).__init__()
+        super(ItemListFiltersWidget, self).__init__()
 
     def addMenus(self):
         pm.popupMenu(parent=self.widgetName)
         pm.menuItem(label='add item', c=self.addItemCallBack)
 
-    def refreshList(self, path=None, task=None, code=None, itemMData=None):
+    def refreshList(self, user=None, status=None, favorites=None, task=None, code=None, itemMData=None):
         color = (0, 0, 0)
         x = None
 
@@ -23,7 +24,6 @@ class ItemListWidget(ItemListBase):
             self.task = itemMData['task']
             self.type = itemMData['type']
         else:
-            self.path = path
             self.task = task
             self.type = database.getTaskType(task)
 
@@ -33,7 +33,14 @@ class ItemListWidget(ItemListBase):
             result = collection.find({'path': self.path, 'code': code})
         else:
             if self.task == 'asset':
-                result = collection.find({'path': self.path, 'task': 'model'})
+                resultUser = collection.find({'user': user, 'task': 'model'})
+                resultStatus = collection.find({'status': status, 'task': 'model'})
+                resultFavorites = []
+                for item in favorites:
+                    resultFavorites.append(collection.find ({'code': item, 'task': 'model'}))
+
+                result = [x for x in resultUser if x in resultStatus and x in resultFavorites]
+
             elif self.task == 'shot':
                 result = collection.find({'path': self.path, 'task': 'layout'})
             else:

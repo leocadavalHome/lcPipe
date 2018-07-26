@@ -1,7 +1,7 @@
 import pymel.core as pm
-from lcPipe.core import version
-from lcPipe.core import sceneBuild
-from lcPipe.core import database
+from core import version
+from core import sceneBuild
+from core import database
 from lcPipe.ui.itemBase import ItemBase
 from lcPipe.ui.shotManager import ShotManager
 

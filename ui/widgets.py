@@ -1,9 +1,9 @@
 import os.path
 
 import pymel.core as pm
-from lcPipe.core import database
-from lcPipe.core import publish
-from lcPipe.core import version
+from core import database
+from lcPipe.publish import publish
+from core import version
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.itemListWidget import ItemListWidget
