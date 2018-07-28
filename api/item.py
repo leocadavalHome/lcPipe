@@ -52,7 +52,6 @@ class Item(object):
 
     def putDataToDB(self):
         try:
-            print 'putDB', self.getDataDict()
             database.putItemMData(itemMData=self.getDataDict(), projName=self.projectName, task=self.task,
                                   code=self.code, itemType=self.type)
         except:

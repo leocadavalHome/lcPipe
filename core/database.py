@@ -615,6 +615,18 @@ def getSceneImagesPath(dirLocation='imagesWorkLocation'):
 
     return dirPath
 
+
+def getPhase(itemMData):
+    project = getProjectDict()
+    return project['workflow'][itemMData['workflow']][itemMData['task']]['phase']
+
+
 def getShotCreatedTasks (itemMData):
-    collection = getCollection (itemType)
-    result = collection.find ({'status':['created', 'partial'], 'code': code, 'task':[]})
+    collection = getCollection('shot')
+    cursor = collection.find({'status': {'$nin': ['notCreated']}, 'code': itemMData['code']})
+    result = []
+    for task in cursor:
+        del task['_id']
+        if getPhase(task)=='prod' and task['task']!='layout':
+            result.append(task)
+    return result

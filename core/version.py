@@ -3,7 +3,30 @@ import os.path
 from lcPipe.core import database
 from lcPipe.api.item import Item
 
-def open (type, task, code):
+
+def checkModified():
+    import maya.cmds as cmds
+    if cmds.file(q=True, modified=True):
+        resp = pm.confirmDialog (title='Unsaved Changes', message='Save changes on current file?',
+                                 button=['Save', "Don't Save", 'Cancel'], defaultButton='Save',
+                                 cancelButton='Cancel', dismissString='Cancel')
+    else:
+        resp = "Don't Save"
+    return resp
+
+
+def open (type, task, code, force = False):
+    if not force:
+        resp = checkModified()
+        print resp
+        if resp == 'Save':
+            print pm.saveFile()
+
+        elif resp == 'Cancel':
+            print 'canceling'
+            return
+
+    print 'opening'
     item = Item(task=task, code=code, itemType=type)
     item.open()
 

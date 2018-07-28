@@ -48,6 +48,7 @@ class ComponentListWidget(ItemListBase):
 
         self.itemList = []
         self.selectedItem = None
+
         for ns, component in itemMData['components'].iteritems():
             type = component['type']
             collection = database.getCollection(type, self.projectName)
@@ -130,5 +131,11 @@ class ComponentListWidget(ItemListBase):
     def createAssetCallBack(self, component, *args):
         if component:
             ns = pm.textFieldGrp('nsFieldPrompt', q=True, tx=True)
-            database.addComponent(self.item, ns, component.task, component.code, 'reference')
+
+            database.addComponent(self.item, ns, component.task, component.code, 'reference', update=True)
+
+            createdTasks = database.getShotCreatedTasks(self.item)
+            for itemMData in createdTasks:
+                database.addComponent(itemMData, ns, component.task, component.code, 'reference', update=True)
+
             pm.layoutDialog(dismiss='ok')

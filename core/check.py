@@ -49,8 +49,6 @@ def sceneRefCheck(silent=False):
     toUpdate = {}
 
     for ns in refToCheckUpdate:
-        print ns
-        print item.components[ns]
 
         if item.components[ns]['assembleMode'] == 'camera':
             continue
@@ -60,8 +58,6 @@ def sceneRefCheck(silent=False):
             toUpdate[ns] = component.updateVersion(refOnSceneList[ns])
 
         if item.components[ns]['assembleMode'] == 'xlo':
-            print 'entrou'
-            print ns, item.components[ns]
             component = XloComponent(ns, item.components[ns], parent=item)
             toUpdate[ns] = component.updateVersion(refOnSceneList[ns])
 

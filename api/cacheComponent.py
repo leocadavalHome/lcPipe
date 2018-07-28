@@ -44,7 +44,7 @@ class CacheComponent(Component):
             self.putToParent()
         else:
             print 'No caches in source!!'
-        self.parent.putDataToDB ()
+        self.parent.putDataToDB()
 
 
     def addToScene(self):

@@ -40,8 +40,6 @@ class Component(object):
         return Item(task=self.task, code=self.code, itemType=self.type)
 
     def putToParent(self):
-        item = self.getItem()
-        print'put2', self.getDataDict()
         self.parent.components[self.ns] = self.getDataDict()
 
     def checkDBForNewVersion(self):
