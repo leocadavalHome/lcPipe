@@ -87,7 +87,7 @@ def getDefaultDict():
 
                                 'shotXlo': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay', 'source': [],
                                                        'components': { 'cam': {'code': '9999', 'ver': 1, 'updateMode': 'last',
-                                                                       'task': 'rig', 'assembleMode': 'reference',
+                                                                       'task': 'rig', 'assembleMode': 'camera',
                                                                        'type': 'asset'}}},
                                             'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
                                                           'source': [('layout', 'copy')]},
@@ -100,7 +100,7 @@ def getDefaultDict():
                                                             'source': [],
                                                             'components': [{'code': '9999', 'ver': 1,
                                                                             'updateMode': 'last', 'task': 'rig',
-                                                                            'assembleMode': 'reference',
+                                                                            'assembleMode': 'camera',
                                                                             'type': 'asset'}]},
                                                  'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
                                                                'source': [('layout', 'copy')]},
@@ -615,3 +615,6 @@ def getSceneImagesPath(dirLocation='imagesWorkLocation'):
 
     return dirPath
 
+def getShotCreatedTasks (itemMData):
+    collection = getCollection (itemType)
+    result = collection.find ({'status':['created', 'partial'], 'code': code, 'task':[]})

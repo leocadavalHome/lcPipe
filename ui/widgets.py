@@ -8,6 +8,7 @@ from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.itemListWidget import ItemListWidget
 from lcPipe.ui.projectSelectWidget import ProjectSelectWidget
+from lcPipe.api.item import Item
 
 class itemBrowser:
     def __init__(self):
@@ -94,40 +95,17 @@ class PublishWidget(publish.PublishWidget):
 
     def publishFile(self, *args):
         # get database info on item
-
-        collection = database.getCollection(self.type)
-        item = database.getItemMData(task=self.task, code=self.code, itemType=self.type)
-        # get path
-        originalName = pm.sceneName()
-        path = database.getPath(item, dirLocation='publishLocation')
-        dirPath = path[0]
-        filename = path[1]
-
-        # increment publish version
-        item['publishVer'] += 1
-        collection.find_one_and_update({'task': self.task, 'code': self.code},
-                                       {'$set': {'publishVer': item['publishVer']}})
-        publishVer = 'v%03d_' % item['publishVer']
-
-        # make full path
-        fullPath = os.path.join(dirPath, publishVer + filename)
-
-        if not os.path.exists(dirPath):
-            print ('creating:' + dirPath)
-            os.makedirs(dirPath)
-
-        # save scene
-        pm.saveAs(fullPath)
-        pm.renameFile(originalName)
-
-        version.takeSnapShot(item)
+        item = Item(task=self.task, code=self.code, itemType=self.type)
+        item.publish()
+        version.takeSnapShot(item.getDataDict())
         self.closeWin()
 
-        print 'publish ver %s, at %s' % (publishVer, fullPath)
-        resp = pm.confirmDialog(title='Warning', ma='center', message='PUBLISH: %s %s \n Reopen working task?' % (item['name'], item['task']),
-                         button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
+        print 'publish ver %s, at %s' % (item.publishVer, item.getPublishPath())
+        resp = pm.confirmDialog(title='Warning', ma='center',
+                                message='PUBLISH: %s %s \n Reopen working task?' % (item.name, item.task),
+                                button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
 
         if resp == 'Ok':
-            version.open(type=item['type'], task=item['task'], code= item['code'])
+            version.open(type=item.type, task=item.task, code= item.code)
         else:
             pm.newFile(f=True, new=True)

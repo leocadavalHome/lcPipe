@@ -4,8 +4,6 @@ import pymel.core as pm
 import os.path
 from lcPipe.core import database
 
-reload(database)
-
 
 def cachePrompt(refs):
     """
@@ -144,13 +142,18 @@ def cacheCamera(task, code):
             item['cacheVer'] = 0
             item['name'] = ''
 
-    itemComponents = shotMData['components']
+
     itemCaches = shotMData['caches']
 
     cameras = pm.ls(type='camera', l=True)
     startup_cameras = [camera for camera in cameras if pm.camera(camera.parent(0), startupCamera=True, q=True)]
     cameraShape = list(set(cameras) - set(startup_cameras))
-    camera = map(lambda x: x.parent(0), cameraShape)[0]
+
+    if cameraShape:
+        camera = map(lambda x: x.parent(0), cameraShape)[0]
+    else:
+        print 'cacheCamera: no camera found!'
+        return
 
     path = database.getPath(shotMData, dirLocation='cacheLocation', ext='')
     cachePath = os.path.join(*path)

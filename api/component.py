@@ -1,4 +1,6 @@
 from lcPipe.api.item import Item
+from lcPipe.core import database
+from lcPipe.api.refInfo import RefInfo
 
 class Component(object):
     def __init__(self, ns, componentMData, parent=None):
@@ -39,9 +41,10 @@ class Component(object):
 
     def putToParent(self):
         item = self.getItem()
-        item.components[self.ns] = self.getDataDict()
+        print'put2', self.getDataDict()
+        self.parent.components[self.ns] = self.getDataDict()
 
-    def checkForNewVersion(self):
+    def checkDBForNewVersion(self):
         item = self.getItem()
         if self.ver != item.publishVer:
             if self.updateMode == 'last':
@@ -51,7 +54,8 @@ class Component(object):
                 self.ver = int(self.updateMode)
             self.putToParent()
         else:
-            print 'version %s ok' %  self.ver
+            print 'version %s ok' % self.ver
+        self.parent.putDataToDB()
 
     def getPublishPath (self):
         item = self.getItem()
@@ -60,5 +64,23 @@ class Component(object):
     def addToScene(self):
         pass
 
-    def updateOnScene(self):
-        pass
+    def updateVersion(self, ref):
+        refInfo = RefInfo(ref)
+        self.checkDBForNewVersion()
+
+        if self.code != refInfo.code:
+            print self.code
+            print refInfo.code
+
+        if self.task != refInfo.task:
+            print self.task
+            print refInfo.task
+
+        resp = {}
+        if self.ver != refInfo.ver:
+            resp['ver'] = self.ver
+
+        if self.cacheVer != refInfo.cacheVer:
+            resp['cacheVer'] = self.cacheVer
+
+        return resp

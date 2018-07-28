@@ -1,20 +1,25 @@
-from lcPipe.api.item import Item
-from lcPipe.api.xloComponent import XloComponent
+import lcPipe.api.item as it
+import  lcPipe.api.xloComponent as xlo
 from lcPipe.api.cacheComponent import CacheComponent
+import lcPipe.api.sceneSource as ss
+import lcPipe.core.check as ck
 
-item = Item(task='render', code='0001')
-
-ns = 'ref'
-src = item.components[ns]
-xlo = XloComponent(ns, src, item)
-cache = CacheComponent(ns, src, item)
+import lcPipe.api.component as cp
 
 
-cacheItem = cache.getItem()
-print cache.getPublishPath()
-print cacheItem.getDataDict()
+reload(ss)
+reload(ck)
+reload (it)
+reload (cp)
+reload (xlo)
 
-xloItem = xlo.getItem()
 
-print xlo.checkForNewVersion()
-print xloItem.getDataDict()
+item = it.Item(task='render', code='0001')
+print item.getDataDict()
+x = cp.Component('ref', item.components['ref'], parent=item)
+
+print x.getDataDict()
+
+x.cacheVer = 8
+
+x.putToParent()

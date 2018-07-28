@@ -2,7 +2,6 @@ import pymel.core as pm
 import os.path
 from lcPipe.core import database
 
-
 class Item(object):
     def __init__(self, projName=None, task=None, code=None, itemType=None, fromScene=False):
 
@@ -51,8 +50,9 @@ class Item(object):
 
         return True
 
-    def _putDataToDB(self):
+    def putDataToDB(self):
         try:
+            print 'putDB', self.getDataDict()
             database.putItemMData(itemMData=self.getDataDict(), projName=self.projectName, task=self.task,
                                   code=self.code, itemType=self.type)
         except:
@@ -125,7 +125,7 @@ class Item(object):
         # save scene
         pm.saveAs(fullPath)
         pm.renameFile(originalName)
-        self._putDataToDB()
+        self.putDataToDB()
 
     def restoreVersion(self, version):
         pass

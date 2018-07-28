@@ -23,7 +23,6 @@ class SceneSource(Source):
         item = self.getItem()
         componentPath = item.getPublishPath()
         pm.importFile(componentPath, defaultNamespace=True)
-
         return {}
 
     def copyToScene(self):
@@ -50,37 +49,28 @@ class SceneSource(Source):
 
     def addXloToScene(self):
         item = self.getItem()
-
         for xlo_ns, xloMData in item.components.iteritems():
-            xlo = XloComponent (xlo_ns, xloMData, item)
+            task = xloMData['task']
+            xloMData['task'] = 'xlo'
+            xlo = XloComponent(xlo_ns, xloMData, parent=self.parent)
 
-            if xlo.code == '9999':
-                xloMData = database.getItemMData (task=xlo['task'], code=xlo['code'], itemType=xlo['type'])
-            else:
-                xloMData = database.getItemMData (task='xlo', code=xlo['code'], itemType=xlo['type'])
-
-            if xloMData['publishVer'] == 0:
-                print 'Component %s not yet published!!' % (xlo_ns + ':' + xloMData['task'] + xloMData['code'])
-                parcial = True
+            if xlo.ver == 0:
+                print 'Component %s not yet published!!' % (xlo_ns + ':' + xlo.task + xlo.code)
                 continue
-            else:
-                version = 'v%03d_' % xloMData['publishVer']
 
-            empty = False
-            path = database.getPath (xloMData, dirLocation='publishLocation')
-            xloPath = os.path.join (path[0], version + path[1])
-            pm.createReference (xloPath, namespace=xlo_ns)
-
+            pm.createReference(xlo.getPublishPath(), namespace=xlo_ns)
+            item.components[xlo_ns]['assembleMode'] = 'xlo'
+            item.components[xlo_ns]['task'] = task
 
         for cache_ns, cacheMData in item.caches.iteritems():
-            cache = CacheComponent(cache_ns, cacheMData, item)
+            cache = CacheComponent(cache_ns, cacheMData, self.parent)
 
             if cache.cacheVer == 0:
-                print 'Component %s not yet published!!' % (cache_ns + ':' + cacheMData['task'] + cacheMData['code'])
+                print 'Component %s not yet published!!' % (cache_ns + ':' + cache.task+ cache.code)
                 continue
 
-            cacheFullPath = cache.getPublishPath()
-            pm.AbcImport(cacheFullPath, mode='import', fitTimeRange=True, setToStartFrame=True, connect='/')
+            pm.AbcImport(cache.getPublishPath(), mode='import', fitTimeRange=True, setToStartFrame=True, connect='/')
+            item.components[cache_ns]['cacheVer'] = cache.cacheVer
 
-        return item.caches
+        return item.components
 

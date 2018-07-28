@@ -1,20 +1,11 @@
 import pymel.core as pm
 import os.path
 from lcPipe.core import database
+from lcPipe.api.item import Item
 
 def open (type, task, code):
-    collection = database.getCollection ( type )
-    item = collection.find_one ( {'task': task, 'code': code} )
-
-    if not item:
-        print 'ERROR: No metadata for this item'
-        return
-
-    ## get path
-    path = database.getPath ( item )
-    sceneFullPath = os.path.join ( *path )
-
-    pm.openFile ( sceneFullPath, f=True )
+    item = Item(task=task, code=code, itemType=type)
+    item.open()
 
 
 def takeSnapShot(itemMData=None, thumbPath=None):

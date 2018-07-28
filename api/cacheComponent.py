@@ -1,7 +1,10 @@
 from lcPipe.api.component import Component
 from lcPipe.api.source import Source
+from lcPipe.api.refInfo import RefInfo
 from lcPipe.core import database
+import pymel.core as pm
 import os.path
+
 
 class CacheComponent(Component):
     def __init__(self, ns, cacheMData, parent=None):
@@ -24,7 +27,7 @@ class CacheComponent(Component):
 
         return os.path.join(cachePath, cacheFileName)
 
-    def checkForNewVersion(self):
+    def checkDBForNewVersion(self):
         sourceItem = self.getSourceItem()
         if sourceItem.caches:
             cacheMDataOnSource = sourceItem.caches[self.ns]
@@ -38,5 +41,34 @@ class CacheComponent(Component):
                 print 'cache version %s updated to %s' % (self.cacheVer, cacheMDataOnSource['cacheVer'])
             else:
                 print 'cache version %s ok' % self.cacheVer
+            self.putToParent()
         else:
             print 'No caches in source!!'
+        self.parent.putDataToDB ()
+
+
+    def addToScene(self):
+        cacheFullPath = self.getPublishPath()
+        pm.createReference(cacheFullPath, namespace=self.ns, groupReference=True, groupName='geo_group', type='Alembic')
+
+    def importCache(self):
+        cacheFullPath = self.getPublishPath()
+        pm.AbcImport(cacheFullPath, mode='import', fitTimeRange=True, setToStartFrame=True, connect='/')
+
+    def updateVersion(self, ref):
+        refInfo = RefInfo(ref)
+        self.checkDBForNewVersion()
+
+        if self.code != refInfo.code:
+            print self.code
+            print refInfo.code
+
+        if self.task != refInfo.task:
+            print self.task
+            print refInfo.task
+
+        resp = {}
+        if self.cacheVer != refInfo.cacheVer:
+            resp['cacheVer'] = self.cacheVer
+
+        return resp

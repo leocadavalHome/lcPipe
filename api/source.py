@@ -48,6 +48,7 @@ class Source(object):
             self.putToParent()
         else:
             print 'version %s ok' %  self.ver
+        self.parent.putDataToDB ()
 
     def addToScene(self):
         pass
