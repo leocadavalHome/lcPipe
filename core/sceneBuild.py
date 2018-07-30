@@ -3,7 +3,7 @@ import os.path
 from lcPipe.core import database
 from lcPipe.api.item import Item
 from lcPipe.api.sceneSource import SceneSource
-
+from lcPipe.api.cameraComponent import CameraComponent
 
 def build(itemType, task, code):
     parcial = False
@@ -18,6 +18,29 @@ def build(itemType, task, code):
 
     pm.newFile(f=True, new=True)
     newComponentsDict = {}
+
+    if item.type == 'shot':
+        print 'creating camera...'
+        cameraItem = Item(task='rig', code='0000', itemType='asset')
+        print cameraItem.noData
+        if cameraItem.noData:
+            pm.confirmDialog(title='No base camera', ma='center',
+                             message='Please make an asset code:0000 as base camera',
+                             button=['OK'], defaultButton='OK', dismissString='OK')
+            return
+
+        cameraMData = {'code': '0000', 'ver': cameraItem.publishVer, 'updateMode': 'last',
+                      'task': 'rig', 'assembleMode': 'camera', 'type': 'asset'}
+
+        camera = CameraComponent('cam', cameraMData, parent=item)
+
+
+
+        camera.wrapData()
+        if not camera.cameraTransform:
+            camera.addToScene()
+        newComponentsDict['cam'] = camera.getDataDict()
+
 
     for ns, sourceMData in itemList.iteritems():
         source = SceneSource(ns, sourceMData, parent=item)
@@ -45,7 +68,7 @@ def build(itemType, task, code):
         elif source.assembleMode == 'xlo':
             newComponentsDict = source.addXloToScene()
 
-        item.components = newComponentsDict
+    item.components = newComponentsDict
 
     # update infos on scene and database
     if not empty or not item.components:
@@ -53,6 +76,11 @@ def build(itemType, task, code):
         pm.fileInfo['task'] = item.task
         pm.fileInfo['code'] = item.code
         pm.fileInfo['type'] = item.type
+
+        if item.type == 'shot':
+            pm.playbackOptions(ast=item.frameRange[0], aet=item.frameRange[1])
+            pm.currentUnit(time='film')
+
         item.workVer = 1
         item.status = 'created'
 

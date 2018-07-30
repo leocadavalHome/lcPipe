@@ -15,11 +15,15 @@ class CacheComponent(Component):
         source = Source(ns, self.parent.source[ns], parent = self.parent)
         return source.getItem()
 
-    def getPublishPath(self):
+    def getPublishPath(self, make=False):
         proj = database.getProjectDict()
         sourceItem = self.getSourceItem()
         path = sourceItem.getPath(dirLocation='cacheLocation', ext='')
         cachePath = os.path.join(*path)
+
+        if make:
+            if not os.path.exists(cachePath):
+                os.makedirs(cachePath)
 
         ver = 'v%03d_' % self.cacheVer
         cacheName = database.templateName(self.getDataDict(), proj['cacheNameTemplate']) + '_' + self.ns

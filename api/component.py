@@ -1,5 +1,4 @@
 from lcPipe.api.item import Item
-from lcPipe.core import database
 from lcPipe.api.refInfo import RefInfo
 
 class Component(object):

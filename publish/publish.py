@@ -116,20 +116,30 @@ class PublishWidget(object):
         if (pm.window('publishTest', exists=True)):
             pm.deleteUI('publishTest', window=True)
 
-        self.win = pm.window('publishTest', w=200, h=300)
-        self.parentCol = pm.columnLayout(adj=1)
-        self.col = pm.columnLayout()
-        self.btn = pm.button(p=self.parentCol, l='VALIDATE', w=200, h=50, c=self.runChecks)
-
-        pm.showWindow(self.win)
-
         order = self.checksDict.keys()
+        height = (len(order)*30)+1
+
+        self.win = pm.window('publishTest',rtf=True)
+        form = pm.formLayout(numberOfDivisions=100)
+        self.col = pm.columnLayout(p=form, w=200, h=500)
+        self.btn = pm.button(p=form, l='VALIDATE', w=200, h=50, c=self.runChecks)
+
+        pm.formLayout(form, edit=True,
+                      attachForm=[(self.col, 'left', 5), (self.col, 'right', 5),(self.col, 'bottom', 5),
+                                  (self.btn, 'left', 5), (self.btn, 'top', 5),(self.btn, 'right', 5)
+                                  ],
+                      attachControl=[(self.col, 'top', 5, self.btn)],
+                      attachPosition=[],
+                      attachNone=()
+                      )
+
         order.sort()
 
         for id in order:
             self.checksWidgets[id] = pm.iconTextButton(p=self.col, style='iconAndTextHorizontal',
                                                        image1='D:JOBS/PIPELINE/pipeExemple/scenes/icons/empty.png',
                                                        label=self.checksDict[id]['label'])
+        pm.showWindow(self.win)
 
     def closeWin(self):
         pm.deleteUI(self.win)
@@ -187,6 +197,13 @@ class PublishWidget(object):
     def runPrePublish(self, *args):
         error = False
 
+        resp = pm.confirmDialog(title='Save', ma='center',
+                                message='Save before publish?',
+                                button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
+
+        if resp == 'Ok':
+            pm.saveFile()
+
         order = self.prePublishDict.keys()
         order.sort()
         for id in order:
@@ -196,7 +213,7 @@ class PublishWidget(object):
 
         if not error:
             print 'prePublish succeeded'
-            pm.button(self.btn, e=True, label='PUBLISH', c=self.publishFile)
+            pm.button(self.btn, e=True, label='PUBLISH', c=self.publishFile, bgc=[0.0,0.5,0.0] )
         else:
             resp = pm.confirmDialog(title='Warning', ma='center',
                                     message='Error: Pre Publish Procedure Failled !' ,

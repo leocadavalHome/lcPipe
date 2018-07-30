@@ -7,7 +7,7 @@ from lcPipe.api.item import Item
 def checkModified():
     import maya.cmds as cmds
     if cmds.file(q=True, modified=True):
-        resp = pm.confirmDialog (title='Unsaved Changes', message='Save changes on current file?',
+        resp = cmds.confirmDialog (title='Unsaved Changes', message='Save changes on current file?',
                                  button=['Save', "Don't Save", 'Cancel'], defaultButton='Save',
                                  cancelButton='Cancel', dismissString='Cancel')
     else:
@@ -15,7 +15,7 @@ def checkModified():
     return resp
 
 
-def open (type, task, code, force = False):
+def open (type, task, code, force=False):
     if not force:
         resp = checkModified()
         print resp

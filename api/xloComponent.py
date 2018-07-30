@@ -16,7 +16,10 @@ class XloComponent(Component):
         return source.getItem()
 
     def getItem(self):
-        return Item(task='xlo', code=self.code, itemType=self.type)
+        if self.ns != 'cam':
+            return Item(task='xlo', code=self.code, itemType=self.type)
+        else:
+            return Item (task='rig', code=self.code, itemType=self.type)
 
     def checkDBForNewCacheVersion(self):
         sourceItem = self.getSourceItem()
@@ -37,13 +40,17 @@ class XloComponent(Component):
             print 'No caches in source!!'
         self.parent.putDataToDB()
 
-    def getCachePublishPath(self):
+    def getCachePublishPath(self, make=False):
         item = self.getItem()
         path = item.getPath(dirLocation='cacheLocation', ext='')
         cachePath = os.path.join(*path)
 
+        if make:
+            if not os.path.exists(cachePath):
+                os.makedirs(cachePath)
+
         ver = 'v%03d_' % self.cacheVer
-        cacheName = database.templateName(self.getDataDict) + '_' + self.ns
+        cacheName = database.templateName(self.getDataDict()) + '_' + self.ns
         cacheFileName = ver + cacheName + '.abc'
 
         return os.path.join(cachePath, cacheFileName)

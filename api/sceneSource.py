@@ -4,6 +4,7 @@ from lcPipe.core import database
 from lcPipe.api.source import Source
 from lcPipe.api.cacheComponent import CacheComponent
 from lcPipe.api.xloComponent import XloComponent
+from lcPipe.api.cameraComponent import CameraComponent
 
 class SceneSource(Source):
     def __init__(self, ns, componentMData, parent=None):
@@ -34,22 +35,29 @@ class SceneSource(Source):
 
     def addCacheToScene(self):
         item = self.getItem()
+        print item.getDataDict()
         for cache_ns, cacheMData in item.caches.iteritems():
-            cache = CacheComponent(cache_ns, cacheMData, item)
+            cache = CacheComponent(cache_ns, cacheMData, self.parent)
 
             if cache.cacheVer == 0:
                 print 'Component %s not yet published!!' % (cache_ns + ':' + cacheMData['task'] + cacheMData['code'])
                 continue
 
             cacheFullPath = cache.getPublishPath()
-            pm.createReference(cacheFullPath, namespace=cache_ns, groupReference=True,
-                               groupName='geo_group', type='Alembic')
+            if cache_ns != 'cam':
+                pm.createReference(cacheFullPath, namespace=cache_ns, groupReference=True,
+                                    groupName=cache_ns+':geo_group', type='Alembic')
+            else:
+                pm.AbcImport(cache.getPublishPath (), mode='import', fitTimeRange=True, setToStartFrame=True,connect='/')
 
         return item.caches
 
     def addXloToScene(self):
         item = self.getItem()
         for xlo_ns, xloMData in item.components.iteritems():
+            if xlo_ns =='cam':
+                continue
+
             task = xloMData['task']
             xloMData['task'] = 'xlo'
             xlo = XloComponent(xlo_ns, xloMData, parent=self.parent)

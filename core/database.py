@@ -48,6 +48,7 @@ def getDefaultDict():
                 'nextShot': 1,
                 'renderer': 'vray',
                 'fps': 24,
+                'mayaVersion': '2015',
                 'resolution': [1920, 1080],
                 'workflow': {
                                 'rig': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
@@ -74,10 +75,7 @@ def getDefaultDict():
                                            'rig': {'type': 'asset', 'phase': 'preProd', 'short': 'rig', 'source': []}},
 
                                 'shotCache': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay','source': [],
-                                                         'components': {'cam': {'code': '9999', 'ver': 1,
-                                                                        'updateMode': 'last', 'task': 'rig',
-                                                                        'assembleMode': 'reference',
-                                                                        'type': 'asset'}}},
+                                                         'components': {}},
                                              'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
                                                            'source': [('layout', 'copy')]},
                                              'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
@@ -86,9 +84,7 @@ def getDefaultDict():
                                                                 'source': [('animation', 'copy')]}},
 
                                 'shotXlo': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay', 'source': [],
-                                                       'components': { 'cam': {'code': '9999', 'ver': 1, 'updateMode': 'last',
-                                                                       'task': 'rig', 'assembleMode': 'camera',
-                                                                       'type': 'asset'}}},
+                                                       'components': {}},
                                             'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
                                                           'source': [('layout', 'copy')]},
                                             'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
@@ -98,10 +94,7 @@ def getDefaultDict():
 
                                 'keyLightShot': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay',
                                                             'source': [],
-                                                            'components': [{'code': '9999', 'ver': 1,
-                                                                            'updateMode': 'last', 'task': 'rig',
-                                                                            'assembleMode': 'camera',
-                                                                            'type': 'asset'}]},
+                                                            'components': []},
                                                  'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
                                                                'source': [('layout', 'copy')]},
                                                  'lighting': {'type': 'shot', 'phase': 'postProd', 'short': 'lit',
@@ -397,7 +390,7 @@ def codeCheck(code, itemType):
     return code, nextItem
 
 
-def createItem(itemType, name, path, workflow, code=None):
+def createItem(itemType, name, path, workflow, code=None, frameRange=None):
     global db
     global currentProject
 
@@ -415,7 +408,7 @@ def createItem(itemType, name, path, workflow, code=None):
     for task in itemWorkflow.iterkeys():
         itemsDict[task] = {'name': name, 'code': validatedCode, 'task': task, 'type': itemType, 'workflow': workflow,
                            'projPrefix': proj['prefix'], 'workVer': 0, 'publishVer': 0, 'path': path, 'filename': '',
-                           'status': 'notCreated', 'source': {}, 'components': {}}
+                           'status': 'notCreated', 'source': {}, 'components': {}, 'frameRange': frameRange}
 
         fileName = templateName(itemsDict[task])
         itemsDict[task]['filename'] = fileName

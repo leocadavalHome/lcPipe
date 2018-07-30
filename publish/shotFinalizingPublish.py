@@ -19,6 +19,8 @@ def cacheAnimation(*args):
 
 def cacheCameraAnimation(*args):
     try:
+        pm.confirmDialog(title='camera Cache', ma='center', icon='information', message='Camera Cache', button=['OK'],
+                         defaultButton='OK', dismissString='ok')
         cache.cacheCamera(task=pm.fileInfo['task'], code=pm.fileInfo['code'])
     except:
         raise

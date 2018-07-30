@@ -107,13 +107,28 @@ class ProjectSettingsWidget():
         self.cacheTemplTxt = pm.textFieldGrp(label='Cache Name Template',
                                              text=','.join(self.projDict['cacheNameTemplate']), adj=2,
                                              cat=(1, 'left', 20))
+        self.fpsTxt = pm.textFieldGrp(label='Project Frame Rate',
+                                             text=self.projDict['fps'], adj=2,
+                                             cat=(1, 'left', 20))
+
+        self.mayaVersionOpt = pm.optionMenuGrp(label='Maya Version', cat=(1, 'left', 20))
+        pm.menuItem(label='2015')
+        pm.menuItem(label='2016')
+        pm.menuItem(label='2017')
+        pm.menuItem(label='2016')
+        pm.optionMenuGrp(self.mayaVersionOpt, e=True, v=self.projDict['mayaVersion'])
+
         self.rendererOpt = pm.optionMenuGrp(label='Renderer', cat=(1, 'left', 20))
         pm.menuItem(label='vray')
         pm.menuItem(label='arnold')
+        pm.menuItem(label='mental ray')
+        pm.menuItem(label='red shift')
         pm.optionMenuGrp(self.rendererOpt, e=True, v=self.projDict['renderer'])
+
         self.resolutionOpt = pm.optionMenuGrp(l='Resolution', cat=(1, 'left', 20))
         pm.menuItem(label='1920x1080')
         pm.menuItem(label='2048x1780')
+
         pm.optionMenuGrp(self.resolutionOpt, e=True,
                          v='%sx%s' % (self.projDict['resolution'][0], self.projDict['resolution'][1]))
         pm.text(p=col, l='FOLDERS')
@@ -158,6 +173,8 @@ class ProjectSettingsWidget():
         self.projDict['assetNameTemplate'] = nameTemplateString.split(',')
         cacheTemplateString = pm.textFieldGrp(self.cacheTemplTxt, q=True, text=True)
         self.projDict['cacheNameTemplate'] = cacheTemplateString.split(',')
+        self.projDict['fps'] = pm.textFieldGrp(self.fpsTxt, q=True, text=True)
+        self.projDict['mayaVersion'] = pm.optionMenuGrp(self.mayaVersionOpt, q=True, v=True)
         self.projDict['renderer'] = pm.optionMenuGrp(self.rendererOpt, q=True, v=True)
 
         res = pm.optionMenuGrp(self.resolutionOpt, q=True, v=True)

@@ -96,6 +96,7 @@ class PublishWidget(publish.PublishWidget):
     def publishFile(self, *args):
         # get database info on item
         item = Item(task=self.task, code=self.code, itemType=self.type)
+
         item.publish()
         version.takeSnapShot(item.getDataDict())
         self.closeWin()
@@ -106,6 +107,6 @@ class PublishWidget(publish.PublishWidget):
                                 button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
 
         if resp == 'Ok':
-            version.open(type=item.type, task=item.task, code= item.code)
+            version.open(type=item.type, task=item.task, code= item.code,force=True)
         else:
             pm.newFile(f=True, new=True)

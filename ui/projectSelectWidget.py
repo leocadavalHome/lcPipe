@@ -12,7 +12,6 @@ class ProjectSelectWidget:
         self.itemListWidget = None
 
     def makePopup(self):
-
         self.projPopUp = pm.popupMenu(parent=self.widgetName)
         pm.menuItem(label='new project', c=self.newProjectCallback)
 

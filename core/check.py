@@ -44,7 +44,7 @@ def sceneRefCheck(silent=False):
     refOnSceneList = pm.getReferences()
 
     toDelete = [x for x in refOnSceneList if x not in item.components]
-    toAdd = [x for x in item.components if x not in refOnSceneList]
+    toAdd = [x for x in item.components if x not in refOnSceneList and x != 'cam']
     refToCheckUpdate = [x for x in refOnSceneList if x not in toDelete]
     toUpdate = {}
 

@@ -3,8 +3,8 @@ import copy
 import pymel.core as pm
 import os.path
 from lcPipe.core import database
-
-
+from lcPipe.api.item import Item
+from lcPipe.api.cameraComponent import CameraComponent
 def cachePrompt(refs):
     """
 
@@ -123,64 +123,30 @@ def cacheScene(task, code):
 
     collection.find_one_and_update({'task': task, 'code': code}, {'$set': shotMData})
 
-    pm.confirmDialog(title='cache', ma='center', icon='information', message='Cache Ver: %s' % ver, button=['OK'],
-                     defaultButton='OK', dismissString='ok')
+    print 'Cache Ver: %s' % ver
 
 
 def cacheCamera(task, code):
-    ver = 0
-    collection = database.getCollection('shot')
-    shotMData = database.getItemMData(task=task, code=code, itemType='shot')
 
-    if 'caches' not in shotMData:
-        shotMData['caches'] = copy.deepcopy(shotMData['components'])
+    shot = Item(task=task, code=code, itemType='shot')
 
-        for item in shotMData['caches'].itervalues():
-            item['ver'] = 0
-            item['type'] = 'cache'
-            item['assembleMode'] = 'cache'
-            item['cacheVer'] = 0
-            item['name'] = ''
+    if 'cam' not in shot.caches:
+        shot.caches['cam'] = {'code': '0000', 'ver': 1, 'updateMode': 'last', 'task': 'rig',
+                              'assembleMode': 'camera', 'type': 'asset', 'cacheVer':0, 'name':''}
 
-
-    itemCaches = shotMData['caches']
-
-    cameras = pm.ls(type='camera', l=True)
-    startup_cameras = [camera for camera in cameras if pm.camera(camera.parent(0), startupCamera=True, q=True)]
-    cameraShape = list(set(cameras) - set(startup_cameras))
-
-    if cameraShape:
-        camera = map(lambda x: x.parent(0), cameraShape)[0]
-    else:
-        print 'cacheCamera: no camera found!'
+    camera = CameraComponent('cam', shot.caches['cam'], parent=shot)
+    camera.wrapData()
+    if not camera.cameraTransform:
+        pm.confirmDialog(title='No Camera', ma='center', icon='information', message='No camera to cache', button=['OK'],
+                         defaultButton='OK', dismissString='ok')
         return
 
-    path = database.getPath(shotMData, dirLocation='cacheLocation', ext='')
-    cachePath = os.path.join(*path)
+    shot.caches['cam']['cacheVer'] += 1
+    cacheFullPath = camera.getCachePublishPath(make=True)
 
-    if not os.path.exists(cachePath):
-        os.makedirs(cachePath)
+    jobCam = ' -root ' + camera.cameraTransform.name()
+    jobFile = " -file " + cacheFullPath
 
-    # get all geometry on geo_group
-    jobCam = ' -root ' + camera
-
-    # make path and name for alembic file
-    cacheMData = itemCaches['cam']  # get the data for this component
-
-    # get version and increment
-    cacheMData['cacheVer'] += 1
-
-    ver = cacheMData['cacheVer']
-
-    # get cache publish path
-
-    cacheName = database.templateName(cacheMData) + '_cam'
-    cacheFileName = str('v%03d_' % ver) + cacheName
-    cacheFullPath = os.path.join(cachePath, cacheFileName)
-
-    jobFile = " -file " + cacheFullPath + ".abc "
-
-    # get scene frame range
     ini = str(int(pm.playbackOptions(q=True, min=True)))
     fim = str(int(pm.playbackOptions(q=True, max=True)))
     jobFrameRange = ' -frameRange ' + ini + ' ' + fim
@@ -196,4 +162,4 @@ def cacheCamera(task, code):
     # do caching
     pm.AbcExport(j=jobArg)
 
-    collection.find_one_and_update({'task': task, 'code': code}, {'$set': shotMData})
+    shot.putDataToDB()

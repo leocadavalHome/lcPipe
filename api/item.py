@@ -18,16 +18,22 @@ class Item(object):
         self.path = []
         self.filename = None
         self.status = None
+        self.frameRange = []
         self.source = {}
         self.components = {}
         self.caches = {}
+        self.noData = True
 
-        if not self._getDataFromDB():
-            raise Exception("The item found no data")
+        if self._getDataFromDB():
+            self.noData=False
+        else:
+            print "The item found no data", self.projectName, self.task, self.code, self.type
+
 
     def _getDataFromDB(self):
         itemMData = database.getItemMData(projName=self.projectName, task=self.task, code=self.code,
                                           itemType=self.type, fromScene=self.fromScene)
+
         if not itemMData:
             return False
 
@@ -43,6 +49,7 @@ class Item(object):
         self.filename = itemMData['filename']
         self.status = itemMData['status']
         self.source = itemMData['source']
+        self.frameRange = itemMData['frameRange']
         self.components = itemMData['components']
 
         if 'caches' in itemMData:
@@ -60,6 +67,7 @@ class Item(object):
 
     def getDataDict(self):
         itemMData={}
+
         itemMData['name'] = self.name
         itemMData['code'] = self.code
         itemMData['task'] = self.task
@@ -72,9 +80,10 @@ class Item(object):
         itemMData['filename'] = self.filename
         itemMData['status'] = self.status
         itemMData['source'] = self.source
+        itemMData['frameRange'] = self.frameRange
         itemMData['components'] = self.components
 
-        if 'caches' in itemMData:
+        if self.caches:
             itemMData['caches'] = self.caches
 
         return itemMData
