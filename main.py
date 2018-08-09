@@ -17,8 +17,8 @@ class Session:
         pm.menuItem(label="Browser", command=self.browserCallback)
         pm.menuItem(label="Publish Scene", command=self.publishCallback)
         pm.menuItem(label="Update Scene", command=self.sceneCheckCallback)
-        pm.menuItem (label="scriptJob Update Scene", command=self.scriptJobSceneCheckCallback)
-        pm.menuItem (label="scriptJob kill", command=self.killall)
+        pm.menuItem(label="scriptJob Update Scene", command=self.scriptJobSceneCheckCallback)
+        pm.menuItem(label="scriptJob kill", command=self.killall)
 
     def sceneCheckCallback(self,*args):
         check.sceneRefCheck()
@@ -68,6 +68,11 @@ class Session:
                 print text
                 database.addProject (projectName=text, prefix=text[:2])
 
+    def saveAs(self):
+        #open a browser
+        #save file as selected task
+        pass
+
     def scriptJobSceneCheckCallback(self,*args):
         from lcPipe.core import check
         pm.scriptJob (event=['SceneOpened', check.sceneRefCheck])
@@ -75,3 +80,57 @@ class Session:
 
     def killall(self, *args):
         pm.scriptJob (ka=True)
+
+def createAssetPrompt(self):
+    form = pm.setParent(q=True)
+    f = pm.formLayout(form, e=True, width=150)
+
+    col2 = pm.columnLayout(p=f, adjustableColumn=True)
+    nsField = pm.textFieldGrp ( 'nsFieldPrompt', l='Name Space', tx='ref' )
+    refModeField = pm.optionMenuGrp ( l='Assemble Mode' )
+    pm.menuItem(l='reference')
+    pm.menuItem(l='cache')
+    pm.menuItem(l='import')
+    pm.menuItem(l='copy')
+    pane = pm.paneLayout(p=col2, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)])
+    folderTreeWidget = FolderTreeWidget()
+    folderTreeWidget.createFolderTree(pane)
+    folderTreeWidget.projectName = self.projectName
+    folderTreeWidget.type = 'asset'
+    folderTreeWidget.getFolderTree()
+
+    itemListWidget = ItemListBase()
+    itemListWidget.projectName = self.projectName
+    itemListWidget.createList(pane)
+    itemListWidget.refreshList(path=[], task='rig')
+
+    infoWidget = InfoWidget()
+    infoWidget.createInfo(pane)
+
+    folderTreeWidget.itemListWidget = itemListWidget
+    folderTreeWidget.itemListWidget.type = 'asset'
+    folderTreeWidget.itemListWidget.task = 'rig'
+    itemListWidget.infoWidget = infoWidget
+
+    b1 = pm.button(p=f, l='Cancel', c='pm.layoutDialog( dismiss="Abort" )')
+    b2 = pm.button(p=f, l='OK', c=lambda x: self.createAssetCallBack(itemListWidget.selectedItem))
+
+    spacer = 5
+    top = 5
+    edge = 5
+    pm.formLayout(form, edit=True,
+                  attachForm=[(col2, 'right', edge), (col2, 'top', top), (col2, 'left', edge), (b1, 'right', edge),
+                              (b1, 'bottom', edge), (b2, 'left', edge), (b2, 'bottom', edge)], attachNone=[],
+                  attachControl=[], attachPosition=[(b1, 'right', spacer, 90), (b2, 'left', spacer, 10)])
+
+def createAssetCallBack(self, component, *args):
+    if component:
+        ns = pm.textFieldGrp('nsFieldPrompt', q=True, tx=True)
+
+        database.addComponent(self.item, ns, component.task, component.code, 'reference', update=True)
+
+        createdTasks = database.getShotCreatedTasks(self.item)
+        for itemMData in createdTasks:
+            database.addComponent(itemMData, ns, component.task, component.code, 'reference', update=True)
+
+        pm.layoutDialog(dismiss='ok')

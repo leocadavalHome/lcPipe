@@ -39,6 +39,20 @@ class ItemWidget(ItemBase):
             if resp == 'Yes':
                 sceneBuild.build(itemType, self.task, self.code)
 
+    def buildAsCallback(self, proxyMode='', *args):
+        print 'build'
+        itemMData = self.getItem()
+
+        itemType = database.getTaskType(self.task)
+        if itemMData['status'] == 'notCreated':
+            sceneBuild.build(itemType, self.task, self.code)
+        else:
+            resp = pm.confirmDialog(title='Confirm',
+                                    message='This item is already built \n Do you want to rebuild?',
+                                    button=['Yes', 'No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+            if resp == 'Yes':
+                sceneBuild.build(itemType, self.task, self.code)
+
     def shotManagerCallback(self, *args):
         itemMData = self.getItem()
         shotMng = ShotManager(itemMData)

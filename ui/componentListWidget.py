@@ -107,14 +107,14 @@ class ComponentListWidget(ItemListBase):
         itemListWidget = ItemListBase()
         itemListWidget.projectName = self.projectName
         itemListWidget.createList(pane)
-        itemListWidget.refreshList(path=[], task='rig')
+        itemListWidget.refreshList(path=[], task='uvs')
 
         infoWidget = InfoWidget()
         infoWidget.createInfo(pane)
 
         folderTreeWidget.itemListWidget = itemListWidget
         folderTreeWidget.itemListWidget.type = 'asset'
-        folderTreeWidget.itemListWidget.task = 'rig'
+        folderTreeWidget.itemListWidget.task = 'uvs'
         itemListWidget.infoWidget = infoWidget
 
         b1 = pm.button(p=f, l='Cancel', c='pm.layoutDialog( dismiss="Abort" )')

@@ -66,10 +66,17 @@ def getDefaultDict():
 
                                 'static': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
                                                      'source': []},
+                                           'proxy': {'type': 'asset', 'phase': 'preProd', 'short': 'prx',
+                                                     'source': []},
+                                           'gpu': {'type': 'asset', 'phase': 'preProd', 'short': 'gpu',
+                                                     'source': [('model', 'reference')]},
                                            'uvs': {'type': 'asset', 'phase': 'preProd', 'short': 'uvs',
                                                    'source': [('model', 'import')]},
                                            'texture': {'type': 'asset', 'phase': 'preProd', 'short': 'tex',
-                                                       'source': [('uvs', 'reference')]}},
+                                                       'source': [('uvs', 'reference')]},
+                                           'xlo': {'type': 'asset', 'phase': 'preProd', 'short': 'xlo',
+                                                'source': [('texture', 'import')]}},
+
                                 'camera': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
                                                      'source': []},
                                            'rig': {'type': 'asset', 'phase': 'preProd', 'short': 'rig', 'source': []}},
@@ -442,7 +449,7 @@ def addComponent(item, ns, componentTask, componentCode, assembleMode, update=Tr
 
     componentMData = compCollection.find_one({'task': componentTask, 'code': componentCode})  # hardcode so assets
     componentDict = {'code': componentCode, 'ver': 1, 'updateMode': 'last', 'task': componentTask,
-                     'assembleMode': assembleMode, 'type': componentMData['type']}
+                     'assembleMode': assembleMode, 'proxyMode': '', 'type': componentMData['type']}
 
     nsList = item['components'].keys()
     index = 1
@@ -620,6 +627,6 @@ def getShotCreatedTasks (itemMData):
     result = []
     for task in cursor:
         del task['_id']
-        if getPhase(task)=='prod' and task['task']!='layout':
+        if getPhase(task) == 'prod' and task['task']!='layout':
             result.append(task)
     return result

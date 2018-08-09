@@ -11,12 +11,13 @@ class SceneSource(Source):
         super(SceneSource, self).__init__(ns, componentMData, parent)
 
     def addReferenceToScene(self):
+        print 'addRefs'
         item = self.getItem()
         componentPath = item.getPublishPath()
         pm.createReference(componentPath, namespace=self.ns)
 
         newComponentDict = {'code': self.code, 'ver': item.publishVer, 'updateMode': self.updateMode,
-                            'task': self.task, 'assembleMode': self.assembleMode, 'type': self.type}
+                            'task': self.task, 'proxyMode': "", 'assembleMode': self.assembleMode, 'type': self.type}
 
         return newComponentDict
 

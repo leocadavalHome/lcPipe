@@ -123,8 +123,7 @@ def cacheScene(task, code):
 
     collection.find_one_and_update({'task': task, 'code': code}, {'$set': shotMData})
 
-    print 'Cache Ver: %s' % ver
-
+    print 'Cache Ver: %s'
 
 def cacheCamera(task, code):
 
@@ -132,7 +131,7 @@ def cacheCamera(task, code):
 
     if 'cam' not in shot.caches:
         shot.caches['cam'] = {'code': '0000', 'ver': 1, 'updateMode': 'last', 'task': 'rig',
-                              'assembleMode': 'camera', 'type': 'asset', 'cacheVer':0, 'name':''}
+                              'assembleMode': 'camera', 'type': 'asset', 'cacheVer': 0, 'name': ''}
 
     camera = CameraComponent('cam', shot.caches['cam'], parent=shot)
     camera.wrapData()

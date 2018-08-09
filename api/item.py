@@ -1,7 +1,9 @@
 import pymel.core as pm
 import os.path
 from lcPipe.core import database
-
+"""
+Item base class, a task of an asset or shot.
+"""
 class Item(object):
     def __init__(self, projName=None, task=None, code=None, itemType=None, fromScene=False):
 
@@ -41,6 +43,7 @@ class Item(object):
         self.code = itemMData['code']
         self.task = itemMData['task']
         self.type = itemMData['type']
+        self.proxyMode = ''
         self.workflow = itemMData['workflow']
         self.projPrefix = itemMData['projPrefix']
         self.workVer = itemMData['workVer']
@@ -95,6 +98,7 @@ class Item(object):
         folderPath = os.path.join(*self.path)
         phase = project['workflow'][self.workflow][self.task]['phase']
         filename = self.filename
+        proxyMode = self.proxyMode
 
         if ext:
             ext = '.' + ext
@@ -102,33 +106,47 @@ class Item(object):
         else:
             ext = ''
 
-        dirPath = os.path.join(location, phase, taskFolder, folderPath)
+        dirPath = os.path.join(location, phase, taskFolder, folderPath, filename, proxyMode)
         filename = filename + ext
 
         return dirPath, filename
 
-    def getPublishPath (self):
+    def getPublishPath (self, make=False):
         path = self.getPath(dirLocation='publishLocation')
+
+        if make:
+            if not os.path.exists(path[0]):
+                os.makedirs(path[0])
+
         version = 'v%03d_' % self.publishVer
         return os.path.join(path[0], version + path[1])
 
-    def getWorkPath(self):
+    def getWorkPath(self, make=False):
         path = self.getPath()
+
+        if make:
+            if not os.path.exists(path[0]):
+                os.makedirs(path[0])
+
         return os.path.join(*path)
 
     def open(self):
         pm.openFile(self.getWorkPath(), f=True)
+
+    def saveAs(self):
+        fileName = self.getWorkPath(make=True)
+        pm.saveAs(fileName)
+
+    def save(self):
+        #add log to item data
+        pass
 
     def publish(self):
         originalName = pm.sceneName()
 
         self.publishVer += 1
 
-        fullPath = self.getPublishPath()
-        dirPath = self.getPath(dirLocation='publishLocation')[0]
-        if not os.path.exists(dirPath):
-            print ('creating:' + dirPath)
-            os.makedirs(dirPath)
+        fullPath = self.getPublishPath(make=True)
 
         # save scene
         pm.saveAs(fullPath)

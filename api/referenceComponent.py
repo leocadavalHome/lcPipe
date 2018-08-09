@@ -11,6 +11,11 @@ class ReferenceComponent(Component):
         componentPath = item.getPublishPath()
         pm.createReference(componentPath, namespace=self.ns)
 
+    def replaceProxyMode(self):
+        proxyItem = self.getItem(task=self.proxyMode)
+
+        pass
+
     def updateVersion(self, ref):
         refInfo = RefInfo(ref)
         self.checkDBForNewVersion()

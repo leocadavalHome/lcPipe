@@ -42,6 +42,7 @@ class ItemListBase(object):
         else:
             self.path = path
             self.task = task
+            print task
             self.type = database.getTaskType(task)
 
         collection = database.getCollection(self.type)
@@ -65,7 +66,6 @@ class ItemListBase(object):
         self.selectedItem = None
 
         for itemMData in result:
-
             if not code and (task == 'asset' or task == 'shot'):
                 templateToUse = [x for x in itemListProj['assetNameTemplate'] if x != '$task']
                 name = database.templateName(itemMData, template=templateToUse)

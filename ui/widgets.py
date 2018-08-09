@@ -9,7 +9,12 @@ from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.itemListWidget import ItemListWidget
 from lcPipe.ui.projectSelectWidget import ProjectSelectWidget
 from lcPipe.api.item import Item
+from lcPipe.ui.itemListBase import ItemListBase
 
+
+"""
+
+"""
 class itemBrowser:
     def __init__(self):
         self.projectSelectWidget = None
@@ -110,3 +115,80 @@ class PublishWidget(publish.PublishWidget):
             version.open(type=item.type, task=item.task, code= item.code,force=True)
         else:
             pm.newFile(f=True, new=True)
+
+
+class PublishAsWidget (publish.PublishWidget):
+    def __init__(self, task=None, code=None, assetType=None, proxyMode=''):
+        super(PublishAsWidget, self).__init__(task)
+        self.task = task
+        self.code = code
+        self.type = assetType
+        self.proxyMode = proxyMode
+
+    def publishFile(self, *args):
+        # get database info on item
+        item = Item(task=self.task, code=self.code, itemType=self.type)
+        item.proxyMode = self.proxyMode
+        item.publishAs()
+        version.takeSnapShot(item.getDataDict())
+        self.closeWin()
+
+        print 'publish ver %s, at %s' % (item.publishVer, item.getPublishPath())
+        resp = pm.confirmDialog(title='Warning', ma='center',
+                                message='PUBLISH: %s %s \n Reopen working task?' % (item.name, item.task),
+                                button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
+
+        if resp == 'Ok':
+            version.open(type=item.type, task=item.task, code=item.code, force=True)
+        else:
+            pm.newFile(f=True, new=True)
+
+
+class AssetPrompt:
+    ##todo fazer funcionar o asset Prompt generico
+        def __init__(self):
+            self.createAssetPrompt()
+
+        def createAssetPrompt(self):
+            form = pm.setParent(q=True)
+            f = pm.formLayout(form, e=True, width=150)
+
+            col2 = pm.columnLayout(p=f, adjustableColumn=True)
+            pane = pm.paneLayout(p=col2, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)])
+            folderTreeWidget = FolderTreeWidget()
+            print 'ok'
+            folderTreeWidget.createFolderTree(pane)
+            print 'ok2'
+            folderTreeWidget.projectName = database.getCurrentProject()
+            folderTreeWidget.type = 'asset'
+            folderTreeWidget.getFolderTree()
+
+            itemListWidget = ItemListBase()
+            itemListWidget.projectName = database.getCurrentProject()
+            itemListWidget.createList(pane)
+            itemListWidget.refreshList(path=[], task='asset')
+
+            infoWidget = InfoWidget()
+            infoWidget.createInfo(pane)
+
+            folderTreeWidget.itemListWidget = itemListWidget
+            folderTreeWidget.itemListWidget.type = 'asset'
+            folderTreeWidget.itemListWidget.task = 'asset'
+            itemListWidget.infoWidget = infoWidget
+
+            b1 = pm.button(p=f, l='Cancel', c='pm.layoutDialog( dismiss="Abort" )')
+            b2 = pm.button(p=f, l='OK', c=lambda x: self.createAssetCallBack(itemListWidget.selectedItem))
+
+            spacer = 5
+            top = 5
+            edge = 5
+            pm.formLayout(form, edit=True,
+                          attachForm=[(col2, 'right', edge), (col2, 'top', top), (col2, 'left', edge), (b1, 'right', edge),
+                                      (b1, 'bottom', edge), (b2, 'left', edge), (b2, 'bottom', edge)], attachNone=[],
+                          attachControl=[], attachPosition=[(b1, 'right', spacer, 90), (b2, 'left', spacer, 10)])
+
+        def createAssetCallBack(self, component, *args):
+            if component:
+                print component
+
+                pm.layoutDialog(dismiss='ok')

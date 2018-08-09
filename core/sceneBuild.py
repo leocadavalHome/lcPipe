@@ -30,8 +30,7 @@ def build(itemType, task, code):
             return
 
         cameraMData = {'code': '0000', 'ver': cameraItem.publishVer, 'updateMode': 'last',
-                      'task': 'rig', 'assembleMode': 'camera', 'type': 'asset'}
-
+                      'task': 'rig', 'assembleMode': 'camera','proxyMode':'rig', 'type': 'asset'}
         camera = CameraComponent('cam', cameraMData, parent=item)
 
 
