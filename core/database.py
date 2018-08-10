@@ -181,6 +181,7 @@ def getCollection(itemType, projectName=None):
 
 ##DATABASE
 def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=False):
+
     if fromScene:
         print 'fromScene'
         projName = pm.fileInfo.get('projectName')
@@ -211,7 +212,7 @@ def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=F
     return item
 
 
-def putItemMData(itemMData, projName=None, task=None, code=None, itemType=None, fromScene=True):
+def putItemMData(itemMData, projName=None, task=None, code=None, itemType=None, fromScene=False):
     if not itemMData:
         print 'ERROR putItemData: no item metadata in function call:'
 
@@ -397,7 +398,7 @@ def codeCheck(code, itemType):
     return code, nextItem
 
 
-def createItem(itemType, name, path, workflow, code=None, frameRange=None):
+def createItem(itemType, name, path, workflow, code=None, frameRange=None, customData=None):
     global db
     global currentProject
 
@@ -415,7 +416,8 @@ def createItem(itemType, name, path, workflow, code=None, frameRange=None):
     for task in itemWorkflow.iterkeys():
         itemsDict[task] = {'name': name, 'code': validatedCode, 'task': task, 'type': itemType, 'workflow': workflow,
                            'projPrefix': proj['prefix'], 'workVer': 0, 'publishVer': 0, 'path': path, 'filename': '',
-                           'status': 'notCreated', 'source': {}, 'components': {}, 'frameRange': frameRange}
+                           'status': 'notCreated', 'source': {}, 'components': {}, 'frameRange': frameRange,
+                           'customData': customData}
 
         fileName = templateName(itemsDict[task])
         itemsDict[task]['filename'] = fileName
@@ -423,9 +425,9 @@ def createItem(itemType, name, path, workflow, code=None, frameRange=None):
     for task, value in itemWorkflow.iteritems():
         for sourceTask in value['source']:
             itemsDict[task]['source'][sourceTask[0]] = {'code': validatedCode, 'ver': 1,
-                                                           'updateMode': 'last', 'task': sourceTask[0],
-                                                           'assembleMode': sourceTask[1],
-                                                           'type': itemType}
+                                                        'updateMode': 'last', 'task': sourceTask[0],
+                                                        'assembleMode': sourceTask[1],
+                                                        'type': itemType}
         if 'components' in value.keys():
             itemsDict[task]['components'] = value['components']
 

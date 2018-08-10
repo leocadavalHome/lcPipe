@@ -25,8 +25,10 @@ class Item(object):
         self.components = {}
         self.caches = {}
         self.noData = True
+        self.customData = {}
 
         if self._getDataFromDB():
+
             self.noData=False
         else:
             print "The item found no data", self.projectName, self.task, self.code, self.type
@@ -54,7 +56,7 @@ class Item(object):
         self.source = itemMData['source']
         self.frameRange = itemMData['frameRange']
         self.components = itemMData['components']
-
+        self.customData = itemMData['customData']
         if 'caches' in itemMData:
             self.caches = itemMData['caches']
 
@@ -85,6 +87,7 @@ class Item(object):
         itemMData['source'] = self.source
         itemMData['frameRange'] = self.frameRange
         itemMData['components'] = self.components
+        itemMData['customData'] = self.customData
 
         if self.caches:
             itemMData['caches'] = self.caches

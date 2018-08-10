@@ -4,6 +4,10 @@ import json
 from pprint import pprint
 import os.path
 import lcPipe.core.database as database
+from lcPipe.api.item import Item
+import shutil
+import re
+import os
 
 with open('T:/test.json') as f:
     data = json.load(f)
@@ -67,38 +71,70 @@ def search(components, level=0):
             print (('  '*level) + 'nao tem components key')
 search(data['components'])
 
+
+def insertFileInfo(path, projectName=None, task=None, code=None, type=None):
+    if not os.path.exists(path):
+        print 'file not exists'
+        return
+
+    newLines = []
+    with open(path, 'rt') as scene_file:
+        old_lines = scene_file.readlines ()
+        for line in old_lines:
+            newLine = None
+            match = re.search('fileInfo "application" "maya";', line)
+            if match:
+                newLines.append('fileInfo "projectName" "'+projectName+'";\n')
+                newLines.append('fileInfo "task" "'+task+'";\n')
+                newLines.append('fileInfo "code" "'+code+'";\n')
+                newLines.append('fileInfo "type" "'+type+'";\n')
+                newLines.append(line)
+            else:
+                newLines.append(line)
+
+    with open(path, 'wt') as scene_file:
+        scene_file.writelines(newLines)
+
+
 def ingestAtPath(pathSrc, pathTgt):
-    pass
-pathTgt = ['set','howlingtonClassroom', 'setPieces']
+    setPiecesPath = r'wolftv\asset\set_piece'
+    proxyModelPath = r'modeling\proxy_model\source'
+
+    setPiecesFullPath = os.path.join(pathSrc, setPiecesPath)
+    fileList = pm.getFileList(folder=setPiecesFullPath)
+
+    for piece in fileList:
+        print 'importing %s to pipeLine' % piece
+        fileName = piece
+        versionPath = os.path.join(setPiecesFullPath, fileName, proxyModelPath)
+        versionsAvailable = pm.getFileList(folder = versionPath)
+        maxVer = 0
+        for ver in versionsAvailable:
+            verNum = int(ver[1:])
+            maxVer = max(maxVer, verNum)
+            version = 'v%03d' % maxVer
+
+        pieceFullPath = os.path.join(versionPath, version)
+        pieceFile = pm.getFileList(folder=pieceFullPath)[0]
+        pieceFullPath = os.path.join(pieceFullPath, pieceFile)
+
+        ingestionDict = {'name': fileName, 'version': maxVer, 'sourcePath': pieceFullPath,
+                         'assetType': 'set_piece', 'task': 'proxy', 'setAssemble': os.path.split(pathSrc)[-1]}
+
+        database.incrementNextCode ('asset', fromBegining=True)
+        itemMData = database.createItem(itemType='asset', name=fileName, path=pathTgt, workflow='static',
+                                        customData={'ingestData': ingestionDict})
+
+        item = Item(task='proxy',code=itemMData['proxy']['code'])
+        item.status = 'created'
+        item.putDataToDB()
+
+        workPath = item.getWorkPath(make=True)
+        shutil.copyfile(pieceFullPath, workPath)
+        prj = database.getCurrentProject()
+        insertFileInfo(workPath, projectName=prj, task=item.task, code=item.code, type=item.type)
+        print '%s imported as %s' % (piece, item.task+item.code+item.name)
+
+pathTgt = ['set', 'howlingtonClassroom', 'setPieces']
 pathSrc = r'T:\FTP Downloaded Files\howlingtonClassroom'
-setPiecesPath  = r'wolftv\asset\set_piece'
-proxyModelPath = r'modeling\proxy_model\source'
-
-setPiecesFullPath = os.path.join (pathSrc, setPiecesPath)
-print setPiecesFullPath
-fileList = pm.getFileList(folder=setPiecesFullPath)
-print fileList
-
-for piece in fileList:
-    fileName = piece
-    versionPath = os.path.join(setPiecesFullPath, fileName, proxyModelPath)
-    versionsAvailable = pm.getFileList(folder = versionPath)
-    maxVer = 0
-    for ver in versionsAvailable:
-        verNum = int(ver[1:])
-        maxVer = max(maxVer, verNum)
-        version = 'v%03d' % maxVer
-
-    pieceFullPath = os.path.join(versionPath, version)
-    pieceFile = pm.getFileList(folder = pieceFullPath)[0]
-    pieceFullPath = os.path.join (pieceFullPath, pieceFile)
-
-    print pieceFullPath
-    ingestionDict = {'name': fileName, 'version': maxVer, 'sourcePath': pieceFullPath,
-                     'assetType': 'set_piece', 'task': 'proxy', 'setAssemble': os.path.split(pathSrc)[-1]}
-
-    print ingestionDict
-    print database.createItem(itemType='asset', name=fileName, path=pathTgt, workflow='static')
-
-
-
+ingestAtPath(pathSrc, pathTgt)

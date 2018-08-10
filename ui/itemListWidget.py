@@ -3,6 +3,7 @@ from lcPipe.core import database
 from lcPipe.core import version
 from lcPipe.ui.itemWidget import ItemWidget
 from lcPipe.ui.itemListBase import ItemListBase
+import time
 
 class ItemListWidget(ItemListBase):
     def __init__(self):
@@ -14,8 +15,8 @@ class ItemListWidget(ItemListBase):
 
     def refreshList(self, path=None, task=None, code=None, itemMData=None):
         color = (0, 0, 0)
-        x = None
 
+        start_time = time.time ()
         itemListProj = database.getProjectDict()
 
         if itemMData:
@@ -27,10 +28,11 @@ class ItemListWidget(ItemListBase):
             self.task = task
             self.type = database.getTaskType(task)
 
+
         collection = database.getCollection(self.type)
 
         if code:
-            result = collection.find({'path': self.path, 'code': code})
+            result = collection.find ({'path': self.path, 'code': code})
         else:
             if self.task == 'asset':
                 result = collection.find({'path': self.path, 'task': 'model'})
@@ -39,6 +41,10 @@ class ItemListWidget(ItemListBase):
             else:
                 result = collection.find({'path': self.path, 'task': task})
 
+        elapsed_time = time.time () - start_time
+        print '%s to get items from db' % elapsed_time
+
+        start_time = time.time ()
         flowChilds = pm.flowLayout(self.widgetName, q=True, ca=True)
         if flowChilds:
             for i in flowChilds:
@@ -48,7 +54,6 @@ class ItemListWidget(ItemListBase):
         self.selectedItem = None
 
         for itemMData in result:
-
             if not code and (task == 'asset' or task == 'shot'):
                 templateToUse = [x for x in itemListProj['assetNameTemplate'] if x != '$task']
                 name = database.templateName(itemMData, template=templateToUse)
@@ -84,6 +89,9 @@ class ItemListWidget(ItemListBase):
             x.code = itemMData['code']
             self.itemList.append(x)
             x.addToLayout(self.viewOption)
+
+        elapsed_time = time.time () - start_time
+        print '%s to put items on ui' % elapsed_time
 
     def addItemCallBack(self, *args):
         if not self.path:
