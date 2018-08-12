@@ -1,5 +1,7 @@
 import pymel.core as pm
 from lcPipe.core import database
+import logging
+logger = logging.getLogger(__name__)
 
 ### INTERFACE
 class ItemBase(object):
@@ -42,15 +44,15 @@ class ItemBase(object):
 
     def clickCallBack(self, *args):
         if self.selected:
-            pm.rowLayout(self.name, e=True, backgroundColor=self.color)
+            pm.layout(self.name, e=True, backgroundColor=self.color)
             self.parentWidget.selectedItem = None
             self.selected = False
         else:
             if self.parentWidget.selectedItem:
-                pm.rowLayout(self.parentWidget.selectedItem.name, e=True,
+                pm.layout(self.parentWidget.selectedItem.name, e=True,
                                   backgroundColor=self.parentWidget.selectedItem.color)
                 self.parentWidget.selectedItem.selected = False
-            pm.rowLayout(self.name, e=True, backgroundColor=(.27, .27, .27))
+            pm.layout(self.name, e=True, backgroundColor=(.27, .27, .27))
             self.parentWidget.selectedItem = self
             self.selected = True
             if self.infoWidget:
@@ -60,7 +62,7 @@ class ItemBase(object):
         return [self.task, self.code]
 
     def removeCallback(self, *args):
-        print 'remove Item'
+        logger.debug('remove Item')
         itemType = database.getTaskType(self.task)
         database.removeItem(itemType, self.code)
         pm.evalDeferred('cmds.deleteUI("' + self.widgetName + '")')
@@ -68,13 +70,13 @@ class ItemBase(object):
 
     def addToLayout(self, option):
         if option == 1:
-            self.widgetName = pm.rowLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color, nc=2, w=140, h=70, dragCallback=self.dragCallback)
-
-            pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack, doubleClickCommand=self.dClickCallBack, h=70, w=70)
+            self.widgetName = pm.columnLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color,w=140, h=75, dragCallback=self.dragCallback)
+            pm.text(label=self.itemName,  font="boldLabelFont")
+            pm.separator(h=5)
+            pm.rowLayout(nc=2)
+            pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack, doubleClickCommand=self.dClickCallBack, h=50, w=50)
             pm.columnLayout()
             pm.text(label=self.label,  font="smallPlainLabelFont")
-            pm.separator(h=2)
-            pm.text(label=self.itemName,  font="smallBoldLabelFont")
             pm.separator(h=2, st='in')
             pm.text(label='code:%s' % self.code,   font="smallPlainLabelFont")
             pm.text(label='user: non',  font="smallPlainLabelFont")
@@ -82,15 +84,14 @@ class ItemBase(object):
             self.addMenus()
 
         elif option == 2:
-            self.widgetName = pm.rowLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color, nc=2,
-                                           w=100, h=40, dragCallback=self.dragCallback)
-
+            self.widgetName = pm.columnLayout(self.name, p=self.parentWidget.widgetName, backgroundColor=self.color,
+                                               w=100, h=45, dragCallback=self.dragCallback)
+            pm.text(label=self.itemName, font="smallBoldLabelFont")
+            pm.rowLayout(nc=5)
             pm.iconTextButton(image=self.imgPath, style='iconOnly', command=self.clickCallBack,
-                              doubleClickCommand=self.dClickCallBack,h=40,w=40)
+                              doubleClickCommand=self.dClickCallBack,h=30,w=30)
             pm.columnLayout()
             pm.text(label=self.label,  font="smallPlainLabelFont")
-            pm.separator(h=3)
-            pm.text(label=self.itemName, font="smallBoldLabelFont")
             self.addMenus()
 
     def addMenus(self):

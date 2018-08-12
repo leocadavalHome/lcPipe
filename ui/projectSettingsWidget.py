@@ -2,7 +2,8 @@ import pymel.core as pm
 import os.path
 from lcPipe.core import database
 from lcPipe.ui.folderTreeEditableWidget import FolderTreeEditableWidget
-
+import logging
+logger = logging.getLogger(__name__)
 
 class ProjectSettingsWidget():
     def __init__(self, projectName=None):
@@ -24,24 +25,23 @@ class ProjectSettingsWidget():
 
         if self.new:
             if not projName:
-                print 'Please choose a name for the project!!'
+                pm.confirmDialog (title='error', ma='center', message='Please choose a name for the project!!', button=['OK'],
+                                  defaultButton='OK', dismissString='OK')
                 return
 
             existName = database.getProjectDict(projName)
 
             if existName:
-                print 'This Name exists. Please choose another name'
+                pm.confirmDialog (title='error', ma='center', message='This Name exists. Please choose another name', button=['OK'],
+                                  defaultButton='OK', dismissString='OK')
                 return
 
-            print 'create project'
-            print self.projDict
             database.addProject(**self.projDict)
             pm.deleteUI(self.parentWidget.projPopUp)
             self.parentWidget.makePopup()
             self.parentWidget.changeProjectCallBack(projName)
 
         else:
-            print 'edit project'
             database.putProjectDict(self.projDict, projName)
 
         pm.deleteUI(self.win)
@@ -50,7 +50,6 @@ class ProjectSettingsWidget():
         pm.deleteUI(self.win)
 
     def browseCallback(self, opt, *args):
-        print 'browse'
         resultDir = pm.fileDialog2(cap='choose directory', okCaption='Select', fm=3, dialogStyle=2)
         if resultDir:
             selectDir = os.path.normpath(resultDir[0])

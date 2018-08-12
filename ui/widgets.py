@@ -10,7 +10,8 @@ from lcPipe.ui.itemListWidget import ItemListWidget
 from lcPipe.ui.projectSelectWidget import ProjectSelectWidget
 from lcPipe.api.item import Item
 from lcPipe.ui.itemListBase import ItemListBase
-
+import logging
+logger = logging.getLogger(__name__)
 
 """
 
@@ -37,9 +38,15 @@ class itemBrowser:
 
         pm.rowLayout(nc=3, adj=1)
         self.typeOpt = pm.optionMenuGrp(label='Item Type', changeCommand=self.changeTypeCallback, cat=[[1,'left',5],[2,'left',-80]])
-        types = ['asset', 'shot', 'model', 'uvs', 'texture', 'blendShape', 'rig', 'layout', 'animation',
-                 'shotFinalizing', 'lightining', 'render']
-        for assetType in types:
+        pm.menuItem(label='asset')
+        pm.menuItem(label='shot')
+        pm.menuItem(divider=True)
+        typesAsset = database.getAllTasks('asset')
+        for assetType in typesAsset:
+            pm.menuItem(label=assetType)
+        pm.menuItem(divider=True)
+        typesShot = database.getAllTasks('shot')
+        for assetType in typesShot:
             pm.menuItem(label=assetType)
 
         pm.symbolButton(image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/small.png', c=lambda x, y=2: self.changeViewCallback(y))
@@ -106,7 +113,7 @@ class PublishWidget(publish.PublishWidget):
         version.takeSnapShot(item.getDataDict())
         self.closeWin()
 
-        print 'publish ver %s, at %s' % (item.publishVer, item.getPublishPath())
+        logger.debug('publish ver %s, at %s' % (item.publishVer, item.getPublishPath()))
         resp = pm.confirmDialog(title='Warning', ma='center',
                                 message='PUBLISH: %s %s \n Reopen working task?' % (item.name, item.task),
                                 button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
@@ -133,7 +140,7 @@ class PublishAsWidget (publish.PublishWidget):
         version.takeSnapShot(item.getDataDict())
         self.closeWin()
 
-        print 'publish ver %s, at %s' % (item.publishVer, item.getPublishPath())
+        logger.debug('publish ver %s, at %s' % (item.publishVer, item.getPublishPath()))
         resp = pm.confirmDialog(title='Warning', ma='center',
                                 message='PUBLISH: %s %s \n Reopen working task?' % (item.name, item.task),
                                 button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
@@ -156,9 +163,7 @@ class AssetPrompt:
             col2 = pm.columnLayout(p=f, adjustableColumn=True)
             pane = pm.paneLayout(p=col2, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)])
             folderTreeWidget = FolderTreeWidget()
-            print 'ok'
             folderTreeWidget.createFolderTree(pane)
-            print 'ok2'
             folderTreeWidget.projectName = database.getCurrentProject()
             folderTreeWidget.type = 'asset'
             folderTreeWidget.getFolderTree()

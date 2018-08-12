@@ -1,6 +1,8 @@
 import pymel.core as pm
 from lcPipe.api.component import Component
 from lcPipe.api.refInfo import RefInfo
+import logging
+logger = logging.getLogger(__name__)
 
 class ReferenceComponent(Component):
     def __init__(self, ns, componentMData, parent=None):
@@ -19,14 +21,6 @@ class ReferenceComponent(Component):
     def updateVersion(self, ref):
         refInfo = RefInfo(ref)
         self.checkDBForNewVersion()
-
-        if self.code != refInfo.code:
-            print self.code
-            print refInfo.code
-
-        if self.task != refInfo.task:
-            print self.task
-            print refInfo.task
 
         resp = {}
         if self.ver != refInfo.ver:

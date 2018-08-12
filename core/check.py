@@ -4,6 +4,9 @@ from lcPipe.api.item import Item
 from lcPipe.api.cacheComponent import CacheComponent
 from lcPipe.api.xloComponent import XloComponent
 from lcPipe.api.referenceComponent import ReferenceComponent
+import logging
+logger = logging.getLogger(__name__)
+
 
 def checkVersions():
     """
@@ -48,7 +51,7 @@ def sceneRefCheck(silent=False):
     projName = pm.fileInfo.get('projectName')
 
     if currentProject != projName:
-        print 'ERROR sceneRefCheck: This file is from a project different from the current project'
+        logger.error('This file is from a project different from the current project')
         return
 
     item = Item(fromScene=True)  # get current scene metadata
@@ -109,17 +112,16 @@ def sceneRefCheck(silent=False):
 
     # Do the processing
     # delete
-    print 'toDelete:%s' % toDelete
+    logger.info('toDelete:%s' % toDelete)
     for ns in toDelete:
         refOnSceneList[ns].remove()
 
     # add
-    print 'toAdd:%s' % toAdd
+    logger.info('toAdd:%s' % toAdd)
     for ns in toAdd:
         if item.components[ns]['assembleMode'] == 'camera':
             continue
 
-        print ns
         if item.components[ns]['assembleMode'] == 'reference':
             component = ReferenceComponent(ns, item.components[ns], parent=item)
             component.addToScene()
@@ -164,16 +166,16 @@ def sceneRefCheck(silent=False):
     # Replace
     for ns in toReplace:
         if item.components[ns]['assembleMode'] == 'reference':
-            print item.components[ns]['task'], item.components[ns]['proxyMode']
+            logger.debug(item.components[ns]['task'], item.components[ns]['proxyMode'])
             item.components[ns]['task'] = item.components[ns]['proxyMode']
-            print item.components[ns]['task'], item.components[ns]['proxyMode']
+            logger.debug (item.components[ns]['task'], item.components[ns]['proxyMode'])
             component = ReferenceComponent(ns, item.components[ns], parent=item)
-            print component.getPublishPath()
+            logger.debug ( component.getPublishPath())
             # todo check if existe uma versao
             refOnSceneList[ns].replaceWith(component.getPublishPath())
     item.putDataToDB()
 
-    print 'done sceneChecking!'
+    logger.info('done sceneChecking!')
 
 def confirmPopUp(msg):
     return pm.confirmDialog(title='PopUp', ma='center', message=msg, button=['OK', 'Cancel'], defaultButton='OK',

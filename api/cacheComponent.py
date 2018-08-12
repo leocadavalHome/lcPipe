@@ -4,6 +4,8 @@ from lcPipe.api.refInfo import RefInfo
 from lcPipe.core import database
 import pymel.core as pm
 import os.path
+import logging
+logger = logging.getLogger(__name__)
 
 """
 Wraper for a cache scene component
@@ -58,17 +60,17 @@ class CacheComponent(Component):
             cacheMDataOnSource = sourceItem.caches[self.ns]
 
             if cacheMDataOnSource['cacheVer'] == 0:
-                print 'checkVersions: Cache not yet published!!'
+                logger.warn('checkVersions: Cache not yet published!!')
                 return
 
             if self.cacheVer != cacheMDataOnSource['cacheVer']:
                 self.cacheVer = cacheMDataOnSource['cacheVer']
-                print 'cache version %s updated to %s' % (self.cacheVer, cacheMDataOnSource['cacheVer'])
+                logger.info('cache version %s updated to %s' % (self.cacheVer, cacheMDataOnSource['cacheVer']))
             else:
-                print 'cache version %s ok' % self.cacheVer
+                logger.info ('cache version %s ok' % self.cacheVer)
             self.putToParent()
         else:
-            print 'No caches in source!!'
+            logger.warn('No caches in source!!')
         self.parent.putDataToDB()
 
 
@@ -98,14 +100,6 @@ class CacheComponent(Component):
         """
         refInfo = RefInfo(ref)
         self.checkDBForNewVersion()
-
-        if self.code != refInfo.code:
-            print self.code
-            print refInfo.code
-
-        if self.task != refInfo.task:
-            print self.task
-            print refInfo.task
 
         resp = {}
         if self.cacheVer != refInfo.cacheVer:

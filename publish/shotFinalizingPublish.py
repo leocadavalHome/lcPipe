@@ -8,7 +8,8 @@
 
 import pymel.core as pm
 import lcPipe.core.cache as cache
-
+import logging
+logger = logging.getLogger(__name__)
 
 def cacheAnimation(*args):
     try:

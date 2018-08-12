@@ -2,6 +2,8 @@ from lcPipe.api.component import Component
 from lcPipe.core import database
 import pymel.core as pm
 import os.path
+import logging
+logger = logging.getLogger(__name__)
 """
 Wraper for a camera scene component
 """
@@ -47,7 +49,6 @@ class CameraComponent(Component):
         Rename the camera after the scene name
         :return:
         """
-        print self.parent.getDataDict()
         cameraName = 'cam:'+self.parent.projPrefix + self.parent.code +'_' + self.parent.name+'_camera'
         if self.cameraTransform.name() != cameraName:
             pm.rename(self.cameraTransform, cameraName)

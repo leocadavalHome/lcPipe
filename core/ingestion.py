@@ -5,71 +5,115 @@ from pprint import pprint
 import os.path
 import lcPipe.core.database as database
 from lcPipe.api.item import Item
+from lcPipe.api.component import Component
 import shutil
 import re
 import os
+import logging
 
-with open('T:/test.json') as f:
-    data = json.load(f)
+logger = logging.getLogger(__name__)
 
-pprint(data)
-
-def readGroupAsset(path, level):
-    jsonPath = path.replace('.\wolftv', 'T:\FTP Downloaded Files\howlingtonClassroom\wolftv')
-
-    if not os.path.isfile(jsonPath):
-        print 'nao achou path!!'
-        return
-
-    with open (jsonPath) as f:
-        data2 = json.load (f)
-    print 'json'
-    search(data2['components'], level+1)
-    print 'endjson'
-
-def readFbRole(FbRole, level):
+def readFbRole(FbRole, level, maxDepth=0, searchInGroupAsset=True):
     assetType = FbRole['componentData']['assetType']
     assetCode = FbRole['componentData']['assetCode']
-
-    print (('  '*level) + assetCode, assetType)
+    assetInstanceNumber = FbRole['componentData']['instanceNumber']
 
     if assetType == 'set_piece':
-        modelAssetPath = FbRole['components'][0]['componentData']['sourcePath']
-        print (('  ' * (level + 1)) + modelAssetPath)
+        modelAssetTask = FbRole['components'][0]['componentData']['task']
         controlXform1 = FbRole['components'][1]['componentData']['inner_ctl_data']
         controlXform2 = FbRole['components'][1]['componentData']['mid_ctl_data']
         controlXform3 = FbRole['components'][1]['componentData']['outer_ctl_data']
-        print (('  ' * (level + 1)), controlXform1)
-        print (('  ' * (level + 1)), controlXform2)
-        print (('  ' * (level + 1)), controlXform3)
+
+        return {'name': assetCode, 'instanceNumber': assetInstanceNumber, 'subType': 'set_piece', 'task': modelAssetTask,
+                'xform': {'innerControl': controlXform1, 'midControl': controlXform2, 'outerControl': controlXform3},
+                'components': []}
+
     elif assetType == 'group':
-        print (('  ' * (level + 1)) + 'groupAsset')
+        groupAssetTask = FbRole['components'][0]['componentData']['task']
         groupAssetPath = FbRole['components'][0]['componentData']['sourcePath']
-        print (('  ' * (level + 1)) + groupAssetPath)
-        readGroupAsset(groupAssetPath, level+1)
+        controlXform1 = FbRole['components'][1]['componentData']['inner_ctl_data']
+        controlXform2 = FbRole['components'][1]['componentData']['mid_ctl_data']
+        controlXform3 = FbRole['components'][1]['componentData']['outer_ctl_data']
+
+        if searchInGroupAsset and (maxDepth == 0 or level < maxDepth):
+            jsonContent = readGroupAsset(groupAssetPath, level=level+1, maxDepth=maxDepth)
+        else:
+            jsonContent = {}
+
+        return {'name': assetCode, 'instanceNumber': assetInstanceNumber, 'subType': 'group', 'task': groupAssetTask,
+                'sourcePath': groupAssetPath,
+                'xform': {'innerControl': controlXform1, 'midControl': controlXform2, 'outerControl': controlXform3},
+                'components': jsonContent}
 
 
-def readGroup (group, level):
+def readGroup (group, level, maxDepth=0, searchInGroupAsset=True):
     assetlabel = group['componentData']['label']
     assetXform = group['componentData']['xform']
-    print (('  '*level) + assetlabel, assetXform)
-
-
-def search(components, level=0):
-    for elem in components:
-        print (('  '*level) + elem['componentClass'])
-        if elem['componentClass'] == 'FbRole':
-            readFbRole(elem, level)
-
-        elif elem['componentClass'] == 'Group':
-            readGroup(elem, level)
-
-        if 'components' in elem:
-            if elem['components']:
-                search(elem['components'], level=level+1)
+    if 'components' in group:
+        if group['components'] and (maxDepth == 0 or level < maxDepth):
+            componentContent = search(group['components'], level=level + 1, maxDepth=maxDepth, searchInGroupAsset=searchInGroupAsset)
         else:
-            print (('  '*level) + 'nao tem components key')
-search(data['components'])
+            componentContent = []
+    else:
+        logger.error('There is no component key on Dict')
+        componentContent = []
+
+    return {'name': assetlabel, 'xform': {'groupControl': assetXform}, 'components': componentContent}
+
+def readGroupAsset(path, level, maxDepth=0):
+    jsonPath = path.replace('.\wolftv', 'T:\FTP Downloaded Files\howlingtonClassroom\wolftv')  # todo remove hard Code!!
+    if not os.path.isfile(jsonPath):
+        logger.error('Path not found!!')
+        return {'error path not found'}
+
+    with open(jsonPath) as f:
+        data2 = json.load(f)
+
+    jsonContent = search(data2['components'], level=level, maxDepth=maxDepth)
+
+    return jsonContent
+
+
+def readDescription(path, level, maxDepth=0, searchInGroupAsset=True):
+    jsonPath = path.replace('.\wolftv', 'T:\FTP Downloaded Files\howlingtonClassroom\wolftv')  # todo remove hard Code!!
+    if not os.path.isfile(jsonPath):
+        logger.error('Path not found!!')
+        return {'error path not found'}
+
+    with open(jsonPath) as f:
+        data2 = json.load(f)
+
+    jsonContent = search(data2['components'], level=level, maxDepth=maxDepth, searchInGroupAsset=searchInGroupAsset)
+
+    return jsonContent
+
+
+def search(components, level=0, maxDepth=0, searchInGroupAsset=True):
+    returnList = []
+    for elem in components:
+
+        if elem['componentClass'] == 'FbRole':
+            content = readFbRole(elem, level, maxDepth, searchInGroupAsset=searchInGroupAsset)
+        elif elem['componentClass'] == 'Group':
+            content = readGroup(elem, level, maxDepth, searchInGroupAsset=searchInGroupAsset)
+        else:
+            return []
+
+        returnList.append(content)
+
+    return returnList
+
+x = readDescription('T:/group.json', 1, maxDepth=4, searchInGroupAsset=True)
+#pprint(x)
+def printDescription (x):
+    for a in x:
+        print a['name']
+        for b in a['components']:
+            print '-->',b['name']
+            for c in b['components']:
+                print '    -->', c['name']
+                for d in c['components']:
+                    print '        -->', d['name']
 
 
 def insertFileInfo(path, projectName=None, task=None, code=None, type=None):
@@ -134,7 +178,81 @@ def ingestAtPath(pathSrc, pathTgt):
         prj = database.getCurrentProject()
         insertFileInfo(workPath, projectName=prj, task=item.task, code=item.code, type=item.type)
         print '%s imported as %s' % (piece, item.task+item.code+item.name)
+'''
+### read description
+with open('T:/test.json') as f:
+    data = json.load(f)
 
+pprint(data)
+
+
+logger.setLevel(logging.DEBUG)
+
+
+##ingest pieces
 pathTgt = ['set', 'howlingtonClassroom', 'setPieces']
 pathSrc = r'T:\FTP Downloaded Files\howlingtonClassroom'
 ingestAtPath(pathSrc, pathTgt)
+'''
+
+
+
+### group
+pathTgt = ['set', 'howlingtonClassroom', 'groups']
+pathSrc = r'T:\FTP Downloaded Files\howlingtonClassroom'
+
+groupPath = r'wolftv\asset\group'
+proxyModelPath = r'modeling\proxy_model\desc'
+
+groupsFullPath = os.path.join (pathSrc, groupPath)
+logger.debug('groupFullPath: %s' % groupsFullPath)
+fileList = pm.getFileList (folder=groupsFullPath)
+
+for group in fileList:
+    logger.info('importing %s to pipeLine' % group)
+    fileName = group
+    versionPath = os.path.join(groupsFullPath, fileName, proxyModelPath)
+    logger.debug('versionPath: %s' % versionPath)
+    versionsAvailable = pm.getFileList(folder=versionPath)
+    logger.debug('versionAvailable: %s' % versionsAvailable)
+    maxVer = 0
+    for ver in versionsAvailable:
+        verNum = int (ver[1:])
+        maxVer = max (maxVer, verNum)
+        version = 'v%03d' % maxVer
+        logger.info(version)
+
+    groupFullPath = os.path.join(versionPath, version)
+    groupFile = pm.getFileList(folder=groupFullPath)[0]
+    groupFullPath = os.path.join(groupFullPath, groupFile)
+    logger.debug('groupFullPath: %s' % groupFullPath)
+    ingestionDict = {'name': fileName, 'version': maxVer, 'sourcePath': groupFullPath,
+                 'assetType': 'group', 'task': 'proxy', 'setAssemble': os.path.split(pathSrc)[-1]}
+
+    descDict = readDescription(groupFullPath, 1, maxDepth=0, searchInGroupAsset=False)
+    printDescription(descDict)
+    for component in descDict:
+        logger.debug(component)
+        logger.debug(component['name'])
+        logger.debug(component['instanceNumber'])
+
+    database.incrementNextCode('asset', fromBegining=True)
+    # create Item on Database
+    itemMData = database.createItem(itemType='asset', name=fileName, path=pathTgt, workflow='group', customData={'ingestData': ingestionDict})
+    itemProxy = Item(task='proxy', code=itemMData['proxy']['code'])
+    itemModel = Item(task='model', code=itemMData['model']['code'])
+
+    for component in descDict:
+        logger.debug(component)
+
+'''
+        component = Component(ns= component['name']+str(component['instanceNumber'], )
+
+        database.addComponent(item=itemProxy, ns=component['name']+str(component['instanceNumber']),
+                              componentTask=component['task'], componentCode=component.code,
+                              assembleMode='reference', update=True)
+        database.addComponent(item=itemModel, ns=component['name']+str(component['instanceNumber']),
+                              componentTask=component.task, componentCode=component.code,
+                              assembleMode='reference', update=True)
+'''
+

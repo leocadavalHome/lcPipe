@@ -1,14 +1,15 @@
-
 from lcPipe.publish.modelPublish import *
 from lcPipe.publish.uvPublish import *
 from lcPipe.publish.texPublish import *
 from lcPipe.publish.shotFinalizingPublish import *
+import logging
+logger = logging.getLogger(__name__)
 
 def skip(*args):
     for a in args:
-        print a
+        logger.debug (a)
 
-    print 'skip'
+    logger.debug ('skip')
     return 'skip'
 
 
@@ -177,7 +178,6 @@ class PublishWidget(object):
                                   label=self.checksDict[id]['label'] + ' Ok')
 
         if sucess:
-            print 'item valid!'
             self.runPrePublish()
 
     def runFix(self, fix, id):
@@ -212,13 +212,13 @@ class PublishWidget(object):
                 error = True
 
         if not error:
-            print 'prePublish succeeded'
+            logger.debug('prePublish succeeded')
             pm.button(self.btn, e=True, label='PUBLISH', c=self.publishFile, bgc=[0.0,0.5,0.0] )
         else:
             resp = pm.confirmDialog(title='Warning', ma='center',
                                     message='Error: Pre Publish Procedure Failled !' ,
                                     button=['Ok'], defaultButton='ok', dismissString='ok')
-            print 'prePublish failed'
+            logger.debug ('prePublish failed')
 
     def publishFile(self, *args):
         pass

@@ -4,6 +4,8 @@ from lcPipe.core import sceneBuild
 from lcPipe.core import database
 from lcPipe.ui.itemBase import ItemBase
 from lcPipe.ui.shotManager import ShotManager
+import logging
+logger = logging.getLogger(__name__)
 
 ### INTERFACE
 class ItemWidget(ItemBase):
@@ -17,7 +19,6 @@ class ItemWidget(ItemBase):
             self.openCallback()
         
     def openCallback(self, *args):
-        print 'open'
         itemMData = self.getItem()
 
         if itemMData['status'] == 'notCreated':
@@ -27,7 +28,6 @@ class ItemWidget(ItemBase):
         version.open(type=itemMData['type'], task=itemMData['task'], code=itemMData['code'])
 
     def buildCallback(self, *args):
-        print 'build'
         itemMData = self.getItem()
         itemType = database.getTaskType(self.task)
         if itemMData['status'] == 'notCreated':
@@ -40,7 +40,6 @@ class ItemWidget(ItemBase):
                 sceneBuild.build(itemType, self.task, self.code)
 
     def buildAsCallback(self, proxyMode='', *args):
-        print 'build'
         itemMData = self.getItem()
 
         itemType = database.getTaskType(self.task)

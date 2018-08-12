@@ -1,7 +1,8 @@
 import pymel.core as pm
 from lcPipe.core import database
 from lcPipe.ui.itemBase import ItemBase
-
+import logging
+logger = logging.getLogger(__name__)
 
 class ComponentWidget(ItemBase):
     def __init__(self, name, itemName, imgPath, label, status, parentWidget, color=(0, .2, .50)):

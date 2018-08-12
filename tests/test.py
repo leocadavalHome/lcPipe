@@ -1,3 +1,8 @@
-import lcPipe.ui.widgets as widgets
-reload (widgets)
-x = widgets.AssetPrompt()
+from lcPipe.core import database
+
+
+project = database.getProjectDict()
+new = database.getDefaultDict()
+print new['workflow']
+print project['workflow']
+database.updateCurrentProjectKey('workflow', new['workflow'])

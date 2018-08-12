@@ -4,6 +4,8 @@ from lcPipe.core import version
 from lcPipe.ui.itemWidget import ItemWidget
 from lcPipe.ui.itemListBase import ItemListBase
 import time
+import logging
+logger = logging.getLogger(__name__)
 
 class ItemListWidget(ItemListBase):
     def __init__(self):
@@ -42,7 +44,7 @@ class ItemListWidget(ItemListBase):
                 result = collection.find({'path': self.path, 'task': task})
 
         elapsed_time = time.time () - start_time
-        print '%s to get items from db' % elapsed_time
+        logger.debug('%s to get items from db' % elapsed_time)
 
         start_time = time.time ()
         flowChilds = pm.flowLayout(self.widgetName, q=True, ca=True)
@@ -91,7 +93,7 @@ class ItemListWidget(ItemListBase):
             x.addToLayout(self.viewOption)
 
         elapsed_time = time.time () - start_time
-        print '%s to put items on ui' % elapsed_time
+        logger.debug('%s to put items on ui' % elapsed_time)
 
     def addItemCallBack(self, *args):
         if not self.path:

@@ -4,6 +4,8 @@ from lcPipe.core import version
 from lcPipe.ui.itemWidget import ItemWidget
 
 from lcPipe.ui.itemListBase import ItemListBase
+import logging
+logger = logging.getLogger(__name__)
 
 class ItemListFiltersWidget(ItemListBase):
     def __init__(self):
@@ -153,7 +155,6 @@ class ItemListFiltersWidget(ItemListBase):
         code = pm.textFieldGrp('CrAsset_codeField', q=True, tx=True)
 
         itemDict = database.createItem(self.type, name, self.path, workflow, code)
-        print itemDict
         if itemDict == 'codeExists':
             return pm.confirmDialog(title='error', ma='center', message='this code already exists', button=['OK'],
                                     defaultButton='OK', dismissString='OK')

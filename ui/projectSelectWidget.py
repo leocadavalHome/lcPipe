@@ -1,6 +1,8 @@
 import pymel.core as pm
 from lcPipe.core import database
 from lcPipe.ui.projectSettingsWidget import ProjectSettingsWidget
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ProjectSelectWidget:

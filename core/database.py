@@ -4,6 +4,8 @@ import os.path
 import os
 import pymongo
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 # The global variable for database acess
 db = None
@@ -53,6 +55,8 @@ def getDefaultDict():
                 'workflow': {
                                 'rig': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
                                                   'source': []},
+                                        'proxy': {'type': 'asset', 'phase': 'preProd', 'short': 'prx',
+                                                  'source': []},
                                         'uvs': {'type': 'asset', 'phase': 'preProd', 'short': 'uvs',
                                                 'source': [('model', 'import')]},
                                         'blendShape': {'type': 'asset', 'phase': 'preProd', 'short': 'bsp',
@@ -76,6 +80,13 @@ def getDefaultDict():
                                                        'source': [('uvs', 'reference')]},
                                            'xlo': {'type': 'asset', 'phase': 'preProd', 'short': 'xlo',
                                                 'source': [('texture', 'import')]}},
+
+                                'group': { 'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
+                                                     'source': []},
+                                           'proxy': {'type': 'asset', 'phase': 'preProd', 'short': 'prx',
+                                                     'source': []},
+                                           'gpu': {'type': 'asset', 'phase': 'preProd', 'short': 'gpu',
+                                                     'source': [('model', 'reference')]}},
 
                                 'camera': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
                                                      'source': []},
@@ -127,6 +138,10 @@ def getCurrentProject():
     global currentProject
     return currentProject
 
+def updateCurrentProjectKey(key, value):
+    global db
+    projectName = getCurrentProject()
+    db.projects.find_one_and_update({'projectName': projectName}, {'$set': {key: value}})
 
 def setCurrentProject(project):
     global currentProject
@@ -190,14 +205,14 @@ def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=F
         itemType = pm.fileInfo.get('type')
 
         if not projName or not task or not code or not itemType:
-            print 'ERROR getItemData: Cant get item Metadata. Scene has incomplete fileInfo:', projName, task, code, itemType
+            logger.error('Cant get item Metadata. Scene has incomplete fileInfo:%s %s %s %s' % (projName, task, code, itemType))
     else:
         if not task or not code:
-            print 'ERROR getItemData: Cant get item Metadata. Missing item ids on function call:', projName, task, code, itemType
+            logger.error ('Cant get item Metadata. Missing item ids on function call:%s %s %s %s' % (projName, task, code, itemType))
 
         if not itemType:
             itemType = getTaskType(task)
-            print 'WARNING getItemData: getting type from task', task, itemType
+            logger.warn('getItemData: getting type from task %s %s' % (task, itemType))
 
     if projName:
         collection = getCollection(itemType, projName)
@@ -207,14 +222,14 @@ def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=F
     item = collection.find_one({'task': task, 'code': code})
 
     if not item:
-        print 'ERROR getItemData: Cant find item Metadata on database:', projName, task, code, itemType
+        logger.error('Cant find item Metadata on database:%s %s %s %s' % (projName, task, code, itemType))
 
     return item
 
 
 def putItemMData(itemMData, projName=None, task=None, code=None, itemType=None, fromScene=False):
     if not itemMData:
-        print 'ERROR putItemData: no item metadata in function call:'
+        logger.error('No item metadata in function call')
 
     if fromScene:
         projName = pm.fileInfo.get('projectName')
@@ -223,15 +238,15 @@ def putItemMData(itemMData, projName=None, task=None, code=None, itemType=None, 
         itemType = pm.fileInfo.get('type')
 
         if not projName or not task or not code or not itemType:
-            print 'ERROR putItemData: Cant put item Metadata. Scene has incomplete fileInfo:', projName, task, code, itemType
+            logger.error('Cant put item Metadata. Scene has incomplete fileInfo:%s %s %s %s' % (projName, task, code, itemType))
             return
     else:
         if not task or not code:
-            print 'ERROR putItemData: Cant get item Metadata. Missing item ids on function call:', projName, task, code, itemType
+            logger.error('Cant get item Metadata. Missing item ids on function call:%s %s %s %s' % (projName, task, code, itemType))
 
         if not itemType:
             itemType = getTaskType(task)
-            print 'WARNING putItemData: getting type from task', task, itemType
+            logger.warn('getting type from task %s %s' % (task, itemType))
 
     collection = getCollection(itemType, projectName=projName)
     itemOut = collection.find_one_and_update({'task': task, 'code': code}, {'$set': itemMData})
@@ -394,7 +409,6 @@ def codeCheck(code, itemType):
         nextItem = True
         code = "%04d" % proj['next' + itemType.capitalize()]
 
-    print code, nextItem
     return code, nextItem
 
 
@@ -439,7 +453,7 @@ def createItem(itemType, name, path, workflow, code=None, frameRange=None, custo
 
 
 def removeItem(itemType, code):
-    print 'remove item'
+    logger.info('Remove item %s' % code)
     collection = getCollection(itemType)
     collection.delete_many({'code': code})
 
@@ -483,7 +497,7 @@ def find(code, task, collection):  # old!!
     if item:
         return item
     else:
-        print 'FIND: item not found'
+        logger.error('item not found')
         return
 
 
@@ -517,7 +531,7 @@ def getTaskLong(taskShort):
     if result:
         return result[0]
     else:
-        print 'ERROR getTaskLong: no long name for this task short!'
+        logger.error('No long name for this task short!')
 
 
 def getTaskShort(taskLong):
@@ -531,7 +545,16 @@ def getTaskShort(taskLong):
     if result:
         return result[0]
     else:
-        print 'ERROR getTaskShort: no short name for this task!'
+        logger.error('No short name for this task!')
+
+def getAllTasks (assetType=None):
+    project = getProjectDict()
+    taskList = []
+    for workflow in project['workflow'].itervalues ():
+        for key, value in workflow.iteritems():
+            if value['type'] == assetType:
+                taskList.append(key)
+    return sorted(list(set(taskList)))
 
 
 def getGeoGroupMembers(geoGroup):
@@ -557,7 +580,7 @@ def getConnectedAlembic(ref):
 
     alembicList = pm.ls(type='AlembicNode')
     if not alembicList:
-        print 'there is no cache assigned'
+        logger.info('There is no cache assigned')
         return
 
     for alembic in alembicList:

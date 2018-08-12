@@ -1,15 +1,31 @@
 import pymel.core as pm
+import logging
+import sys
+
 from lcPipe.core import database
 from lcPipe.core import check
 from lcPipe.ui import widgets
-from lcPipe.ui.projectSelectWidget import ProjectSelectWidget
+
+from lcPipe.ui.folderTreeWidget import FolderTreeWidget
+from lcPipe.ui.infoWidget import InfoWidget
+from lcPipe.ui.itemListBase import ItemListBase
+
+logger = logging.getLogger(__name__)
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+logger.setLevel(logging.DEBUG)
+
+
 
 class Session:
     def __init__(self):
         self.user = 'teste'
 
     def createMenu(self):
-        print 'initiating session'
+        logger.info('initiating session')
         if pm.menu('PipeMenu', exists=True):
             pm.deleteUI('PipeMenu')
 
@@ -45,15 +61,14 @@ class Session:
         pubWidget.createWin()
 
     def currentPrj(self, *args):
-        print database.currentProject
+        return database.currentProject
 
     def checkProjects(self):
         all = database.getAllProjects()
         allProjects = [x for x in all]
-        print allProjects
 
         if not allProjects:
-            print 'no project found!!'
+            logger.error('no project found!!')
 
             result = pm.promptDialog (
                 title='No project',
@@ -65,7 +80,6 @@ class Session:
 
             if result == 'OK':
                 text = pm.promptDialog (query=True, text=True)
-                print text
                 database.addProject (projectName=text, prefix=text[:2])
 
     def saveAs(self):

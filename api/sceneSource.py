@@ -1,17 +1,17 @@
 import pymel.core as pm
-import os.path
-from lcPipe.core import database
 from lcPipe.api.source import Source
 from lcPipe.api.cacheComponent import CacheComponent
 from lcPipe.api.xloComponent import XloComponent
-from lcPipe.api.cameraComponent import CameraComponent
+import logging
+logger = logging.getLogger(__name__)
+
 
 class SceneSource(Source):
     def __init__(self, ns, componentMData, parent=None):
         super(SceneSource, self).__init__(ns, componentMData, parent)
 
     def addReferenceToScene(self):
-        print 'addRefs'
+        logger.info('addRefs')
         item = self.getItem()
         componentPath = item.getPublishPath()
         pm.createReference(componentPath, namespace=self.ns)
@@ -36,12 +36,11 @@ class SceneSource(Source):
 
     def addCacheToScene(self):
         item = self.getItem()
-        print item.getDataDict()
         for cache_ns, cacheMData in item.caches.iteritems():
             cache = CacheComponent(cache_ns, cacheMData, self.parent)
 
             if cache.cacheVer == 0:
-                print 'Component %s not yet published!!' % (cache_ns + ':' + cacheMData['task'] + cacheMData['code'])
+                logger.warn('Component %s not yet published!!' % (cache_ns + ':' + cacheMData['task'] + cacheMData['code']))
                 continue
 
             cacheFullPath = cache.getPublishPath()
@@ -64,7 +63,7 @@ class SceneSource(Source):
             xlo = XloComponent(xlo_ns, xloMData, parent=self.parent)
 
             if xlo.ver == 0:
-                print 'Component %s not yet published!!' % (xlo_ns + ':' + xlo.task + xlo.code)
+                logger.warn ('Component %s not yet published!!' % (xlo_ns + ':' + xlo.task + xlo.code))
                 continue
 
             pm.createReference(xlo.getPublishPath(), namespace=xlo_ns)
@@ -75,7 +74,7 @@ class SceneSource(Source):
             cache = CacheComponent(cache_ns, cacheMData, self.parent)
 
             if cache.cacheVer == 0:
-                print 'Component %s not yet published!!' % (cache_ns + ':' + cache.task+ cache.code)
+                logger.warn ('Component %s not yet published!!' % (cache_ns + ':' + cache.task+ cache.code))
                 continue
 
             pm.AbcImport(cache.getPublishPath(), mode='import', fitTimeRange=True, setToStartFrame=True, connect='/')

@@ -5,7 +5,8 @@ from lcPipe.ui.componentWidget import ComponentWidget
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.itemListBase import ItemListBase
-
+import logging
+logger = logging.getLogger(__name__)
 
 class ComponentListWidget(ItemListBase):
     def __init__(self):

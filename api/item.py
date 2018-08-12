@@ -1,6 +1,8 @@
 import pymel.core as pm
 import os.path
 from lcPipe.core import database
+import logging
+logger = logging.getLogger(__name__)
 """
 Item base class, a task of an asset or shot.
 """
@@ -31,7 +33,7 @@ class Item(object):
 
             self.noData=False
         else:
-            print "The item found no data", self.projectName, self.task, self.code, self.type
+            logger.error("The item found no data", self.projectName, self.task, self.code, self.type)
 
 
     def _getDataFromDB(self):
@@ -40,25 +42,27 @@ class Item(object):
 
         if not itemMData:
             return False
-
-        self.name = itemMData['name']
-        self.code = itemMData['code']
-        self.task = itemMData['task']
-        self.type = itemMData['type']
-        self.proxyMode = ''
-        self.workflow = itemMData['workflow']
-        self.projPrefix = itemMData['projPrefix']
-        self.workVer = itemMData['workVer']
-        self.publishVer = itemMData['publishVer']
-        self.path = itemMData['path']
-        self.filename = itemMData['filename']
-        self.status = itemMData['status']
-        self.source = itemMData['source']
-        self.frameRange = itemMData['frameRange']
-        self.components = itemMData['components']
-        self.customData = itemMData['customData']
-        if 'caches' in itemMData:
-            self.caches = itemMData['caches']
+        try:
+            self.name = itemMData['name']
+            self.code = itemMData['code']
+            self.task = itemMData['task']
+            self.type = itemMData['type']
+            self.proxyMode = ''
+            self.workflow = itemMData['workflow']
+            self.projPrefix = itemMData['projPrefix']
+            self.workVer = itemMData['workVer']
+            self.publishVer = itemMData['publishVer']
+            self.path = itemMData['path']
+            self.filename = itemMData['filename']
+            self.status = itemMData['status']
+            self.source = itemMData['source']
+            self.frameRange = itemMData['frameRange']
+            self.components = itemMData['components']
+            self.customData = itemMData['customData']
+            if 'caches' in itemMData:
+                self.caches = itemMData['caches']
+        except:
+            return False
 
         return True
 
@@ -72,25 +76,26 @@ class Item(object):
 
     def getDataDict(self):
         itemMData={}
-
-        itemMData['name'] = self.name
-        itemMData['code'] = self.code
-        itemMData['task'] = self.task
-        itemMData['type'] = self.type
-        itemMData['workflow'] = self.workflow
-        itemMData['projPrefix'] = self.projPrefix
-        itemMData['workVer'] = self.workVer
-        itemMData['publishVer'] = self.publishVer
-        itemMData['path'] = self.path
-        itemMData['filename'] = self.filename
-        itemMData['status'] = self.status
-        itemMData['source'] = self.source
-        itemMData['frameRange'] = self.frameRange
-        itemMData['components'] = self.components
-        itemMData['customData'] = self.customData
-
-        if self.caches:
-            itemMData['caches'] = self.caches
+        try:
+            itemMData['name'] = self.name
+            itemMData['code'] = self.code
+            itemMData['task'] = self.task
+            itemMData['type'] = self.type
+            itemMData['workflow'] = self.workflow
+            itemMData['projPrefix'] = self.projPrefix
+            itemMData['workVer'] = self.workVer
+            itemMData['publishVer'] = self.publishVer
+            itemMData['path'] = self.path
+            itemMData['filename'] = self.filename
+            itemMData['status'] = self.status
+            itemMData['source'] = self.source
+            itemMData['frameRange'] = self.frameRange
+            itemMData['components'] = self.components
+            itemMData['customData'] = self.customData
+            if self.caches:
+                itemMData['caches'] = self.caches
+        except:
+            logger.error('Cant get dataDict')
 
         return itemMData
 

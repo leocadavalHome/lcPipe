@@ -2,7 +2,8 @@ import pymel.core as pm
 import os.path
 from lcPipe.core import database
 from lcPipe.api.item import Item
-
+import logging
+logger = logging.getLogger(__name__)
 
 def checkModified():
     import maya.cmds as cmds
@@ -18,15 +19,13 @@ def checkModified():
 def open (type, task, code, force=False):
     if not force:
         resp = checkModified()
-        print resp
+
         if resp == 'Save':
-            print pm.saveFile()
+            pm.saveFile()
 
         elif resp == 'Cancel':
-            print 'canceling'
             return
 
-    print 'opening'
     item = Item(task=task, code=code, itemType=type)
     item.open()
 
@@ -49,7 +48,6 @@ def takeSnapShot(itemMData=None, thumbPath=None):
 
         thumbPath = os.path.join(thumbDir, itemDir[1])
 
-    print thumbPath
     pm.playblast(frame = 1, format="image", compression="jpg",orn=False,  cf=thumbPath , v=False, fo=True, wh=[100,100], p=100, os=True )
 
 

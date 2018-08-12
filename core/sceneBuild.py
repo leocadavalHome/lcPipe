@@ -4,6 +4,10 @@ from lcPipe.core import database
 from lcPipe.api.item import Item
 from lcPipe.api.sceneSource import SceneSource
 from lcPipe.api.cameraComponent import CameraComponent
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def build(itemType, task, code):
     parcial = False
@@ -20,9 +24,8 @@ def build(itemType, task, code):
     newComponentsDict = {}
 
     if item.type == 'shot':
-        print 'creating camera...'
+        logger.debug('creating camera...')
         cameraItem = Item(task='rig', code='0000', itemType='asset')
-        print cameraItem.noData
         if cameraItem.noData:
             pm.confirmDialog(title='No base camera', ma='center',
                              message='Please make an asset code:0000 as base camera',
@@ -46,7 +49,7 @@ def build(itemType, task, code):
         sourceItem = source.getItem()
 
         if sourceItem.publishVer == 0:
-            print 'Component %s not yet published!!' % (ns + ':' + source.task + source.code)
+            logger.warn('Component %s not yet published!!' % (ns + ':' + source.task + source.code))
             parcial = True
             continue
 

@@ -2,7 +2,8 @@ import pymel.core as pm
 from lcPipe.core import database
 from lcPipe.core import version
 from lcPipe.ui.itemBase import ItemBase
-
+import logging
+logger = logging.getLogger(__name__)
 
 class ItemListBase(object):
     def __init__(self):
@@ -42,7 +43,6 @@ class ItemListBase(object):
         else:
             self.path = path
             self.task = task
-            print task
             self.type = database.getTaskType(task)
 
         collection = database.getCollection(self.type)

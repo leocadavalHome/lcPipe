@@ -1,4 +1,6 @@
 from lcPipe.core import database
+import logging
+logger = logging.getLogger(__name__)
 
 class RefInfo (object):
     def __init__(self, ref):

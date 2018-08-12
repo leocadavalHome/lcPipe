@@ -5,6 +5,9 @@ import os.path
 from lcPipe.core import database
 from lcPipe.api.item import Item
 from lcPipe.api.cameraComponent import CameraComponent
+import logging
+logger = logging.getLogger(__name__)
+
 def cachePrompt(refs):
     """
 
@@ -83,7 +86,7 @@ def cacheScene(task, code):
         for geo in geos:
             if '|' in geo:
 
-                print 'PROBLEMA de nomeacao na geo %s' % geo
+                logger.error('Naming problem on geo %s' % geo)
             else:
                 jobGeos = jobGeos + ' -root ' + geo
 
@@ -123,7 +126,7 @@ def cacheScene(task, code):
 
     collection.find_one_and_update({'task': task, 'code': code}, {'$set': shotMData})
 
-    print 'Cache Ver: %s'
+    logger.info('Cache Ver: %s')
 
 def cacheCamera(task, code):
 

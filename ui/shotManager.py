@@ -3,6 +3,8 @@ from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.componentListWidget import ComponentListWidget
 from lcPipe.core import check
 from lcPipe.core import version
+import logging
+logger = logging.getLogger(__name__)
 
 class ShotManager:
     def __init__(self, itemMData):
@@ -41,7 +43,6 @@ class ShotManager:
         pm.deleteUI(self.win)
 
     def updateCallback (self, *args):
-        print 'mexeu'
         info = pm.fileInfo.keys()
         if 'code' in info and 'task' in info:
             code = pm.fileInfo['code']
@@ -49,7 +50,6 @@ class ShotManager:
 
             if code and task:
                 if code == self.itemMData['code'] and task == self.itemMData['task']:
-                    print 'same file. Updating'
                     check.sceneRefCheck(silent=True)
                     pm.deleteUI (self.win)
                     return

@@ -3,7 +3,8 @@ import shutil
 
 import lcPipe.core.database as database
 import pymel.core as pm
-
+import logging
+logger = logging.getLogger(__name__)
 
 def imagesOnDir(*args):
     fileNodes = pm.ls(type='file')
@@ -24,7 +25,6 @@ def copyImagesToDir(*args):
         workPath = database.getSceneImagesPath('imagesWorkLocation')
 
         if not os.path.normpath(imgDir) == os.path.normpath(workPath):
-            print 'diferentes'
             if not os.path.exists(workPath):
                 os.makedirs(workPath)
             shutil.copy2(imgPath, os.path.join(workPath, imageName))

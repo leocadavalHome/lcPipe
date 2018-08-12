@@ -5,6 +5,9 @@ from lcPipe.api.component import Component
 from lcPipe.core import database
 from lcPipe.api.item import Item
 from lcPipe.api.refInfo import RefInfo
+import logging
+logger = logging.getLogger(__name__)
+
 
 class XloComponent(Component):
     def __init__(self, ns, xloMData, parent=None):
@@ -27,17 +30,17 @@ class XloComponent(Component):
             cacheMDataOnSource = sourceItem.caches[self.ns]
 
             if cacheMDataOnSource['cacheVer'] == 0:
-                print 'checkVersions: Cache not yet published!!'
+                logger.warn('checkVersions: Cache not yet published!!')
                 return
 
             if self.cacheVer != cacheMDataOnSource['cacheVer']:
                 self.cacheVer = cacheMDataOnSource['cacheVer']
-                print 'cache version %s updated to %s' % (self.cacheVer, cacheMDataOnSource['cacheVer'])
+                logger.info('cache version %s updated to %s' % (self.cacheVer, cacheMDataOnSource['cacheVer']))
             else:
-                print 'cache version %s ok' % self.cacheVer
+                logger.info('cache version %s ok' % self.cacheVer)
             self.putToParent()
         else:
-            print 'No caches in source!!'
+            logger.warn('No caches in source!!')
         self.parent.putDataToDB()
 
     def getCachePublishPath(self, make=False):
@@ -64,14 +67,6 @@ class XloComponent(Component):
         refInfo = RefInfo(ref)
         self.checkDBForNewVersion()
         self.checkDBForNewCacheVersion()
-
-        if self.code != refInfo.code:
-            print self.code
-            print refInfo.code
-
-        if self.task != refInfo.task:
-            print self.task
-            print refInfo.task
 
         resp = {}
         if self.ver != refInfo.ver:
