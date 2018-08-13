@@ -440,8 +440,8 @@ def createItem(itemType, name, path, workflow, code=None, frameRange=None, custo
         for sourceTask in value['source']:
             itemsDict[task]['source'][sourceTask[0]] = {'code': validatedCode, 'ver': 1,
                                                         'updateMode': 'last', 'task': sourceTask[0],
-                                                        'assembleMode': sourceTask[1],
-                                                        'type': itemType}
+                                                        'assembleMode': sourceTask[1], 'proxyMode': '',
+                                                        'xform': {}, 'type': itemType}
         if 'components' in value.keys():
             itemsDict[task]['components'] = value['components']
 
@@ -459,13 +459,13 @@ def removeItem(itemType, code):
 
 
 # Items
-def addComponent(item, ns, componentTask, componentCode, assembleMode, update=True):
+def addComponent(item, ns, componentTask, componentCode, assembleMode, proxyMode='', xform={}, update=True):
     itemType = getTaskType(componentTask)
     compCollection = getCollection(itemType)
 
     componentMData = compCollection.find_one({'task': componentTask, 'code': componentCode})  # hardcode so assets
     componentDict = {'code': componentCode, 'ver': 1, 'updateMode': 'last', 'task': componentTask,
-                     'assembleMode': assembleMode, 'proxyMode': '', 'type': componentMData['type']}
+                     'assembleMode': assembleMode, 'proxyMode': proxyMode,'xform': xform, 'type': componentMData['type']}
 
     nsList = item['components'].keys()
     index = 1
@@ -567,7 +567,11 @@ def getCamera():
     cameras = pm.ls(type='camera', l=True)
     startup_cameras = [camera for camera in cameras if pm.camera(camera.parent(0), startupCamera=True, q=True)]
     cameraShape = list(set(cameras) - set(startup_cameras))
-    camera = map(lambda x: x.parent(0), cameraShape)[0]
+    if cameraShape:
+        camera = map(lambda x: x.parent(0), cameraShape)[0]
+    else:
+        camera = None
+
     return camera
 
 
@@ -654,4 +658,13 @@ def getShotCreatedTasks (itemMData):
         del task['_id']
         if getPhase(task) == 'prod' and task['task']!='layout':
             result.append(task)
+    return result
+
+def searchName (name=None):
+    collection = getCollection('asset')
+    cursor = collection.find({'name':name})
+    result = []
+    for item in cursor:
+        del item['_id']
+        result.append(item)
     return result

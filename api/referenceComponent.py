@@ -14,6 +14,7 @@ class ReferenceComponent(Component):
         pm.createReference(componentPath, namespace=self.ns)
 
     def replaceProxyMode(self):
+        # todo replace proxy mode!!
         proxyItem = self.getItem(task=self.proxyMode)
 
         pass

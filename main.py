@@ -16,8 +16,7 @@ stream_handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
-logger.setLevel(logging.DEBUG)
-
+logger.setLevel(10)
 
 
 class Session:

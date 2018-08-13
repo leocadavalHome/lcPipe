@@ -7,17 +7,22 @@ from lcPipe.api.cameraComponent import CameraComponent
 import logging
 
 logger = logging.getLogger(__name__)
+logger.setLevel(10)
 
 
 def build(itemType, task, code):
+    logger.debug('initiate Scene Building %s %s %s' % (task, code, itemType))
     parcial = False
     empty = True
 
     item = Item(task=task, code=code, itemType=itemType)
 
     if not item.source:
+        logger.debug('No source found. Using components')
+        logger.debug('components %s' % item.components)
         itemList = item.components
     else:
+        logger.debug('Using source')
         itemList = item.source
 
     pm.newFile(f=True, new=True)
@@ -36,21 +41,21 @@ def build(itemType, task, code):
                       'task': 'rig', 'assembleMode': 'camera','proxyMode':'rig', 'type': 'asset'}
         camera = CameraComponent('cam', cameraMData, parent=item)
 
-
-
         camera.wrapData()
         if not camera.cameraTransform:
             camera.addToScene()
         newComponentsDict['cam'] = camera.getDataDict()
 
-
+    logger.debug('item list %s' % itemList)
     for ns, sourceMData in itemList.iteritems():
         source = SceneSource(ns, sourceMData, parent=item)
+        logger.debug('source component %s' % source.getDataDict())
         sourceItem = source.getItem()
 
         if sourceItem.publishVer == 0:
             logger.warn('Component %s not yet published!!' % (ns + ':' + source.task + source.code))
             parcial = True
+            newComponentsDict[ns] = sourceMData
             continue
 
         empty = False
@@ -95,7 +100,7 @@ def build(itemType, task, code):
 
         pm.saveAs(sceneFullPath)
 
-        if parcial:
+        if parcial:  # todo make parcial rebuild
             item.status = 'partial'
             pm.confirmDialog(title='Warning', ma='center',
                              message='WARNING build: Some components have no publish to complete build this file!',

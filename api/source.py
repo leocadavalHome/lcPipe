@@ -13,7 +13,14 @@ class Source(object):
         self.ver = sourceMData['ver']
         self.updateMode = sourceMData['updateMode']
         self.assembleMode = sourceMData['assembleMode']
-
+        if 'xform' in sourceMData:
+            self.xform = sourceMData['xform']
+        else:
+            self.xform = None
+        if 'proxyMode' in sourceMData:
+            self.proxyMode = sourceMData['proxyMode']
+        else:
+            self.proxyMode = None
         if 'cacheVer' in sourceMData:
             self.cacheVer = sourceMData['cacheVer']
         else:
@@ -27,7 +34,10 @@ class Source(object):
         componentMData['ver'] = self.ver
         componentMData['updateMode'] = self.updateMode
         componentMData['assembleMode'] = self.assembleMode
-
+        if self.xform:
+            componentMData['xform']=self.xform
+        if self.proxyMode:
+            componentMData['proxyMode']=self.proxyMode
         if self.cacheVer:
             componentMData['cacheVer'] = self.cacheVer
 

@@ -103,8 +103,7 @@ def search(components, level=0, maxDepth=0, searchInGroupAsset=True):
 
     return returnList
 
-x = readDescription('T:/group.json', 1, maxDepth=4, searchInGroupAsset=True)
-#pprint(x)
+
 def printDescription (x):
     for a in x:
         print a['name']
@@ -230,29 +229,29 @@ for group in fileList:
                  'assetType': 'group', 'task': 'proxy', 'setAssemble': os.path.split(pathSrc)[-1]}
 
     descDict = readDescription(groupFullPath, 1, maxDepth=0, searchInGroupAsset=False)
-    printDescription(descDict)
-    for component in descDict:
-        logger.debug(component)
-        logger.debug(component['name'])
-        logger.debug(component['instanceNumber'])
 
     database.incrementNextCode('asset', fromBegining=True)
-    # create Item on Database
-    itemMData = database.createItem(itemType='asset', name=fileName, path=pathTgt, workflow='group', customData={'ingestData': ingestionDict})
+    itemMData = database.createItem(itemType='asset', name=fileName, path=pathTgt, workflow='group',
+                                    customData={'ingestData': ingestionDict})
+
     itemProxy = Item(task='proxy', code=itemMData['proxy']['code'])
     itemModel = Item(task='model', code=itemMData['model']['code'])
 
     for component in descDict:
-        logger.debug(component)
+        logger.debug('add %s to %s' % (component['name'], fileName))
+        logger.debug(component['xform'])
+        itemList = database.searchName(component['name'])
+        if 0 < len(itemList) > 1:
+            proxyComponentMData = database.addComponent(item=itemProxy.getDataDict(), ns='ref',
+                                                        componentCode=itemList[0]['code'],componentTask='proxy',
+                                                        assembleMode='reference', update=True,
+                                                        proxyMode='proxy', xform=component['xform'])
+            logger.debug('proxy comp:%s'% proxyComponentMData)
+            modelComponentMData = database.addComponent(item=itemModel.getDataDict(), ns='ref',
+                                                        componentCode=itemList[0]['code'], componentTask='model',
+                                                        assembleMode='reference', update=True,
+                                                        proxyMode='', xform=component['xform'])
+            logger.debug ('model comp:%s' % modelComponentMData)
 
-'''
-        component = Component(ns= component['name']+str(component['instanceNumber'], )
-
-        database.addComponent(item=itemProxy, ns=component['name']+str(component['instanceNumber']),
-                              componentTask=component['task'], componentCode=component.code,
-                              assembleMode='reference', update=True)
-        database.addComponent(item=itemModel, ns=component['name']+str(component['instanceNumber']),
-                              componentTask=component.task, componentCode=component.code,
-                              assembleMode='reference', update=True)
-'''
+# todo fazer as transformacoes dos components
 

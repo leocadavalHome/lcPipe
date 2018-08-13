@@ -22,6 +22,10 @@ class Component(object):
         self.ver = componentMData['ver']
         self.updateMode = componentMData['updateMode']
         self.assembleMode = componentMData['assembleMode']
+        if 'xform' in componentMData:
+            self.xform = componentMData['xform']
+        else:
+            self.xform = None
         if 'proxyMode' in componentMData:
             self.proxyMode = componentMData['proxyMode']
         else:
@@ -44,6 +48,8 @@ class Component(object):
         componentMData['ver'] = self.ver
         componentMData['updateMode'] = self.updateMode
         componentMData['assembleMode'] = self.assembleMode
+        if self.xform:
+            componentMData['xform']=self.xform
         if self.proxyMode:
             componentMData['proxyMode']=self.proxyMode
         if self.cacheVer:

@@ -17,7 +17,8 @@ class SceneSource(Source):
         pm.createReference(componentPath, namespace=self.ns)
 
         newComponentDict = {'code': self.code, 'ver': item.publishVer, 'updateMode': self.updateMode,
-                            'task': self.task, 'proxyMode': "", 'assembleMode': self.assembleMode, 'type': self.type}
+                            'task': self.task, 'proxyMode': self.proxyMode, 'xform': self.xform,
+                            'assembleMode': self.assembleMode, 'type': self.type}
 
         return newComponentDict
 

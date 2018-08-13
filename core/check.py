@@ -5,8 +5,10 @@ from lcPipe.api.cacheComponent import CacheComponent
 from lcPipe.api.xloComponent import XloComponent
 from lcPipe.api.referenceComponent import ReferenceComponent
 import logging
-logger = logging.getLogger(__name__)
 
+
+logger = logging.getLogger(__name__)
+logger.setLevel(10)
 
 def checkVersions():
     """
@@ -46,7 +48,7 @@ def sceneRefCheck(silent=False):
     :return:
     """
     uptodate = True
-    print 'init sceneChecking...'
+    logger.debug('init sceneChecking...')
     currentProject = database.getCurrentProject()
     projName = pm.fileInfo.get('projectName')
 
@@ -56,7 +58,9 @@ def sceneRefCheck(silent=False):
 
     item = Item(fromScene=True)  # get current scene metadata
 
+
     # compare references and metadata and create lists of references to add, delete, update and replace
+    logger.debug('creating lists of changes...')
     refOnSceneList = pm.getReferences()
     toDelete = [x for x in refOnSceneList if x not in item.components]
     toAdd = [x for x in item.components if x not in refOnSceneList and x != 'cam']
@@ -65,13 +69,16 @@ def sceneRefCheck(silent=False):
     toUpdate = {}
 
     # create the list of references to update depending on the assemble mode
+    logger.debug('check update...')
     for ns in refToCheckUpdate:
+        logger.debug('ns:%s' % ns)
         if item.components[ns]['assembleMode'] == 'camera':
             continue
 
         if item.components[ns]['assembleMode'] == 'reference':
             component = ReferenceComponent(ns, item.components[ns], parent=item)
             toUpdate[ns] = component.updateVersion(refOnSceneList[ns])
+
 
         if item.components[ns]['assembleMode'] == 'xlo':
             component = XloComponent(ns, item.components[ns], parent=item)
@@ -82,6 +89,7 @@ def sceneRefCheck(silent=False):
             toUpdate[ns] = cache.updateVersion(refOnSceneList[ns])
 
     # If not in silent mode, show dialogs to the user choose which references should be processed
+    logger.debug('prompt if needed')
     if not silent:
         if toDelete:
             uptodate = False
@@ -109,7 +117,7 @@ def sceneRefCheck(silent=False):
                              button=['OK'], defaultButton='OK', dismissString='OK')
 
 
-
+    logger.debug('processing...')
     # Do the processing
     # delete
     logger.info('toDelete:%s' % toDelete)

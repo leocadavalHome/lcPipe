@@ -136,6 +136,7 @@ class ComponentListWidget(ItemListBase):
             database.addComponent(self.item, ns, component.task, component.code, 'reference', update=True)
 
             createdTasks = database.getShotCreatedTasks(self.item)
+
             for itemMData in createdTasks:
                 database.addComponent(itemMData, ns, component.task, component.code, 'reference', update=True)
 
