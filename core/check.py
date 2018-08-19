@@ -174,11 +174,13 @@ def sceneRefCheck(silent=False):
     # Replace
     for ns in toReplace:
         if item.components[ns]['assembleMode'] == 'reference':
-            logger.debug(item.components[ns]['task'], item.components[ns]['proxyMode'])
+            logger.debug('task:%s, proxyMode:%s'%(item.components[ns]['task'], item.components[ns]['proxyMode']))
+
             item.components[ns]['task'] = item.components[ns]['proxyMode']
-            logger.debug (item.components[ns]['task'], item.components[ns]['proxyMode'])
+            logger.debug ('task:%s, proxyMode:%s'%(item.components[ns]['task'], item.components[ns]['proxyMode']))
             component = ReferenceComponent(ns, item.components[ns], parent=item)
             logger.debug ( component.getPublishPath())
+            logger.debug (refOnSceneList[ns].path)
             # todo check if existe uma versao
             refOnSceneList[ns].replaceWith(component.getPublishPath())
     item.putDataToDB()

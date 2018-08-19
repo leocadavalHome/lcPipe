@@ -22,14 +22,10 @@ class Component(object):
         self.ver = componentMData['ver']
         self.updateMode = componentMData['updateMode']
         self.assembleMode = componentMData['assembleMode']
-        if 'xform' in componentMData:
-            self.xform = componentMData['xform']
-        else:
-            self.xform = None
-        if 'proxyMode' in componentMData:
-            self.proxyMode = componentMData['proxyMode']
-        else:
-            self.proxyMode = None
+        self.onSceneParent = componentMData['onSceneParent']
+        self.xform = componentMData['xform']
+        self.proxyMode = componentMData['proxyMode']
+
         if 'cacheVer' in componentMData:
             self.cacheVer = componentMData['cacheVer']
         else:
@@ -48,10 +44,9 @@ class Component(object):
         componentMData['ver'] = self.ver
         componentMData['updateMode'] = self.updateMode
         componentMData['assembleMode'] = self.assembleMode
-        if self.xform:
-            componentMData['xform']=self.xform
-        if self.proxyMode:
-            componentMData['proxyMode']=self.proxyMode
+        componentMData['onSceneParent'] = self.onSceneParent
+        componentMData['xform'] = self.xform
+        componentMData['proxyMode'] = self.proxyMode
         if self.cacheVer:
             componentMData['cacheVer'] = self.cacheVer
 

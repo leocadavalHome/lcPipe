@@ -1,7 +1,9 @@
 from lcPipe.core import database
 import logging
 logger = logging.getLogger(__name__)
-
+"""
+Class to wrap a reference file
+"""
 class RefInfo (object):
     def __init__(self, ref):
 

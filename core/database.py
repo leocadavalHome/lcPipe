@@ -6,6 +6,7 @@ import pymongo
 import sys
 import logging
 logger = logging.getLogger(__name__)
+logger.setLevel(10)
 
 # The global variable for database acess
 db = None
@@ -29,7 +30,9 @@ def mongoConnect():
 
 ##Projects
 def getDefaultDict():
-    projDict = {'projectName': '', 'prefix': '', 'workLocation': u'D:/JOBS/PIPELINE/pipeExemple/scenes',
+    projDict = {'projectName': '',
+                'prefix': '',
+                'workLocation': u'D:/JOBS/PIPELINE/pipeExemple/scenes',
                 'publishLocation': u'D:/JOBS/PIPELINE/pipeExemple/publishes',
                 'imagesWorkLocation': u'D:/JOBS/PIPELINE/pipeExemple/sourceimages',
                 'imagesPublishLocation': u'D:/JOBS/PIPELINE/pipeExemple/publishes/sourceimages',
@@ -66,7 +69,7 @@ def getDefaultDict():
                                         'xlo': {'type': 'asset', 'phase': 'preProd', 'short': 'xlo',
                                                 'source': [('texture', 'import')]},
                                         'rig': {'type': 'asset', 'phase': 'preProd', 'short': 'rig',
-                                                'source': [('uvs', 'reference'),('blendShape', 'import')]}},
+                                                'source': [('uvs', 'reference'), ('blendShape', 'import')]}},
 
                                 'static': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
                                                      'source': []},
@@ -441,7 +444,7 @@ def createItem(itemType, name, path, workflow, code=None, frameRange=None, custo
             itemsDict[task]['source'][sourceTask[0]] = {'code': validatedCode, 'ver': 1,
                                                         'updateMode': 'last', 'task': sourceTask[0],
                                                         'assembleMode': sourceTask[1], 'proxyMode': '',
-                                                        'xform': {}, 'type': itemType}
+                                                        'xform': {}, 'onSceneParent': None, 'type': itemType}
         if 'components' in value.keys():
             itemsDict[task]['components'] = value['components']
 
@@ -459,18 +462,20 @@ def removeItem(itemType, code):
 
 
 # Items
-def addComponent(item, ns, componentTask, componentCode, assembleMode, proxyMode='', xform={}, update=True):
+def addComponent(item, ns, componentTask, componentCode, assembleMode, proxyMode='',
+                 xform={}, onSceneParent=None, update=True):
+
     itemType = getTaskType(componentTask)
     compCollection = getCollection(itemType)
 
     componentMData = compCollection.find_one({'task': componentTask, 'code': componentCode})  # hardcode so assets
     componentDict = {'code': componentCode, 'ver': 1, 'updateMode': 'last', 'task': componentTask,
-                     'assembleMode': assembleMode, 'proxyMode': proxyMode,'xform': xform, 'type': componentMData['type']}
+                     'assembleMode': assembleMode, 'proxyMode': proxyMode, 'xform': xform,
+                     'onSceneParent': onSceneParent, 'type': itemType}
 
     nsList = item['components'].keys()
     index = 1
     nsBase = ns
-
     while ns in nsList:
         ns = nsBase + str(index)
         index += 1
@@ -483,6 +488,31 @@ def addComponent(item, ns, componentTask, componentCode, assembleMode, proxyMode
 
     return item
 
+def addSource(item, ns, componentTask, componentCode, assembleMode, proxyMode='',
+                 xform={}, onSceneParent=None, update=True):
+
+    itemType = getTaskType(componentTask)
+    compCollection = getCollection(itemType)
+
+    componentMData = compCollection.find_one({'task': componentTask, 'code': componentCode})  # hardcode so assets
+    componentDict = {'code': componentCode, 'ver': 1, 'updateMode': 'last', 'task': componentTask,
+                     'assembleMode': assembleMode, 'proxyMode': proxyMode, 'xform': xform,
+                     'onSceneParent': onSceneParent, 'type': itemType}
+
+    nsList = item['source'].keys()
+    index = 1
+    nsBase = ns
+    while ns in nsList:
+        ns = nsBase + str(index)
+        index += 1
+
+    item['source'][ns] = componentDict
+
+    if update:
+        itemCollection = getCollection(item['type'])
+        result = itemCollection.find_one_and_update({'task': item['task'], 'code': item['code']}, {'$set': item})
+
+    return item
 
 def removeComponent(item, ns):
     del item['components'][ns]
@@ -668,3 +698,14 @@ def searchName (name=None):
         del item['_id']
         result.append(item)
     return result
+
+def addFolder(foldersToAdd=None, assetType='asset'):
+    projectDict = getProjectDict()
+    assetFolders = projectDict[assetType+'Folders']
+    parent = ''
+    for folder in foldersToAdd:
+        print folder
+        if folder not in assetFolders:
+            assetFolders[folder] = {'parent': parent}
+        parent = folder
+    updateCurrentProjectKey(assetType+'Folders', assetFolders)

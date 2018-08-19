@@ -5,6 +5,7 @@ import sys
 from lcPipe.core import database
 from lcPipe.core import check
 from lcPipe.ui import widgets
+from lcPipe.core import ingestion
 
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
@@ -25,6 +26,9 @@ class Session:
 
     def createMenu(self):
         logger.info('initiating session')
+        database.mongoConnect()
+        self.checkProjects()
+        
         if pm.menu('PipeMenu', exists=True):
             pm.deleteUI('PipeMenu')
 
@@ -34,6 +38,10 @@ class Session:
         pm.menuItem(label="Update Scene", command=self.sceneCheckCallback)
         pm.menuItem(label="scriptJob Update Scene", command=self.scriptJobSceneCheckCallback)
         pm.menuItem(label="scriptJob kill", command=self.killall)
+        pm.menuItem(label="Flying Bark Data Ingestion Tool", command=self.fbDataIngestionCallback)
+
+    def fbDataIngestionCallback(self, *args):
+        ingestion.fbIngestTool()
 
     def sceneCheckCallback(self,*args):
         check.sceneRefCheck()
@@ -51,8 +59,6 @@ class Session:
             self.publish(type=pm.fileInfo['type'], task=pm.fileInfo['task'], code=pm.fileInfo['code'])
 
     def browser(self):
-        database.mongoConnect()
-        self.checkProjects()
         widgets.itemBrowser()
 
     def publish(self, type, task, code):

@@ -33,10 +33,14 @@ class Item(object):
 
             self.noData=False
         else:
-            logger.error("The item found no data", self.projectName, self.task, self.code, self.type)
+            logger.error("The item found no data %s %s %s %s" % (self.projectName, self.task, self.code, self.type))
 
 
     def _getDataFromDB(self):
+        """
+        get data from the database and initialize values on object variables
+        :return:
+        """
         itemMData = database.getItemMData(projName=self.projectName, task=self.task, code=self.code,
                                           itemType=self.type, fromScene=self.fromScene)
 
@@ -67,6 +71,10 @@ class Item(object):
         return True
 
     def putDataToDB(self):
+        """
+        write object data on database
+        :return:
+        """
         try:
             database.putItemMData(itemMData=self.getDataDict(), projName=self.projectName, task=self.task,
                                   code=self.code, itemType=self.type)
@@ -75,6 +83,10 @@ class Item(object):
 
 
     def getDataDict(self):
+        """
+        Return object data in a dictionary form
+        :return: itemMData dictionary
+        """
         itemMData={}
         try:
             itemMData['name'] = self.name
@@ -100,6 +112,15 @@ class Item(object):
         return itemMData
 
     def getPath(self, dirLocation='workLocation', ext='ma'):
+        """
+        Return object respective diretory and file name, based on dirLocation parameter and extention parameter.
+        Valid values for diLocation are: "workLocation","publishLocation", "cacheLocation",
+        "imagesWorkLocation", "imagesPublishLocation"
+        Extension parameter typically take maya file extensions, "ma", "abc" or image file extensions, "jpg", "gif", etc
+        :param dirLocation: string
+        :param ext: string (no point)
+        :return: list [ dirPath, filename]
+        """
         project = database.getProjectDict(self.projectName)
         location = project[dirLocation]
         taskFolder = self.task
@@ -120,6 +141,11 @@ class Item(object):
         return dirPath, filename
 
     def getPublishPath (self, make=False):
+        """
+        Return publish path for this item. If make is true it will create the directory if it doesnt exist
+        :param make:  Boolean
+        :return: string
+        """
         path = self.getPath(dirLocation='publishLocation')
 
         if make:
@@ -130,6 +156,11 @@ class Item(object):
         return os.path.join(path[0], version + path[1])
 
     def getWorkPath(self, make=False):
+        """
+        Return the work path for this item. If make is true, it will create the directory if it doesnt exist
+        :param make: Boolean
+        :return: String
+        """
         path = self.getPath()
 
         if make:
@@ -139,9 +170,17 @@ class Item(object):
         return os.path.join(*path)
 
     def open(self):
+        """
+        open the file on disk relative to this item
+        :return:
+        """
         pm.openFile(self.getWorkPath(), f=True)
 
     def saveAs(self):
+        """
+        Save the currently open as a version of this item
+        :return:
+        """
         fileName = self.getWorkPath(make=True)
         pm.saveAs(fileName)
 
@@ -150,6 +189,10 @@ class Item(object):
         pass
 
     def publish(self):
+        """
+        Publish the current file on the publish directory and update version
+        :return:
+        """
         originalName = pm.sceneName()
 
         self.publishVer += 1

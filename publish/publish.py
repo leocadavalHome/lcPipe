@@ -204,8 +204,14 @@ class PublishWidget(object):
         if resp == 'Ok':
             pm.saveFile()
 
+        pm.button(self.btn, e=True, label='PUBLISH', c=self.prePublish, bgc=[0.0,0.5,0.0] )
+
+
+    def prePublish(self, *args):
+        error = False
         order = self.prePublishDict.keys()
         order.sort()
+
         for id in order:
             resp = self.prePublishDict[id]['prePublish']()
             if resp:
@@ -213,12 +219,13 @@ class PublishWidget(object):
 
         if not error:
             logger.debug('prePublish succeeded')
-            pm.button(self.btn, e=True, label='PUBLISH', c=self.publishFile, bgc=[0.0,0.5,0.0] )
+            self.publishFile()
         else:
             resp = pm.confirmDialog(title='Warning', ma='center',
-                                    message='Error: Pre Publish Procedure Failled !' ,
+                                    message='Error: Pre Publish Procedure Failled !',
                                     button=['Ok'], defaultButton='ok', dismissString='ok')
-            logger.debug ('prePublish failed')
+            logger.debug('prePublish failed')
+
 
     def publishFile(self, *args):
         pass

@@ -1,17 +1,15 @@
-import json
 import pymel.core as pm
 import json
-from pprint import pprint
 import os.path
 import lcPipe.core.database as database
 from lcPipe.api.item import Item
-from lcPipe.api.component import Component
 import shutil
 import re
 import os
 import logging
 
 logger = logging.getLogger(__name__)
+logger.setLevel(10)
 
 def readFbRole(FbRole, level, maxDepth=0, searchInGroupAsset=True):
     assetType = FbRole['componentData']['assetType']
@@ -49,16 +47,18 @@ def readFbRole(FbRole, level, maxDepth=0, searchInGroupAsset=True):
 def readGroup (group, level, maxDepth=0, searchInGroupAsset=True):
     assetlabel = group['componentData']['label']
     assetXform = group['componentData']['xform']
-    if 'components' in group:
+    try:
         if group['components'] and (maxDepth == 0 or level < maxDepth):
             componentContent = search(group['components'], level=level + 1, maxDepth=maxDepth, searchInGroupAsset=searchInGroupAsset)
         else:
             componentContent = []
-    else:
+    except KeyError:
         logger.error('There is no component key on Dict')
         componentContent = []
 
-    return {'name': assetlabel, 'xform': {'groupControl': assetXform}, 'components': componentContent}
+    return {'name': assetlabel, 'subType': 'sceneGroup',
+            'xform': {'groupControl': {'rotatePivot': [0, 0, 0], 'scalePivot': [0, 0, 0], 'xform': assetXform}},
+            'components': componentContent}
 
 def readGroupAsset(path, level, maxDepth=0):
     jsonPath = path.replace('.\wolftv', 'T:\FTP Downloaded Files\howlingtonClassroom\wolftv')  # todo remove hard Code!!
@@ -106,13 +106,21 @@ def search(components, level=0, maxDepth=0, searchInGroupAsset=True):
 
 def printDescription (x):
     for a in x:
-        print a['name']
+        if 'subType' in a:
+            print a['name']
+            print a['subType']
         for b in a['components']:
             print '-->',b['name']
+            if 'subType' in b:
+                print '-->', b['subType']
             for c in b['components']:
                 print '    -->', c['name']
+                if 'subType' in c:
+                    print '    -->', c['subType']
                 for d in c['components']:
-                    print '        -->', d['name']
+                    print '        -->', d['name'], d['subType']
+                    if 'subType' in d:
+                        print '        -->', d['subType']
 
 
 def insertFileInfo(path, projectName=None, task=None, code=None, type=None):
@@ -139,7 +147,7 @@ def insertFileInfo(path, projectName=None, task=None, code=None, type=None):
         scene_file.writelines(newLines)
 
 
-def ingestAtPath(pathSrc, pathTgt):
+def ingestPieces(pathSrc, pathTgt):
     setPiecesPath = r'wolftv\asset\set_piece'
     proxyModelPath = r'modeling\proxy_model\source'
 
@@ -147,7 +155,7 @@ def ingestAtPath(pathSrc, pathTgt):
     fileList = pm.getFileList(folder=setPiecesFullPath)
 
     for piece in fileList:
-        print 'importing %s to pipeLine' % piece
+        logger.info('importing %s to pipeLine' % piece)
         fileName = piece
         versionPath = os.path.join(setPiecesFullPath, fileName, proxyModelPath)
         versionsAvailable = pm.getFileList(folder = versionPath)
@@ -164,94 +172,255 @@ def ingestAtPath(pathSrc, pathTgt):
         ingestionDict = {'name': fileName, 'version': maxVer, 'sourcePath': pieceFullPath,
                          'assetType': 'set_piece', 'task': 'proxy', 'setAssemble': os.path.split(pathSrc)[-1]}
 
-        database.incrementNextCode ('asset', fromBegining=True)
+        database.incrementNextCode('asset', fromBegining=True)
         itemMData = database.createItem(itemType='asset', name=fileName, path=pathTgt, workflow='static',
                                         customData={'ingestData': ingestionDict})
 
-        item = Item(task='proxy',code=itemMData['proxy']['code'])
+        item = Item(task='proxy', code=itemMData['proxy']['code'])
         item.status = 'created'
         item.putDataToDB()
 
         workPath = item.getWorkPath(make=True)
         shutil.copyfile(pieceFullPath, workPath)
+
         prj = database.getCurrentProject()
         insertFileInfo(workPath, projectName=prj, task=item.task, code=item.code, type=item.type)
-        print '%s imported as %s' % (piece, item.task+item.code+item.name)
-'''
-### read description
-with open('T:/test.json') as f:
-    data = json.load(f)
 
-pprint(data)
+        # todo copy to publish folder
+        item.publishVer += 1
+        publishPath = item.getPublishPath(make=True)
+        shutil.copyfile(workPath, publishPath)
+        item.putDataToDB()
 
-
-logger.setLevel(logging.DEBUG)
+        logger.info('%s imported as %s and published' % (piece, item.task + item.code + item.name))
 
 
-##ingest pieces
-pathTgt = ['set', 'howlingtonClassroom', 'setPieces']
-pathSrc = r'T:\FTP Downloaded Files\howlingtonClassroom'
-ingestAtPath(pathSrc, pathTgt)
-'''
+def ingestGroups(pathSrc, pathTgt):
+    groupPath = r'wolftv\asset\group'
+    proxyModelPath = r'modeling\proxy_model\desc'
+
+    groupsFullPath = os.path.join(pathSrc, groupPath)
+    logger.debug('groupFullPath: %s' % groupsFullPath)
+    fileList = pm.getFileList (folder=groupsFullPath)
+
+    for group in fileList:
+        logger.info('importing %s to pipeLine' % group)
+        fileName = group
+        versionPath = os.path.join(groupsFullPath, fileName, proxyModelPath)
+        versionsAvailable = pm.getFileList(folder=versionPath)
+        maxVer = 0
+        for ver in versionsAvailable:
+            verNum = int(ver[1:])
+            maxVer = max(maxVer, verNum)
+            version = 'v%03d' % maxVer
+
+        groupFullPath = os.path.join(versionPath, version)
+        groupFile = pm.getFileList(folder=groupFullPath)[0]
+        groupFullPath = os.path.join(groupFullPath, groupFile)
+
+        ingestionDict = {'name': fileName, 'version': maxVer, 'sourcePath': groupFullPath,
+                         'assetType': 'group', 'task': 'proxy', 'setAssemble': os.path.split(pathSrc)[-1]}
+
+        database.incrementNextCode('asset', fromBegining=True)
+        itemMData = database.createItem(itemType='asset', name=fileName, path=pathTgt, workflow='group',
+                                        customData={'ingestData': ingestionDict})
+        itemProxy = Item(task='proxy', code=itemMData['proxy']['code'])
+        itemModel = Item(task='model', code=itemMData['model']['code'])
+
+        descDict = readDescription(groupFullPath, 1, maxDepth=0, searchInGroupAsset=True)
+        for component in descDict:
+            logger.debug('add %s to %s' % (component['name'], fileName))
+            itemList = database.searchName(component['name'])
+            if 0 < len(itemList) > 1:
+                proxyComponentMData = database.addSource(item=itemProxy.getDataDict(), ns='ref',
+                                                         componentCode=itemList[0]['code'], componentTask='proxy',
+                                                         assembleMode='reference', update=True,
+                                                         proxyMode='proxy', xform=component['xform'], onSceneParent='')
+                modelComponentMData = database.addSource(item=itemModel.getDataDict(), ns='ref',
+                                                         componentCode=itemList[0]['code'], componentTask='proxy',
+                                                         assembleMode='reference', update=True,
+                                                         proxyMode='', xform=component['xform'], onSceneParent='')
 
 
+def ingestSet(pathSrc , pathTgt):
+    descDict = readDescription(pathSrc, level=1, maxDepth=0, searchInGroupAsset=True)
 
-### group
-pathTgt = ['set', 'howlingtonClassroom', 'groups']
-pathSrc = r'T:\FTP Downloaded Files\howlingtonClassroom'
+    descName, file_extension = os.path.splitext(os.path.basename(pathSrc))
+    fileName = descName.split('_')[0]
+    ver = descName.split('.')[-1]
 
-groupPath = r'wolftv\asset\group'
-proxyModelPath = r'modeling\proxy_model\desc'
-
-groupsFullPath = os.path.join (pathSrc, groupPath)
-logger.debug('groupFullPath: %s' % groupsFullPath)
-fileList = pm.getFileList (folder=groupsFullPath)
-
-for group in fileList:
-    logger.info('importing %s to pipeLine' % group)
-    fileName = group
-    versionPath = os.path.join(groupsFullPath, fileName, proxyModelPath)
-    logger.debug('versionPath: %s' % versionPath)
-    versionsAvailable = pm.getFileList(folder=versionPath)
-    logger.debug('versionAvailable: %s' % versionsAvailable)
-    maxVer = 0
-    for ver in versionsAvailable:
-        verNum = int (ver[1:])
-        maxVer = max (maxVer, verNum)
-        version = 'v%03d' % maxVer
-        logger.info(version)
-
-    groupFullPath = os.path.join(versionPath, version)
-    groupFile = pm.getFileList(folder=groupFullPath)[0]
-    groupFullPath = os.path.join(groupFullPath, groupFile)
-    logger.debug('groupFullPath: %s' % groupFullPath)
-    ingestionDict = {'name': fileName, 'version': maxVer, 'sourcePath': groupFullPath,
-                 'assetType': 'group', 'task': 'proxy', 'setAssemble': os.path.split(pathSrc)[-1]}
-
-    descDict = readDescription(groupFullPath, 1, maxDepth=0, searchInGroupAsset=False)
+    ingestionDict = {'name': fileName, 'version': ver, 'sourcePath': pathSrc,
+                     'assetType': 'group', 'task': 'proxy', 'setAssemble': ''}
 
     database.incrementNextCode('asset', fromBegining=True)
     itemMData = database.createItem(itemType='asset', name=fileName, path=pathTgt, workflow='group',
                                     customData={'ingestData': ingestionDict})
+    item = Item(task='proxy', code=itemMData['proxy']['code'])
+    addComponentsToSet(item=itemMData['proxy'], onSceneParent='', components=descDict)
 
-    itemProxy = Item(task='proxy', code=itemMData['proxy']['code'])
-    itemModel = Item(task='model', code=itemMData['model']['code'])
 
-    for component in descDict:
-        logger.debug('add %s to %s' % (component['name'], fileName))
-        logger.debug(component['xform'])
-        itemList = database.searchName(component['name'])
-        if 0 < len(itemList) > 1:
-            proxyComponentMData = database.addComponent(item=itemProxy.getDataDict(), ns='ref',
-                                                        componentCode=itemList[0]['code'],componentTask='proxy',
-                                                        assembleMode='reference', update=True,
-                                                        proxyMode='proxy', xform=component['xform'])
-            logger.debug('proxy comp:%s'% proxyComponentMData)
-            modelComponentMData = database.addComponent(item=itemModel.getDataDict(), ns='ref',
-                                                        componentCode=itemList[0]['code'], componentTask='model',
-                                                        assembleMode='reference', update=True,
-                                                        proxyMode='', xform=component['xform'])
-            logger.debug ('model comp:%s' % modelComponentMData)
+def addComponentsToSet(item=None, onSceneParent='', components=[], groupComponents=True):
+    for object in components:
+        if object['subType'] == 'sceneGroup':
+            groupMData = database.addSource(item=item, ns=onSceneParent+'Ref',
+                                            componentCode=object['name'],
+                                            componentTask='asset',
+                                            assembleMode='createGroup', update=True,
+                                            proxyMode='', xform=object['xform'],
+                                            onSceneParent=onSceneParent)
 
-# todo fazer as transformacoes dos components
+            if object['components']:
+                addComponentsToSet(item=item, onSceneParent=object['name'],
+                                   components=object['components'])
 
+
+        if object['subType'] == 'set_piece':
+            itemList = database.searchName(object['name'])
+            if 0 < len(itemList) > 1:
+                proxyMData = database.addSource(item=item, ns=onSceneParent+'Ref'+str(object['instanceNumber']),
+                                                componentCode=itemList[0]['code'], componentTask='proxy',
+                                                assembleMode='reference', update=True,
+                                                proxyMode='proxy', xform=object['xform'],
+                                                onSceneParent=onSceneParent)
+
+
+        if object['subType'] == 'group':
+            if not groupComponents:
+                itemList = database.searchName(object['name'])
+                if 0 < len(itemList) > 1:
+                    proxyMData = database.addSource(item=item, ns=onSceneParent+'Ref'+str(object['instanceNumber']),
+                                                    componentCode=itemList[0]['code'], componentTask='proxy',
+                                                    assembleMode='reference', update=True,
+                                                    proxyMode='proxy', xform=object['xform'],
+                                                    onSceneParent=onSceneParent)
+            else:
+                groupMData = database.addSource(item=item, ns=onSceneParent + 'Ref'+str(object['instanceNumber']),
+                                                componentCode=object['name']+str(object['instanceNumber']),
+                                                componentTask='asset', assembleMode='createGroup', update=True,
+                                                proxyMode='', xform=object['xform'],
+                                                onSceneParent=onSceneParent)
+                if object['components']:
+                    addComponentsToSet(item=item, onSceneParent=object['name']+str(object['instanceNumber']),
+                                       components=object['components'])
+
+
+def browseCallBack(*args):
+    resultDir = pm.fileDialog2 (cap='choose directory', okCaption='Select', fm=3, dialogStyle=2)
+    if resultDir:
+        pm.textField ('pathTxtField', e=True, tx=os.path.normpath (resultDir[0]))
+        listSets ()
+
+
+def listSets():
+    searchDir = pm.textField ('pathTxtField', q=True, tx=True)
+    sets = next (os.walk (searchDir))[1]
+    pm.textScrollList ('setScrollList', e=True, ra=True)
+    pm.textScrollList ('setScrollList', e=True, append=sets)
+
+
+def selectSetCallback(*args):
+    sel = pm.textScrollList ('setScrollList', q=True, si=True)
+    searchDir = pm.textField ('pathTxtField', q=True, tx=True)
+    if sel:
+        groupDir = os.path.join (searchDir, sel[0], 'wolftv', 'asset', 'group')
+        print groupDir
+        if os.path.isdir (groupDir):
+            pm.text ('groupTxt', e=True, l='   found!')
+        else:
+            pm.text ('groupTxt', e=True, l='   no diretory found')
+
+        set_pieceDir = os.path.join (searchDir, sel[0], 'wolftv', 'asset', 'set_piece')
+        print set_pieceDir
+        if os.path.isdir (set_pieceDir):
+            pm.text ('pieceTxt', e=True, l='   found!')
+        else:
+            pm.text ('pieceTxt', e=True, l='   no diretory found')
+
+        descriptionFileDir = os.path.join (searchDir, sel[0])
+        descList = pm.getFileList (folder=descriptionFileDir, filespec='*.json')
+        if len (descList) == 1:
+            pm.text ('descriptionTxt', e=True, l='   found!')
+        elif len (descList) > 1:
+            pm.text ('descriptionTxt', e=True, l='   more than one found!')
+        else:
+            pm.text ('descriptionTxt', e=True, l='   no json file found!')
+
+
+def importCallback(*args):
+    sel = pm.textScrollList ('setScrollList', q=True, si=True)
+    searchDir = pm.textField ('pathTxtField', q=True, tx=True)
+    if sel:
+        if pm.text('groupTxt', q=True, label=True) == '   found!':
+            resp = pm.confirmDialog(title='Import Groups', ma='center',
+                                    message='Import Group?',
+                                    button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
+            if resp == 'Ok':
+                pathTgt = ['set', sel[0], 'group']
+                pathSrc = os.path.join(searchDir, sel[0])
+                database.addFolder(['set', sel[0], 'group'])
+                ingestGroups(pathSrc, pathTgt)
+
+        if pm.text('pieceTxt', q=True, label=True) == '   found!':
+            resp = pm.confirmDialog(title='Import set_pieces', ma='center',
+                                    message='Import Set_Pieces?',
+                                    button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
+            if resp == 'Ok':
+                pathTgt = ['set', sel[0], 'setPiece']
+                pathSrc = os.path.join(searchDir, sel[0])
+                database.addFolder(['set', sel[0], 'setPiece'])
+                ingestPieces(pathSrc, pathTgt)
+
+        if pm.text('descriptionTxt', q=True, label=True) == '   found!':
+            resp = pm.confirmDialog(title='Import File Description', ma='center',
+                                    message='Import File Description?',
+                                    button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
+            if resp == 'Ok':
+                descriptionFileDir = os.path.join(searchDir, sel[0])
+                descList = pm.getFileList (folder=descriptionFileDir, filespec='*.json')
+                if len(descList) == 1:
+                    fileDescName = descList[0]
+                    pathTgt = ['set', sel[0]]
+                    pathSrc = os.path.join(searchDir, sel[0], fileDescName)
+                    database.addFolder(['set', sel[0]])
+                    ingestSet(pathSrc, pathTgt)
+
+
+def cancelCallback(*args):
+    pm.deleteUI ('FlyingBarkIngestTool', window=True)
+
+
+def fbIngestTool():
+    if pm.window ('FlyingBarkIngestTool', exists=True):
+        pm.deleteUI ('FlyingBarkIngestTool', window=True)
+
+    pm.window ('FlyingBarkIngestTool')
+    pm.columnLayout ()
+    pm.rowLayout (nc=3)
+    pm.text (l='PATH')
+    pm.textField ('pathTxtField', w=205)
+    pm.button (l='...', c=browseCallBack)
+    pm.setParent ('..')
+    pm.separator (h=20)
+    pm.text (label='SETS')
+    pm.separator (h=5)
+    pm.textScrollList ('setScrollList', h=150, sc=selectSetCallback)
+    pm.separator (h=10)
+    pm.rowLayout (nc=2)
+    pm.text (label='GROUP DIR')
+    pm.text ('groupTxt', l='')
+    pm.setParent ('..')
+    pm.separator (h=10)
+    pm.rowLayout (nc=2)
+    pm.text (label='SET_PIECES DIR')
+    pm.text ('pieceTxt', l='')
+    pm.setParent ('..')
+    pm.separator (h=10)
+    pm.rowLayout (nc=2)
+    pm.text (label='DESCRIPTION FILE')
+    pm.text ('descriptionTxt', l='')
+    pm.setParent ('..')
+    pm.separator (h=20)
+    pm.rowLayout (nc=2)
+    pm.button ('Import', label='Import', w=125, h=50, c=importCallback)
+    pm.button ('CancelBtn', label='Cancel', w=125, h=50)
+    pm.showWindow ()
