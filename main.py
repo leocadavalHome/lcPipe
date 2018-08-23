@@ -13,11 +13,10 @@ from lcPipe.ui.itemListBase import ItemListBase
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler(sys.stdout)
-stream_handler.setLevel(logging.DEBUG)
+stream_handler.setLevel(10)
 formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
-logger.setLevel(10)
 
 
 class Session:
@@ -28,7 +27,7 @@ class Session:
         logger.info('initiating session')
         database.mongoConnect()
         self.checkProjects()
-        
+
         if pm.menu('PipeMenu', exists=True):
             pm.deleteUI('PipeMenu')
 
@@ -36,8 +35,8 @@ class Session:
         pm.menuItem(label="Browser", command=self.browserCallback)
         pm.menuItem(label="Publish Scene", command=self.publishCallback)
         pm.menuItem(label="Update Scene", command=self.sceneCheckCallback)
-        pm.menuItem(label="scriptJob Update Scene", command=self.scriptJobSceneCheckCallback)
-        pm.menuItem(label="scriptJob kill", command=self.killall)
+        #pm.menuItem(label="scriptJob Update Scene", command=self.scriptJobSceneCheckCallback)
+        #pm.menuItem(label="scriptJob kill", command=self.killall)
         pm.menuItem(label="Flying Bark Data Ingestion Tool", command=self.fbDataIngestionCallback)
 
     def fbDataIngestionCallback(self, *args):

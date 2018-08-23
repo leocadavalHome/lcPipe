@@ -10,11 +10,11 @@ from collections import OrderedDict
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
 
-
 def build(itemType=None, task=None, code=None, silent=False):
     logger.debug('initiate Scene Building %s %s %s' % (task, code, itemType))
     parcial = False
     empty = True
+
 
     item = Item(task=task, code=code, itemType=itemType)
 

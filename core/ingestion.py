@@ -7,11 +7,12 @@ import shutil
 import re
 import os
 import logging
+from lcPipe.ui.progressWidget import ProgressWindowWidget
 
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
 
-def readFbRole(FbRole, level, maxDepth=0, searchInGroupAsset=True):
+def readFbRole(FbRole, level, maxDepth=0, searchInGroupAsset=True, basePath=None):
     assetType = FbRole['componentData']['assetType']
     assetCode = FbRole['componentData']['assetCode']
     assetInstanceNumber = FbRole['componentData']['instanceNumber']
@@ -34,7 +35,7 @@ def readFbRole(FbRole, level, maxDepth=0, searchInGroupAsset=True):
         controlXform3 = FbRole['components'][1]['componentData']['outer_ctl_data']
 
         if searchInGroupAsset and (maxDepth == 0 or level < maxDepth):
-            jsonContent = readGroupAsset(groupAssetPath, level=level+1, maxDepth=maxDepth)
+            jsonContent = readGroupAsset(groupAssetPath, level=level+1, maxDepth=maxDepth, basePath=basePath)
         else:
             jsonContent = {}
 
@@ -44,12 +45,13 @@ def readFbRole(FbRole, level, maxDepth=0, searchInGroupAsset=True):
                 'components': jsonContent}
 
 
-def readGroup (group, level, maxDepth=0, searchInGroupAsset=True):
+def readGroup (group, level, maxDepth=0, searchInGroupAsset=True, basePath=None):
     assetlabel = group['componentData']['label']
     assetXform = group['componentData']['xform']
     try:
         if group['components'] and (maxDepth == 0 or level < maxDepth):
-            componentContent = search(group['components'], level=level + 1, maxDepth=maxDepth, searchInGroupAsset=searchInGroupAsset)
+            componentContent = search(group['components'], level=level + 1, maxDepth=maxDepth,
+                                      searchInGroupAsset=searchInGroupAsset, basePath=basePath)
         else:
             componentContent = []
     except KeyError:
@@ -60,8 +62,13 @@ def readGroup (group, level, maxDepth=0, searchInGroupAsset=True):
             'xform': {'groupControl': {'rotatePivot': [0, 0, 0], 'scalePivot': [0, 0, 0], 'xform': assetXform}},
             'components': componentContent}
 
-def readGroupAsset(path, level, maxDepth=0):
-    jsonPath = path.replace('.\wolftv', 'T:\FTP Downloaded Files\howlingtonClassroom\wolftv')  # todo remove hard Code!!
+def readGroupAsset(path, level, maxDepth=0, basePath=None):
+    logger.debug ('path: %s ' % path)
+    logger.debug ('basepath: %s ' % basePath)
+    replacePath = os.path.normpath(os.path.join(basePath, 'wolftv'))
+    jsonPath = path.replace('.\wolftv', replacePath)
+    logger.debug ('jsonPath: %s ' % jsonPath)
+
     if not os.path.isfile(jsonPath):
         logger.error('Path not found!!')
         return {'error path not found'}
@@ -69,13 +76,15 @@ def readGroupAsset(path, level, maxDepth=0):
     with open(jsonPath) as f:
         data2 = json.load(f)
 
-    jsonContent = search(data2['components'], level=level, maxDepth=maxDepth)
+    jsonContent = search(data2['components'], level=level, maxDepth=maxDepth, basePath=basePath)
 
     return jsonContent
 
 
-def readDescription(path, level, maxDepth=0, searchInGroupAsset=True):
-    jsonPath = path.replace('.\wolftv', 'T:\FTP Downloaded Files\howlingtonClassroom\wolftv')  # todo remove hard Code!!
+def readDescription(descFileName, path, level, maxDepth=0, searchInGroupAsset=True):
+
+    jsonPath = os.path.join(path, descFileName)  # done remove hard Code!!
+    logger.debug('jsonPath: %s ' % jsonPath)
     if not os.path.isfile(jsonPath):
         logger.error('Path not found!!')
         return {'error path not found'}
@@ -83,19 +92,20 @@ def readDescription(path, level, maxDepth=0, searchInGroupAsset=True):
     with open(jsonPath) as f:
         data2 = json.load(f)
 
-    jsonContent = search(data2['components'], level=level, maxDepth=maxDepth, searchInGroupAsset=searchInGroupAsset)
+    jsonContent = search(data2['components'], level=level, maxDepth=maxDepth,
+                         searchInGroupAsset=searchInGroupAsset, basePath=path)
 
     return jsonContent
 
 
-def search(components, level=0, maxDepth=0, searchInGroupAsset=True):
+def search(components, level=0, maxDepth=0, searchInGroupAsset=True, basePath=None):
     returnList = []
     for elem in components:
 
         if elem['componentClass'] == 'FbRole':
-            content = readFbRole(elem, level, maxDepth, searchInGroupAsset=searchInGroupAsset)
+            content = readFbRole(elem, level, maxDepth, searchInGroupAsset=searchInGroupAsset, basePath=basePath)
         elif elem['componentClass'] == 'Group':
-            content = readGroup(elem, level, maxDepth, searchInGroupAsset=searchInGroupAsset)
+            content = readGroup(elem, level, maxDepth, searchInGroupAsset=searchInGroupAsset, basePath=basePath)
         else:
             return []
 
@@ -154,8 +164,13 @@ def ingestPieces(pathSrc, pathTgt):
     setPiecesFullPath = os.path.join(pathSrc, setPiecesPath)
     fileList = pm.getFileList(folder=setPiecesFullPath)
 
+    progressWin = ProgressWindowWidget(title='set pieces', maxValue=len(fileList))
+
     for piece in fileList:
+
         logger.info('importing %s to pipeLine' % piece)
+        progressWin.progressUpdate(1)
+
         fileName = piece
         versionPath = os.path.join(setPiecesFullPath, fileName, proxyModelPath)
         versionsAvailable = pm.getFileList(folder = versionPath)
@@ -186,14 +201,14 @@ def ingestPieces(pathSrc, pathTgt):
         prj = database.getCurrentProject()
         insertFileInfo(workPath, projectName=prj, task=item.task, code=item.code, type=item.type)
 
-        # todo copy to publish folder
+        # done copy to publish folder
         item.publishVer += 1
         publishPath = item.getPublishPath(make=True)
         shutil.copyfile(workPath, publishPath)
         item.putDataToDB()
 
         logger.info('%s imported as %s and published' % (piece, item.task + item.code + item.name))
-
+    progressWin.closeWindow()
 
 def ingestGroups(pathSrc, pathTgt):
     groupPath = r'wolftv\asset\group'
@@ -203,8 +218,12 @@ def ingestGroups(pathSrc, pathTgt):
     logger.debug('groupFullPath: %s' % groupsFullPath)
     fileList = pm.getFileList (folder=groupsFullPath)
 
+    progressWin = ProgressWindowWidget(title='groups', maxValue=len (fileList))
+
     for group in fileList:
         logger.info('importing %s to pipeLine' % group)
+        progressWin.progressUpdate (1)
+
         fileName = group
         versionPath = os.path.join(groupsFullPath, fileName, proxyModelPath)
         versionsAvailable = pm.getFileList(folder=versionPath)
@@ -236,16 +255,17 @@ def ingestGroups(pathSrc, pathTgt):
                                                          componentCode=itemList[0]['code'], componentTask='proxy',
                                                          assembleMode='reference', update=True,
                                                          proxyMode='proxy', xform=component['xform'], onSceneParent='')
+
                 modelComponentMData = database.addSource(item=itemModel.getDataDict(), ns='ref',
                                                          componentCode=itemList[0]['code'], componentTask='proxy',
                                                          assembleMode='reference', update=True,
-                                                         proxyMode='', xform=component['xform'], onSceneParent='')
+                                                         proxyMode='model', xform=component['xform'], onSceneParent='')
+    progressWin.closeWindow()
 
+def ingestSet(descFileName, pathSrc, pathTgt):
+    descDict = readDescription(descFileName, pathSrc, level=1, maxDepth=0, searchInGroupAsset=True)
 
-def ingestSet(pathSrc , pathTgt):
-    descDict = readDescription(pathSrc, level=1, maxDepth=0, searchInGroupAsset=True)
-
-    descName, file_extension = os.path.splitext(os.path.basename(pathSrc))
+    descName, file_extension = os.path.splitext(descFileName)
     fileName = descName.split('_')[0]
     ver = descName.split('.')[-1]
 
@@ -255,53 +275,58 @@ def ingestSet(pathSrc , pathTgt):
     database.incrementNextCode('asset', fromBegining=True)
     itemMData = database.createItem(itemType='asset', name=fileName, path=pathTgt, workflow='group',
                                     customData={'ingestData': ingestionDict})
-    item = Item(task='proxy', code=itemMData['proxy']['code'])
-    addComponentsToSet(item=itemMData['proxy'], onSceneParent='', components=descDict)
+
+    progressWin = ProgressWindowWidget (title='Set', maxValue=2)
+    addComponentsToSet(item=itemMData['proxy'], onSceneParent='', components=descDict, proxyMode='proxy')
+    progressWin.progressUpdate (1)
+    addComponentsToSet(item=itemMData['model'], onSceneParent='', components=descDict, proxyMode='model')
+    progressWin.progressUpdate (1)
+    progressWin.closeWindow ()
 
 
-def addComponentsToSet(item=None, onSceneParent='', components=[], groupComponents=True):
-    for object in components:
-        if object['subType'] == 'sceneGroup':
+def addComponentsToSet(item=None, onSceneParent='', components=[], groupComponents=True, proxyMode='proxy'):
+    for obj in components:
+        if obj['subType'] == 'sceneGroup':
             groupMData = database.addSource(item=item, ns=onSceneParent+'Ref',
-                                            componentCode=object['name'],
+                                            componentCode=obj['name'],
                                             componentTask='asset',
                                             assembleMode='createGroup', update=True,
-                                            proxyMode='', xform=object['xform'],
+                                            proxyMode='asset', xform=obj['xform'],
                                             onSceneParent=onSceneParent)
 
-            if object['components']:
-                addComponentsToSet(item=item, onSceneParent=object['name'],
-                                   components=object['components'])
+            if obj['components']:
+                addComponentsToSet(item=item, onSceneParent=obj['name'],
+                                   components=obj['components'], proxyMode=proxyMode)
 
 
-        if object['subType'] == 'set_piece':
-            itemList = database.searchName(object['name'])
+        if obj['subType'] == 'set_piece':
+            itemList = database.searchName(obj['name'])
             if 0 < len(itemList) > 1:
-                proxyMData = database.addSource(item=item, ns=onSceneParent+'Ref'+str(object['instanceNumber']),
+                proxyMData = database.addSource(item=item, ns=onSceneParent+'Ref'+str(obj['instanceNumber']),
                                                 componentCode=itemList[0]['code'], componentTask='proxy',
                                                 assembleMode='reference', update=True,
-                                                proxyMode='proxy', xform=object['xform'],
+                                                proxyMode=proxyMode, xform=obj['xform'],
                                                 onSceneParent=onSceneParent)
 
 
-        if object['subType'] == 'group':
+        if obj['subType'] == 'group':
             if not groupComponents:
-                itemList = database.searchName(object['name'])
+                itemList = database.searchName(obj['name'])
                 if 0 < len(itemList) > 1:
-                    proxyMData = database.addSource(item=item, ns=onSceneParent+'Ref'+str(object['instanceNumber']),
+                    proxyMData = database.addSource(item=item, ns=onSceneParent+'Ref'+str(obj['instanceNumber']),
                                                     componentCode=itemList[0]['code'], componentTask='proxy',
                                                     assembleMode='reference', update=True,
-                                                    proxyMode='proxy', xform=object['xform'],
+                                                    proxyMode=proxyMode, xform=obj['xform'],
                                                     onSceneParent=onSceneParent)
             else:
-                groupMData = database.addSource(item=item, ns=onSceneParent + 'Ref'+str(object['instanceNumber']),
-                                                componentCode=object['name']+str(object['instanceNumber']),
+                groupMData = database.addSource(item=item, ns=onSceneParent + 'Ref'+str(obj['instanceNumber']),
+                                                componentCode=obj['name']+str(obj['instanceNumber']),
                                                 componentTask='asset', assembleMode='createGroup', update=True,
-                                                proxyMode='', xform=object['xform'],
+                                                proxyMode='asset', xform=obj['xform'],
                                                 onSceneParent=onSceneParent)
-                if object['components']:
-                    addComponentsToSet(item=item, onSceneParent=object['name']+str(object['instanceNumber']),
-                                       components=object['components'])
+                if obj['components']:
+                    addComponentsToSet(item=item, onSceneParent=obj['name']+str(obj['instanceNumber']),
+                                       components=obj['components'], proxyMode=proxyMode)
 
 
 def browseCallBack(*args):
@@ -350,16 +375,6 @@ def importCallback(*args):
     sel = pm.textScrollList ('setScrollList', q=True, si=True)
     searchDir = pm.textField ('pathTxtField', q=True, tx=True)
     if sel:
-        if pm.text('groupTxt', q=True, label=True) == '   found!':
-            resp = pm.confirmDialog(title='Import Groups', ma='center',
-                                    message='Import Group?',
-                                    button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
-            if resp == 'Ok':
-                pathTgt = ['set', sel[0], 'group']
-                pathSrc = os.path.join(searchDir, sel[0])
-                database.addFolder(['set', sel[0], 'group'])
-                ingestGroups(pathSrc, pathTgt)
-
         if pm.text('pieceTxt', q=True, label=True) == '   found!':
             resp = pm.confirmDialog(title='Import set_pieces', ma='center',
                                     message='Import Set_Pieces?',
@@ -370,6 +385,16 @@ def importCallback(*args):
                 database.addFolder(['set', sel[0], 'setPiece'])
                 ingestPieces(pathSrc, pathTgt)
 
+        if pm.text('groupTxt', q=True, label=True) == '   found!':
+            resp = pm.confirmDialog(title='Import Groups', ma='center',
+                                    message='Import Group?',
+                                    button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
+            if resp == 'Ok':
+                pathTgt = ['set', sel[0], 'group']
+                pathSrc = os.path.join(searchDir, sel[0])
+                database.addFolder(['set', sel[0], 'group'])
+                ingestGroups(pathSrc, pathTgt)
+
         if pm.text('descriptionTxt', q=True, label=True) == '   found!':
             resp = pm.confirmDialog(title='Import File Description', ma='center',
                                     message='Import File Description?',
@@ -378,12 +403,12 @@ def importCallback(*args):
                 descriptionFileDir = os.path.join(searchDir, sel[0])
                 descList = pm.getFileList (folder=descriptionFileDir, filespec='*.json')
                 if len(descList) == 1:
-                    fileDescName = descList[0]
+                    descFileName = descList[0]
                     pathTgt = ['set', sel[0]]
-                    pathSrc = os.path.join(searchDir, sel[0], fileDescName)
+                    pathSrc = os.path.join(searchDir, sel[0])
                     database.addFolder(['set', sel[0]])
-                    ingestSet(pathSrc, pathTgt)
-
+                    ingestSet(descFileName, pathSrc, pathTgt)
+    pm.deleteUI ('FlyingBarkIngestTool', window=True)
 
 def cancelCallback(*args):
     pm.deleteUI ('FlyingBarkIngestTool', window=True)
@@ -422,5 +447,5 @@ def fbIngestTool():
     pm.separator (h=20)
     pm.rowLayout (nc=2)
     pm.button ('Import', label='Import', w=125, h=50, c=importCallback)
-    pm.button ('CancelBtn', label='Cancel', w=125, h=50)
+    pm.button ('CancelBtn', label='Close', w=125, h=50, c=cancelCallback)
     pm.showWindow ()

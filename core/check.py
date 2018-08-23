@@ -5,10 +5,10 @@ from lcPipe.api.cacheComponent import CacheComponent
 from lcPipe.api.xloComponent import XloComponent
 from lcPipe.api.referenceComponent import ReferenceComponent
 import logging
+import time
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(10)
 
 def checkVersions():
     """
@@ -71,14 +71,17 @@ def sceneRefCheck(silent=False):
     # create the list of references to update depending on the assemble mode
     logger.debug('check update...')
     for ns in refToCheckUpdate:
-        logger.debug('ns:%s' % ns)
+        logger.info('updating ns:%s' % ns)
         if item.components[ns]['assembleMode'] == 'camera':
             continue
 
         if item.components[ns]['assembleMode'] == 'reference':
+            logger.debug('reference')
+            start_time = time.time()
             component = ReferenceComponent(ns, item.components[ns], parent=item)
             toUpdate[ns] = component.updateVersion(refOnSceneList[ns])
-
+            elapsed_time = time.time () - start_time
+            logger.debug ('%s Total info' % elapsed_time)
 
         if item.components[ns]['assembleMode'] == 'xlo':
             component = XloComponent(ns, item.components[ns], parent=item)
@@ -103,7 +106,7 @@ def sceneRefCheck(silent=False):
             uptodate = False
             toReplace = pm.layoutDialog(ui=lambda: refCheckPrompt(toReplace, 'replace')).split(',')
 
-        upDateList = [x for x, y in toUpdate.iteritems() if y ]
+        upDateList = [x for x, y in toUpdate.iteritems() if y]
         if upDateList:
             uptodate = False
             upDateList = pm.layoutDialog(ui=lambda: refCheckPrompt(upDateList, 'update')).split(',')
@@ -120,12 +123,12 @@ def sceneRefCheck(silent=False):
     logger.debug('processing...')
     # Do the processing
     # delete
-    logger.info('toDelete:%s' % toDelete)
+    logger.debug('toDelete:%s' % toDelete)
     for ns in toDelete:
         refOnSceneList[ns].remove()
 
     # add
-    logger.info('toAdd:%s' % toAdd)
+    logger.debug('toAdd:%s' % toAdd)
     for ns in toAdd:
         if item.components[ns]['assembleMode'] == 'camera':
             continue
@@ -174,15 +177,16 @@ def sceneRefCheck(silent=False):
     # Replace
     for ns in toReplace:
         if item.components[ns]['assembleMode'] == 'reference':
-            logger.debug('task:%s, proxyMode:%s'%(item.components[ns]['task'], item.components[ns]['proxyMode']))
+            oldProxyMode = item.components[ns]['task']
 
             item.components[ns]['task'] = item.components[ns]['proxyMode']
-            logger.debug ('task:%s, proxyMode:%s'%(item.components[ns]['task'], item.components[ns]['proxyMode']))
             component = ReferenceComponent(ns, item.components[ns], parent=item)
-            logger.debug ( component.getPublishPath())
-            logger.debug (refOnSceneList[ns].path)
-            # todo check if existe uma versao
-            refOnSceneList[ns].replaceWith(component.getPublishPath())
+            componentItem = component.getItem()
+            if componentItem.publishVer > 0:
+                refOnSceneList[ns].replaceWith(component.getPublishPath())
+            else:
+                item.components[ns]['task'] = oldProxyMode
+
     item.putDataToDB()
 
     logger.info('done sceneChecking!')

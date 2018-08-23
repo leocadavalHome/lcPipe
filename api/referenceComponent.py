@@ -2,7 +2,9 @@ import pymel.core as pm
 from lcPipe.api.component import Component
 from lcPipe.api.refInfo import RefInfo
 import logging
+import time
 logger = logging.getLogger(__name__)
+
 
 """
 Class to wrap the data for a reference file component
@@ -32,6 +34,7 @@ class ReferenceComponent(Component):
         :param ref:
         :return:
         """
+
         refInfo = RefInfo(ref)
         self.checkDBForNewVersion()
 

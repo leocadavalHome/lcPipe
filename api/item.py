@@ -3,6 +3,7 @@ import os.path
 from lcPipe.core import database
 import logging
 logger = logging.getLogger(__name__)
+
 """
 Item base class, a task of an asset or shot.
 """

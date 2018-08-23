@@ -5,9 +5,7 @@ from lcPipe.api.cacheComponent import CacheComponent
 from lcPipe.api.xloComponent import XloComponent
 import logging
 
-
 logger = logging.getLogger(__name__)
-logger.setLevel(10)
 
 """
 Class of a special kind of component used on scene creation

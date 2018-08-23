@@ -92,8 +92,8 @@ class ComponentListWidget(ItemListBase):
         f = pm.formLayout(form, e=True, width=150)
 
         col2 = pm.columnLayout(p=f, adjustableColumn=True)
-        nsField = pm.textFieldGrp ( 'nsFieldPrompt', l='Name Space', tx='ref' )
-        refModeField = pm.optionMenuGrp ( l='Assemble Mode' )
+        nsField = pm.textFieldGrp('nsFieldPrompt', l='Name Space', tx='ref' )
+        refModeField = pm.optionMenuGrp(l='Assemble Mode' )
         pm.menuItem(l='reference')
         pm.menuItem(l='cache')
         pm.menuItem(l='import')
@@ -108,14 +108,14 @@ class ComponentListWidget(ItemListBase):
         itemListWidget = ItemListBase()
         itemListWidget.projectName = self.projectName
         itemListWidget.createList(pane)
-        itemListWidget.refreshList(path=[], task='uvs')
+        itemListWidget.refreshList(path=[], task=['uvs', 'rig'])
 
         infoWidget = InfoWidget()
         infoWidget.createInfo(pane)
 
         folderTreeWidget.itemListWidget = itemListWidget
         folderTreeWidget.itemListWidget.type = 'asset'
-        folderTreeWidget.itemListWidget.task = 'uvs'
+        folderTreeWidget.itemListWidget.task = ['uvs', 'rig']
         itemListWidget.infoWidget = infoWidget
 
         b1 = pm.button(p=f, l='Cancel', c='pm.layoutDialog( dismiss="Abort" )')

@@ -18,7 +18,7 @@ class ItemListWidget(ItemListBase):
     def refreshList(self, path=None, task=None, code=None, itemMData=None):
         color = (0, 0, 0)
 
-        start_time = time.time ()
+        start_time = time.time()
         itemListProj = database.getProjectDict()
 
         if itemMData:
@@ -30,11 +30,10 @@ class ItemListWidget(ItemListBase):
             self.task = task
             self.type = database.getTaskType(task)
 
-
         collection = database.getCollection(self.type)
 
         if code:
-            result = collection.find ({'path': self.path, 'code': code})
+            result = collection.find({'path': self.path, 'code': code})
         else:
             if self.task == 'asset':
                 result = collection.find({'path': self.path, 'task': 'model'})
@@ -92,7 +91,7 @@ class ItemListWidget(ItemListBase):
             self.itemList.append(x)
             x.addToLayout(self.viewOption)
 
-        elapsed_time = time.time () - start_time
+        elapsed_time = time.time() - start_time
         logger.debug('%s to put items on ui' % elapsed_time)
 
     def addItemCallBack(self, *args):

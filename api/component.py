@@ -1,7 +1,9 @@
 from lcPipe.api.item import Item
 from lcPipe.api.refInfo import RefInfo
 import logging
+import time
 logger = logging.getLogger(__name__)
+
 """
 Scene Components base class (camera, cache, reference, xlo)
 """
@@ -86,17 +88,22 @@ class Component(object):
 
         :return:
         """
+
         item = self.getItem()
+
         if self.ver != item.publishVer:
             if self.updateMode == 'last':
                 self.ver = item.publishVer
-                logger.info('version %s updated to %s' % (self.ver, item.publishVer))
+                logger.debug('version %s updated to %s' % (self.ver, item.publishVer))
             else:
                 self.ver = int(self.updateMode)
+
             self.putToParent()
+            self.parent.putDataToDB()
         else:
-            logger.info ('version %s ok' % self.ver)
-        self.parent.putDataToDB()
+            logger.debug('version %s ok' % self.ver)
+
+
 
     def getPublishPath(self):
         """

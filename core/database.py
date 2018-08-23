@@ -6,7 +6,6 @@ import pymongo
 import sys
 import logging
 logger = logging.getLogger(__name__)
-logger.setLevel(10)
 
 # The global variable for database acess
 db = None
@@ -72,7 +71,7 @@ def getDefaultDict():
                                                 'source': [('uvs', 'reference'), ('blendShape', 'import')]}},
 
                                 'static': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
-                                                     'source': []},
+                                                     'source': [('proxy', 'copy')]},
                                            'proxy': {'type': 'asset', 'phase': 'preProd', 'short': 'prx',
                                                      'source': []},
                                            'gpu': {'type': 'asset', 'phase': 'preProd', 'short': 'gpu',
@@ -84,12 +83,12 @@ def getDefaultDict():
                                            'xlo': {'type': 'asset', 'phase': 'preProd', 'short': 'xlo',
                                                 'source': [('texture', 'import')]}},
 
-                                'group': { 'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
-                                                     'source': []},
-                                           'proxy': {'type': 'asset', 'phase': 'preProd', 'short': 'prx',
-                                                     'source': []},
-                                           'gpu': {'type': 'asset', 'phase': 'preProd', 'short': 'gpu',
-                                                     'source': [('model', 'reference')]}},
+                                'group': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
+                                                    'source': []},
+                                          'proxy': {'type': 'asset', 'phase': 'preProd', 'short': 'prx',
+                                                    'source': []},
+                                          'gpu': {'type': 'asset', 'phase': 'preProd', 'short': 'gpu',
+                                                  'source': [('model', 'reference')]}},
 
                                 'camera': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
                                                      'source': []},
@@ -249,7 +248,7 @@ def putItemMData(itemMData, projName=None, task=None, code=None, itemType=None, 
 
         if not itemType:
             itemType = getTaskType(task)
-            logger.warn('getting type from task %s %s' % (task, itemType))
+            logger.debug('getting type from task %s %s' % (task, itemType))
 
     collection = getCollection(itemType, projectName=projName)
     itemOut = collection.find_one_and_update({'task': task, 'code': code}, {'$set': itemMData})
@@ -444,7 +443,7 @@ def createItem(itemType, name, path, workflow, code=None, frameRange=None, custo
             itemsDict[task]['source'][sourceTask[0]] = {'code': validatedCode, 'ver': 1,
                                                         'updateMode': 'last', 'task': sourceTask[0],
                                                         'assembleMode': sourceTask[1], 'proxyMode': '',
-                                                        'xform': {}, 'onSceneParent': None, 'type': itemType}
+                                                        'xform': {}, 'onSceneParent': '', 'type': itemType}
         if 'components' in value.keys():
             itemsDict[task]['components'] = value['components']
 
@@ -614,7 +613,7 @@ def getConnectedAlembic(ref):
 
     alembicList = pm.ls(type='AlembicNode')
     if not alembicList:
-        logger.info('There is no cache assigned')
+        logger.debug('There is no cache assigned')
         return
 
     for alembic in alembicList:

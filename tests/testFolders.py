@@ -1,12 +1,21 @@
 import pymel.core as pm
 import os, sys
-from shiboken import wrapInstance
+try:
+	from shiboken import wrapInstance
+except:
+	from shiboken2 import wrapInstance
+
+try:
+    from PySide import QtGui as widgets
+except:
+    from PySide2 import QtWidgets as widgets
+
 import maya.OpenMayaUI as omui
 from PySide import QtGui, QtCore
 
 def getMayaWindow():
     ptr = omui.MQtUtil.mainWindow()
-    return wrapInstance(long(ptr), QtGui.QWidget)
+    return wrapInstance(long(ptr), widgets.QWidget)
 
 class exampleQMainWindow (QtGui.QMainWindow):
     def __init__ (self):
