@@ -1,6 +1,8 @@
 import pymel.core as pm
 from lcPipe.core import database
 from lcPipe.ui.projectSettingsWidget import ProjectSettingsWidget
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ProjectSelectWidget:
@@ -12,7 +14,6 @@ class ProjectSelectWidget:
         self.itemListWidget = None
 
     def makePopup(self):
-
         self.projPopUp = pm.popupMenu(parent=self.widgetName)
         pm.menuItem(label='new project', c=self.newProjectCallback)
 

@@ -1,20 +1,10 @@
-from lcPipe.api.item import Item
-from lcPipe.api.xloComponent import XloComponent
-from lcPipe.api.cacheComponent import CacheComponent
+import pymel.core as pm
 
-item = Item(task='render', code='0001')
+import lcPipe.ui.widgets as widgets
 
-ns = 'ref'
-src = item.components[ns]
-xlo = XloComponent(ns, src, item)
-cache = CacheComponent(ns, src, item)
+pm.layoutDialog(ui=lambda: widgets.AssetPrompt())
 
 
-cacheItem = cache.getItem()
-print cache.getPublishPath()
-print cacheItem.getDataDict()
 
-xloItem = xlo.getItem()
 
-print xlo.checkForNewVersion()
-print xloItem.getDataDict()
+

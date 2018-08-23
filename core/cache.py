@@ -3,9 +3,10 @@ import copy
 import pymel.core as pm
 import os.path
 from lcPipe.core import database
-
-reload(database)
-
+from lcPipe.api.item import Item
+from lcPipe.api.cameraComponent import CameraComponent
+import logging
+logger = logging.getLogger(__name__)
 
 def cachePrompt(refs):
     """
@@ -85,7 +86,7 @@ def cacheScene(task, code):
         for geo in geos:
             if '|' in geo:
 
-                print 'PROBLEMA de nomeacao na geo %s' % geo
+                logger.error('Naming problem on geo %s' % geo)
             else:
                 jobGeos = jobGeos + ' -root ' + geo
 
@@ -125,59 +126,29 @@ def cacheScene(task, code):
 
     collection.find_one_and_update({'task': task, 'code': code}, {'$set': shotMData})
 
-    pm.confirmDialog(title='cache', ma='center', icon='information', message='Cache Ver: %s' % ver, button=['OK'],
-                     defaultButton='OK', dismissString='ok')
-
+    logger.info('Cache Ver: %s')
 
 def cacheCamera(task, code):
-    ver = 0
-    collection = database.getCollection('shot')
-    shotMData = database.getItemMData(task=task, code=code, itemType='shot')
 
-    if 'caches' not in shotMData:
-        shotMData['caches'] = copy.deepcopy(shotMData['components'])
+    shot = Item(task=task, code=code, itemType='shot')
 
-        for item in shotMData['caches'].itervalues():
-            item['ver'] = 0
-            item['type'] = 'cache'
-            item['assembleMode'] = 'cache'
-            item['cacheVer'] = 0
-            item['name'] = ''
+    if 'cam' not in shot.caches:
+        shot.caches['cam'] = {'code': '0000', 'ver': 1, 'updateMode': 'last', 'task': 'rig',
+                              'assembleMode': 'camera', 'type': 'asset', 'cacheVer': 0, 'name': ''}
 
-    itemComponents = shotMData['components']
-    itemCaches = shotMData['caches']
+    camera = CameraComponent('cam', shot.caches['cam'], parent=shot)
+    camera.wrapData()
+    if not camera.cameraTransform:
+        pm.confirmDialog(title='No Camera', ma='center', icon='information', message='No camera to cache', button=['OK'],
+                         defaultButton='OK', dismissString='ok')
+        return
 
-    cameras = pm.ls(type='camera', l=True)
-    startup_cameras = [camera for camera in cameras if pm.camera(camera.parent(0), startupCamera=True, q=True)]
-    cameraShape = list(set(cameras) - set(startup_cameras))
-    camera = map(lambda x: x.parent(0), cameraShape)[0]
+    shot.caches['cam']['cacheVer'] += 1
+    cacheFullPath = camera.getCachePublishPath(make=True)
 
-    path = database.getPath(shotMData, dirLocation='cacheLocation', ext='')
-    cachePath = os.path.join(*path)
+    jobCam = ' -root ' + camera.cameraTransform.name()
+    jobFile = " -file " + cacheFullPath
 
-    if not os.path.exists(cachePath):
-        os.makedirs(cachePath)
-
-    # get all geometry on geo_group
-    jobCam = ' -root ' + camera
-
-    # make path and name for alembic file
-    cacheMData = itemCaches['cam']  # get the data for this component
-
-    # get version and increment
-    cacheMData['cacheVer'] += 1
-
-    ver = cacheMData['cacheVer']
-
-    # get cache publish path
-
-    cacheName = database.templateName(cacheMData) + '_cam'
-    cacheFileName = str('v%03d_' % ver) + cacheName
-    cacheFullPath = os.path.join(cachePath, cacheFileName)
-
-    jobFile = " -file " + cacheFullPath + ".abc "
-
-    # get scene frame range
     ini = str(int(pm.playbackOptions(q=True, min=True)))
     fim = str(int(pm.playbackOptions(q=True, max=True)))
     jobFrameRange = ' -frameRange ' + ini + ' ' + fim
@@ -193,4 +164,4 @@ def cacheCamera(task, code):
     # do caching
     pm.AbcExport(j=jobArg)
 
-    collection.find_one_and_update({'task': task, 'code': code}, {'$set': shotMData})
+    shot.putDataToDB()

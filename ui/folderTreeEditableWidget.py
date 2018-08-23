@@ -1,6 +1,7 @@
 import pymel.core as pm
 from lcPipe.ui.folderTreeBase import FolderTreeBase
-
+import logging
+logger = logging.getLogger(__name__)
 
 class FolderTreeEditableWidget(FolderTreeBase):
     def __init__(self, itemType='asset'):
@@ -33,7 +34,7 @@ class FolderTreeEditableWidget(FolderTreeBase):
         par = pm.treeView(self.widgetName, q=True, itemParent=args[0])
         newName = self.nextFolderName(args[1], par)
         pm.treeView(self.widgetName, e=True, displayLabel=(args[0], newName.split('_')[-1]))
-        print 'editName: oldName %s, newName %s ' % (args[0], newName)
+        logger.debug ('editName: oldName %s, newName %s ' % (args[0], newName))
         return newName
 
     def nextFolderName(self, name, parent):
@@ -114,14 +115,12 @@ class FolderTreeEditableWidget(FolderTreeBase):
                 par = folder
                 for i in range(start, end + 1, step):
                     itemName = self.nextFolderName(name, par) + '{number:0{width}d}'.format(width=zeroPad, number=i)
-                    print itemName
                     pm.treeView(self.widgetName, e=True, addItem=(itemName, par))
                     pm.treeView(self.widgetName, e=True, displayLabel=(itemName, itemName.split('_')[-1]))
         else:
             par = ''
             for i in range(start, end + 1, step):
                 itemName = self.nextFolderName(name, par) + '{number:0{width}d}'.format(width=zeroPad, number=i)
-                print itemName
                 pm.treeView(self.widgetName, e=True, addItem=(itemName, par))
                 pm.treeView(self.widgetName, e=True, displayLabel=(itemName, itemName.split('_')[-1]))
 
@@ -138,7 +137,6 @@ class FolderTreeEditableWidget(FolderTreeBase):
         return result
 
     def removeFolderCallBack(self, *args):
-        print 'new remove folder'
         sel = pm.treeView(self.widgetName, q=True, si=True)
         if sel:
             folderList = [x for x in sel if self.folderTreeDict[x]['parent'] not in sel]
@@ -148,6 +146,7 @@ class FolderTreeEditableWidget(FolderTreeBase):
                 for child in children:
                     del self.folderTreeDict[child]
         else:
-            print 'select a folder to remove!!'
+            pm.confirmDialog(title='error', ma='center', message='Select a folder to remove', button=['OK'],
+                             defaultButton='OK', dismissString='OK')
         self.getFolderTree(fromDb=False)
 

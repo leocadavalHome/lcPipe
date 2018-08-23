@@ -5,7 +5,8 @@ from lcPipe.ui.componentWidget import ComponentWidget
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.itemListBase import ItemListBase
-
+import logging
+logger = logging.getLogger(__name__)
 
 class ComponentListWidget(ItemListBase):
     def __init__(self):
@@ -48,6 +49,7 @@ class ComponentListWidget(ItemListBase):
 
         self.itemList = []
         self.selectedItem = None
+
         for ns, component in itemMData['components'].iteritems():
             type = component['type']
             collection = database.getCollection(type, self.projectName)
@@ -90,8 +92,8 @@ class ComponentListWidget(ItemListBase):
         f = pm.formLayout(form, e=True, width=150)
 
         col2 = pm.columnLayout(p=f, adjustableColumn=True)
-        nsField = pm.textFieldGrp ( 'nsFieldPrompt', l='Name Space', tx='ref' )
-        refModeField = pm.optionMenuGrp ( l='Assemble Mode' )
+        nsField = pm.textFieldGrp('nsFieldPrompt', l='Name Space', tx='ref' )
+        refModeField = pm.optionMenuGrp(l='Assemble Mode' )
         pm.menuItem(l='reference')
         pm.menuItem(l='cache')
         pm.menuItem(l='import')
@@ -106,14 +108,14 @@ class ComponentListWidget(ItemListBase):
         itemListWidget = ItemListBase()
         itemListWidget.projectName = self.projectName
         itemListWidget.createList(pane)
-        itemListWidget.refreshList(path=[], task='rig')
+        itemListWidget.refreshList(path=[], task=['uvs', 'rig'])
 
         infoWidget = InfoWidget()
         infoWidget.createInfo(pane)
 
         folderTreeWidget.itemListWidget = itemListWidget
         folderTreeWidget.itemListWidget.type = 'asset'
-        folderTreeWidget.itemListWidget.task = 'rig'
+        folderTreeWidget.itemListWidget.task = ['uvs', 'rig']
         itemListWidget.infoWidget = infoWidget
 
         b1 = pm.button(p=f, l='Cancel', c='pm.layoutDialog( dismiss="Abort" )')
@@ -130,5 +132,12 @@ class ComponentListWidget(ItemListBase):
     def createAssetCallBack(self, component, *args):
         if component:
             ns = pm.textFieldGrp('nsFieldPrompt', q=True, tx=True)
-            database.addComponent(self.item, ns, component.task, component.code, 'reference')
+
+            database.addComponent(self.item, ns, component.task, component.code, 'reference', update=True)
+
+            createdTasks = database.getShotCreatedTasks(self.item)
+
+            for itemMData in createdTasks:
+                database.addComponent(itemMData, ns, component.task, component.code, 'reference', update=True)
+
             pm.layoutDialog(dismiss='ok')

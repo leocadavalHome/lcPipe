@@ -1,4 +1,6 @@
 import pymel.core as pm
+import logging
+logger = logging.getLogger(__name__)
 
 def noMultipleUVsets(*arg):
     # Check meshList

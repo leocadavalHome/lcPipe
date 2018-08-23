@@ -1,8 +1,12 @@
 import pymel.core as pm
 import os.path
 from lcPipe.core import database
+import logging
+logger = logging.getLogger(__name__)
 
-
+"""
+Item base class, a task of an asset or shot.
+"""
 class Item(object):
     def __init__(self, projName=None, task=None, code=None, itemType=None, fromScene=False):
 
@@ -19,39 +23,59 @@ class Item(object):
         self.path = []
         self.filename = None
         self.status = None
+        self.frameRange = []
         self.source = {}
         self.components = {}
         self.caches = {}
+        self.noData = True
+        self.customData = {}
 
-        if not self._getDataFromDB():
-            raise Exception("The item found no data")
+        if self._getDataFromDB():
+
+            self.noData=False
+        else:
+            logger.error("The item found no data %s %s %s %s" % (self.projectName, self.task, self.code, self.type))
+
 
     def _getDataFromDB(self):
+        """
+        get data from the database and initialize values on object variables
+        :return:
+        """
         itemMData = database.getItemMData(projName=self.projectName, task=self.task, code=self.code,
                                           itemType=self.type, fromScene=self.fromScene)
+
         if not itemMData:
             return False
-
-        self.name = itemMData['name']
-        self.code = itemMData['code']
-        self.task = itemMData['task']
-        self.type = itemMData['type']
-        self.workflow = itemMData['workflow']
-        self.projPrefix = itemMData['projPrefix']
-        self.workVer = itemMData['workVer']
-        self.publishVer = itemMData['publishVer']
-        self.path = itemMData['path']
-        self.filename = itemMData['filename']
-        self.status = itemMData['status']
-        self.source = itemMData['source']
-        self.components = itemMData['components']
-
-        if 'caches' in itemMData:
-            self.caches = itemMData['caches']
+        try:
+            self.name = itemMData['name']
+            self.code = itemMData['code']
+            self.task = itemMData['task']
+            self.type = itemMData['type']
+            self.proxyMode = ''
+            self.workflow = itemMData['workflow']
+            self.projPrefix = itemMData['projPrefix']
+            self.workVer = itemMData['workVer']
+            self.publishVer = itemMData['publishVer']
+            self.path = itemMData['path']
+            self.filename = itemMData['filename']
+            self.status = itemMData['status']
+            self.source = itemMData['source']
+            self.frameRange = itemMData['frameRange']
+            self.components = itemMData['components']
+            self.customData = itemMData['customData']
+            if 'caches' in itemMData:
+                self.caches = itemMData['caches']
+        except:
+            return False
 
         return True
 
-    def _putDataToDB(self):
+    def putDataToDB(self):
+        """
+        write object data on database
+        :return:
+        """
         try:
             database.putItemMData(itemMData=self.getDataDict(), projName=self.projectName, task=self.task,
                                   code=self.code, itemType=self.type)
@@ -60,33 +84,51 @@ class Item(object):
 
 
     def getDataDict(self):
+        """
+        Return object data in a dictionary form
+        :return: itemMData dictionary
+        """
         itemMData={}
-        itemMData['name'] = self.name
-        itemMData['code'] = self.code
-        itemMData['task'] = self.task
-        itemMData['type'] = self.type
-        itemMData['workflow'] = self.workflow
-        itemMData['projPrefix'] = self.projPrefix
-        itemMData['workVer'] = self.workVer
-        itemMData['publishVer'] = self.publishVer
-        itemMData['path'] = self.path
-        itemMData['filename'] = self.filename
-        itemMData['status'] = self.status
-        itemMData['source'] = self.source
-        itemMData['components'] = self.components
-
-        if 'caches' in itemMData:
-            itemMData['caches'] = self.caches
+        try:
+            itemMData['name'] = self.name
+            itemMData['code'] = self.code
+            itemMData['task'] = self.task
+            itemMData['type'] = self.type
+            itemMData['workflow'] = self.workflow
+            itemMData['projPrefix'] = self.projPrefix
+            itemMData['workVer'] = self.workVer
+            itemMData['publishVer'] = self.publishVer
+            itemMData['path'] = self.path
+            itemMData['filename'] = self.filename
+            itemMData['status'] = self.status
+            itemMData['source'] = self.source
+            itemMData['frameRange'] = self.frameRange
+            itemMData['components'] = self.components
+            itemMData['customData'] = self.customData
+            if self.caches:
+                itemMData['caches'] = self.caches
+        except:
+            logger.error('Cant get dataDict')
 
         return itemMData
 
     def getPath(self, dirLocation='workLocation', ext='ma'):
+        """
+        Return object respective diretory and file name, based on dirLocation parameter and extention parameter.
+        Valid values for diLocation are: "workLocation","publishLocation", "cacheLocation",
+        "imagesWorkLocation", "imagesPublishLocation"
+        Extension parameter typically take maya file extensions, "ma", "abc" or image file extensions, "jpg", "gif", etc
+        :param dirLocation: string
+        :param ext: string (no point)
+        :return: list [ dirPath, filename]
+        """
         project = database.getProjectDict(self.projectName)
         location = project[dirLocation]
         taskFolder = self.task
         folderPath = os.path.join(*self.path)
         phase = project['workflow'][self.workflow][self.task]['phase']
         filename = self.filename
+        proxyMode = self.proxyMode
 
         if ext:
             ext = '.' + ext
@@ -94,38 +136,74 @@ class Item(object):
         else:
             ext = ''
 
-        dirPath = os.path.join(location, phase, taskFolder, folderPath)
+        dirPath = os.path.join(location, phase, taskFolder, folderPath, filename, proxyMode)
         filename = filename + ext
 
         return dirPath, filename
 
-    def getPublishPath (self):
+    def getPublishPath (self, make=False):
+        """
+        Return publish path for this item. If make is true it will create the directory if it doesnt exist
+        :param make:  Boolean
+        :return: string
+        """
         path = self.getPath(dirLocation='publishLocation')
+
+        if make:
+            if not os.path.exists(path[0]):
+                os.makedirs(path[0])
+
         version = 'v%03d_' % self.publishVer
         return os.path.join(path[0], version + path[1])
 
-    def getWorkPath(self):
+    def getWorkPath(self, make=False):
+        """
+        Return the work path for this item. If make is true, it will create the directory if it doesnt exist
+        :param make: Boolean
+        :return: String
+        """
         path = self.getPath()
+
+        if make:
+            if not os.path.exists(path[0]):
+                os.makedirs(path[0])
+
         return os.path.join(*path)
 
     def open(self):
+        """
+        open the file on disk relative to this item
+        :return:
+        """
         pm.openFile(self.getWorkPath(), f=True)
 
+    def saveAs(self):
+        """
+        Save the currently open as a version of this item
+        :return:
+        """
+        fileName = self.getWorkPath(make=True)
+        pm.saveAs(fileName)
+
+    def save(self):
+        #add log to item data
+        pass
+
     def publish(self):
+        """
+        Publish the current file on the publish directory and update version
+        :return:
+        """
         originalName = pm.sceneName()
 
         self.publishVer += 1
 
-        fullPath = self.getPublishPath()
-        dirPath = self.getPath(dirLocation='publishLocation')[0]
-        if not os.path.exists(dirPath):
-            print ('creating:' + dirPath)
-            os.makedirs(dirPath)
+        fullPath = self.getPublishPath(make=True)
 
         # save scene
         pm.saveAs(fullPath)
         pm.renameFile(originalName)
-        self._putDataToDB()
+        self.putDataToDB()
 
     def restoreVersion(self, version):
         pass

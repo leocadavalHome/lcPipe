@@ -1,6 +1,7 @@
 import pymel.core as pm
 from lcPipe.ui.folderTreeBase import FolderTreeBase
-
+import logging
+logger = logging.getLogger(__name__)
 
 class FolderTreeWidget(FolderTreeBase):
     def __init__(self, itemType='asset'):

@@ -8,7 +8,8 @@
 
 import pymel.core as pm
 import lcPipe.core.cache as cache
-
+import logging
+logger = logging.getLogger(__name__)
 
 def cacheAnimation(*args):
     try:
@@ -16,11 +17,11 @@ def cacheAnimation(*args):
         return False
     except:
         raise
-        return True
 
 def cacheCameraAnimation(*args):
     try:
+        pm.confirmDialog(title='camera Cache', ma='center', icon='information', message='Camera Cache', button=['OK'],
+                         defaultButton='OK', dismissString='ok')
         cache.cacheCamera(task=pm.fileInfo['task'], code=pm.fileInfo['code'])
     except:
         raise
-        return True

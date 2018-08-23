@@ -4,6 +4,8 @@ from lcPipe.core import sceneBuild
 from lcPipe.core import database
 from lcPipe.ui.itemBase import ItemBase
 from lcPipe.ui.shotManager import ShotManager
+import logging
+logger = logging.getLogger(__name__)
 
 ### INTERFACE
 class ItemWidget(ItemBase):
@@ -17,7 +19,6 @@ class ItemWidget(ItemBase):
             self.openCallback()
         
     def openCallback(self, *args):
-        print 'open'
         itemMData = self.getItem()
 
         if itemMData['status'] == 'notCreated':
@@ -27,8 +28,20 @@ class ItemWidget(ItemBase):
         version.open(type=itemMData['type'], task=itemMData['task'], code=itemMData['code'])
 
     def buildCallback(self, *args):
-        print 'build'
         itemMData = self.getItem()
+        itemType = database.getTaskType(self.task)
+        if itemMData['status'] == 'notCreated':
+            sceneBuild.build(itemType, self.task, self.code)
+        else:
+            resp = pm.confirmDialog(title='Confirm',
+                                    message='This item is already built \n Do you want to rebuild?',
+                                    button=['Yes', 'No'], defaultButton='Yes', cancelButton='No', dismissString='No')
+            if resp == 'Yes':
+                sceneBuild.build(itemType, self.task, self.code)
+
+    def buildAsCallback(self, proxyMode='', *args):
+        itemMData = self.getItem()
+
         itemType = database.getTaskType(self.task)
         if itemMData['status'] == 'notCreated':
             sceneBuild.build(itemType, self.task, self.code)

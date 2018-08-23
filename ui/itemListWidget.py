@@ -3,6 +3,9 @@ from lcPipe.core import database
 from lcPipe.core import version
 from lcPipe.ui.itemWidget import ItemWidget
 from lcPipe.ui.itemListBase import ItemListBase
+import time
+import logging
+logger = logging.getLogger(__name__)
 
 class ItemListWidget(ItemListBase):
     def __init__(self):
@@ -14,8 +17,8 @@ class ItemListWidget(ItemListBase):
 
     def refreshList(self, path=None, task=None, code=None, itemMData=None):
         color = (0, 0, 0)
-        x = None
 
+        start_time = time.time()
         itemListProj = database.getProjectDict()
 
         if itemMData:
@@ -39,6 +42,10 @@ class ItemListWidget(ItemListBase):
             else:
                 result = collection.find({'path': self.path, 'task': task})
 
+        elapsed_time = time.time () - start_time
+        logger.debug('%s to get items from db' % elapsed_time)
+
+        start_time = time.time ()
         flowChilds = pm.flowLayout(self.widgetName, q=True, ca=True)
         if flowChilds:
             for i in flowChilds:
@@ -48,7 +55,6 @@ class ItemListWidget(ItemListBase):
         self.selectedItem = None
 
         for itemMData in result:
-
             if not code and (task == 'asset' or task == 'shot'):
                 templateToUse = [x for x in itemListProj['assetNameTemplate'] if x != '$task']
                 name = database.templateName(itemMData, template=templateToUse)
@@ -84,6 +90,9 @@ class ItemListWidget(ItemListBase):
             x.code = itemMData['code']
             self.itemList.append(x)
             x.addToLayout(self.viewOption)
+
+        elapsed_time = time.time() - start_time
+        logger.debug('%s to put items on ui' % elapsed_time)
 
     def addItemCallBack(self, *args):
         if not self.path:
@@ -124,14 +133,28 @@ class ItemListWidget(ItemListBase):
         b1 = pm.button(p=f, l='Cancel', c=self.abortCreateCallback)
         b2 = pm.button(p=f, l='OK', c=self.createAssetCallBack)
 
-        spacer = 5
-        top = 5
-        edge = 5
-        pm.formLayout(form, edit=True,
-                      attachForm=[(row, 'right', edge), (row, 'top', top), (row, 'left', edge), (row, 'right', edge),
-                                  (b1, 'right', edge), (b1, 'bottom', edge), (b2, 'left', edge), (b2, 'bottom', edge)],
-                      attachNone=[], attachControl=[],
-                      attachPosition=[(b1, 'right', spacer, 90), (b2, 'left', spacer, 10)])
+        if self.type == 'shot':
+            range = pm.intFieldGrp('rangeField', p=form, numberOfFields=2, label='start', extraLabel='end', value1=1, value2=48 )
+            spacer = 5
+            top = 5
+            edge = 5
+            pm.formLayout (form, edit=True,
+                           attachForm=[(row, 'right', edge), (row, 'top', top), (row, 'left', edge),
+                                       (row, 'right', edge),
+                                       (b1, 'right', edge), (b1, 'bottom', edge), (b2, 'left', edge),
+                                       (b2, 'bottom', edge)],
+                           attachNone=[], attachControl=[(range, 'top', spacer, row), (range, 'bottom', spacer, b1)],
+                           attachPosition=[(b1, 'right', spacer, 90), (b2, 'left', spacer, 10)])
+
+        else:
+            spacer = 5
+            top = 5
+            edge = 5
+            pm.formLayout(form, edit=True,
+                          attachForm=[(row, 'right', edge), (row, 'top', top), (row, 'left', edge), (row, 'right', edge),
+                                      (b1, 'right', edge), (b1, 'bottom', edge), (b2, 'left', edge), (b2, 'bottom', edge)],
+                          attachNone=[], attachControl=[],
+                          attachPosition=[(b1, 'right', spacer, 90), (b2, 'left', spacer, 10)])
 
 
     def abortCreateCallback(self, *args):
@@ -145,8 +168,13 @@ class ItemListWidget(ItemListBase):
         workflow = pm.optionMenuGrp('CrAsset_workflowOpt', q=True, v=True)
         code = pm.textFieldGrp('CrAsset_codeField', q=True, tx=True)
 
-        itemDict = database.createItem(self.type, name, self.path, workflow, code)
-        print itemDict
+        if self.type == 'shot':
+            start = pm.intFieldGrp('rangeField', q=True,value1=True)
+            end = pm.intFieldGrp('rangeField', q=True,value2=True)
+            itemDict = database.createItem(self.type, name, self.path, workflow, code=code, frameRange=[start, end])
+        else:
+            itemDict = database.createItem (self.type, name, self.path, workflow, code=code)
+
         if itemDict == 'codeExists':
             return pm.confirmDialog(title='error', ma='center', message='this code already exists', button=['OK'],
                                     defaultButton='OK', dismissString='OK')

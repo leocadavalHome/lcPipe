@@ -1,153 +1,195 @@
 import pymel.core as pm
-import os.path
 from lcPipe.core import database
+from lcPipe.api.item import Item
+from lcPipe.api.cacheComponent import CacheComponent
+from lcPipe.api.xloComponent import XloComponent
+from lcPipe.api.referenceComponent import ReferenceComponent
+import logging
+import time
 
+
+logger = logging.getLogger(__name__)
 
 def checkVersions():
-    itemMData = database.getItemMData(fromScene=True)
-    components = itemMData['components']
-    source = [x for x in itemMData['source'].itervalues()][0]
-    sourceMData = database.getItemMData(code=source['code'], task=source['task'], itemType=source['type'])
+    """
+    Update the current file metadata with component versions on the database
 
-    for component_ns, component in components.iteritems():
-        if component_ns == 'cam':
+    :return:
+    """
+    item = Item(fromScene=True)
+
+    for ns, componentMData in item.components.iteritems():
+        if ns == 'cam':
             # todo tratar versoes da camera
             continue
 
-        if component['assembleMode'] == 'reference':
-            componentMData = database.getItemMData(code=component['code'], task=component['task'],
-                                                   itemType=component['type'])
+        if componentMData['assembleMode'] == 'reference':
+            refComponent = ReferenceComponent(ns, componentMData, parent=item)
+            refComponent.checkDBForNewVersion()
 
-            if not componentMData:
-                continue
+        elif componentMData['assembleMode'] == 'xlo':
+            xloComponent = XloComponent(ns, componentMData, parent=item)
+            xloComponent.checkDBForNewVersion()
+            xloComponent.checkDBForNewCacheVersion()
 
-            components[component_ns] = checkReferenceVersions(component_ns, component, componentMData)
+        elif componentMData['assembleMode'] == 'cache':
+            cacheComponent = CacheComponent(ns, componentMData, parent=item)
+            cacheComponent.checkDBForNewVersion()
 
-        elif component['assembleMode'] == 'xlo':
-            componentMData = database.getItemMData(code=component['code'], task='xlo', itemType=component['type'])
-
-            if not componentMData:
-                continue
-
-            components[component_ns] = checkReferenceVersions(component_ns, component, componentMData)
-            components[component_ns] = checkCacheVersions(component_ns, components[component_ns], sourceMData)
-
-        elif component['assembleMode'] == 'cache':
-
-            components[component_ns] = checkCacheVersions(component_ns, component, sourceMData)
-
-    database.putItemMData(itemMData)
+    item.putDataToDB()
 
 
-def sceneRefCheck():
-    print 'init checking...'
+def sceneRefCheck(silent=False):
+    """
+
+    Compare the current scene references versions with metadata and update as needed
+
+    :param silent: boolean
+    :return:
+    """
+    uptodate = True
+    logger.debug('init sceneChecking...')
     currentProject = database.getCurrentProject()
     projName = pm.fileInfo.get('projectName')
+
     if currentProject != projName:
-        print 'ERROR sceneRefCheck: This file is from a project different from the current project'
+        logger.error('This file is from a project different from the current project')
         return
 
-    checkVersions()
-    print 'checkVersions ok'
+    item = Item(fromScene=True)  # get current scene metadata
 
-    # get scene name and item
-    itemMData = database.getItemMData(fromScene=True)
-    components = itemMData['components']
 
-    if not isUpdatable(components):
-        return
-
+    # compare references and metadata and create lists of references to add, delete, update and replace
+    logger.debug('creating lists of changes...')
     refOnSceneList = pm.getReferences()
+    toDelete = [x for x in refOnSceneList if x not in item.components]
+    toAdd = [x for x in item.components if x not in refOnSceneList and x != 'cam']
+    toReplace = [x for x in item.components if item.components[x]['task'] != item.components[x]['proxyMode']]
+    refToCheckUpdate = [x for x in refOnSceneList if x not in toDelete and x not in toReplace]
+    toUpdate = {}
 
-    toUpdate = [(x + '-> reference to delete') for x in refOnSceneList if x not in components]
+    # create the list of references to update depending on the assemble mode
+    logger.debug('check update...')
+    for ns in refToCheckUpdate:
+        logger.info('updating ns:%s' % ns)
+        if item.components[ns]['assembleMode'] == 'camera':
+            continue
 
-    for component_ns, component in components.iteritems():
-        refInfo = database.referenceInfo(refOnSceneList[component_ns])
+        if item.components[ns]['assembleMode'] == 'reference':
+            logger.debug('reference')
+            start_time = time.time()
+            component = ReferenceComponent(ns, item.components[ns], parent=item)
+            toUpdate[ns] = component.updateVersion(refOnSceneList[ns])
+            elapsed_time = time.time () - start_time
+            logger.debug ('%s Total info' % elapsed_time)
 
-        if component['assembleMode'] == 'reference':
-            # procedure de reference
-            if component_ns not in refOnSceneList:
-                # this namespace not yet in the scene, need to add
-                toUpdate.append(component_ns + '-> add to scene')
+        if item.components[ns]['assembleMode'] == 'xlo':
+            component = XloComponent(ns, item.components[ns], parent=item)
+            toUpdate[ns] = component.updateVersion(refOnSceneList[ns])
 
-            refInfo = database.referenceInfo(refOnSceneList[component_ns])
-            if component['ver'] != refInfo['ver']:
-                # this namespace not yet in the scene, need to add
-                toUpdate.append(component_ns + '-> update %s to %s' % (refInfo['ver'], component['ver']))
+        if item.components[ns]['assembleMode'] == 'cache':
+            cache = CacheComponent(ns, item.components[ns], parent=item)
+            toUpdate[ns] = cache.updateVersion(refOnSceneList[ns])
 
-        elif component['assembleMode'] == 'xlo':
-            # procedimentos de xlo
-            if component_ns not in refOnSceneList:
-                # this namespace not yet in the scene, need to add
-                toUpdate.append(component_ns + '-> add xlo to scene')
+    # If not in silent mode, show dialogs to the user choose which references should be processed
+    logger.debug('prompt if needed')
+    if not silent:
+        if toDelete:
+            uptodate = False
+            toDelete = pm.layoutDialog(ui=lambda: refCheckPrompt(toDelete, 'delete')).split(',')
 
-            if component['ver'] != refInfo['ver']:
-                # this namespace not yet in the scene, need to add
-                toUpdate.append(component_ns + '-> update xlo %s to %s' % (refInfo['ver'], component['ver']))
+        if toAdd:
+            uptodate = False
+            toAdd = pm.layoutDialog(ui=lambda: refCheckPrompt(toAdd, 'add')).split(',')
 
-            if component['cacheVer'] != refInfo['cacheVer']:
-                # this namespace not yet in the scene, need to add
-                toUpdate.append(component_ns + '-> update xlo cache %s to %s' % (refInfo['cacheVer'], component['cacheVer']))
+        if toReplace:
+            uptodate = False
+            toReplace = pm.layoutDialog(ui=lambda: refCheckPrompt(toReplace, 'replace')).split(',')
 
-        elif component['assembleMode'] == 'cache':
-            # procedimentos de cache
-            if component['cacheVer'] != refInfo['cacheVer']:
-                # this namespace not yet in the scene, need to add
-                toUpdate.append(component_ns + '-> update cache %s to %s' % (refInfo['cacheVer'], component['cacheVer']))
-
-    if toUpdate:
-        resp = pm.layoutDialog(ui=lambda: refCheckPrompt(toUpdate, 'change'))
-        print resp
-    else:
-        confirmPopUp('Scene References OK!!')
-
-
-
-def checkReferenceVersions(component_ns, component, componentMData):
-    if componentMData['publishVer'] == 0:
-        print 'checkVersions: reference %s not yet published!!' \
-              % (component_ns + ':' + component['task'] + component['code'])
-        return component
-
-    if component['ver'] != componentMData['publishVer']:
-        if component['updateMode'] == 'last':
-            print 'checkVersions: reference %s version updated from %d to %d' % \
-                  ((component_ns + ':' + component['task'] + component['code']), component['ver'],
-                   componentMData['publishVer'])
-
-            component['ver'] = componentMData['publishVer']
-
+        upDateList = [x for x, y in toUpdate.iteritems() if y]
+        if upDateList:
+            uptodate = False
+            upDateList = pm.layoutDialog(ui=lambda: refCheckPrompt(upDateList, 'update')).split(',')
+            toUpdate = {x: y for x, y in toUpdate.iteritems() if x in upDateList}
         else:
-            print 'checkVersions: reference %s version fixed to %d' % \
-                  ((component_ns + ':' + component['task'] + component['code']), component['ver'])
-            component['ver'] = int(component['updateMode'])
-    else:
-        print 'checkVersions: reference %s version ok' % (component_ns + ':' + component['task'] + component['code'])
+            toUpdate = {}
 
-    return component
+        if uptodate:
+            pm.confirmDialog(title='Scene Check', ma='center',
+                             message='Versions ok!',
+                             button=['OK'], defaultButton='OK', dismissString='OK')
 
 
-def checkCacheVersions(component_ns, component, sourceMData):
-    if 'caches' in sourceMData:
-        cache_ns = component_ns
-        cache = sourceMData['caches'][cache_ns]
+    logger.debug('processing...')
+    # Do the processing
+    # delete
+    logger.debug('toDelete:%s' % toDelete)
+    for ns in toDelete:
+        refOnSceneList[ns].remove()
 
-        if cache['cacheVer'] == 0:
-            print 'checkVersions: Cache not yet published!!'
-            return component
+    # add
+    logger.debug('toAdd:%s' % toAdd)
+    for ns in toAdd:
+        if item.components[ns]['assembleMode'] == 'camera':
+            continue
 
-        if component['cacheVer'] != cache['cacheVer']:
-            print 'checkVersions: Cache %s version updated from %d to %d' \
-                  % ((component_ns + ':' + component['task'] + component['code']), component['cacheVer'],
-                     cache['cacheVer'])
-            component['cacheVer'] = cache['cacheVer']
-        else:
-            print 'checkVersions: cache %s version ok' % (component_ns + ':' + component['task'] + component['code'])
-    else:
-        print 'checkVersions: no caches in source!!'
+        if item.components[ns]['assembleMode'] == 'reference':
+            component = ReferenceComponent(ns, item.components[ns], parent=item)
+            component.addToScene()
 
-    return component
+        elif item.components[ns]['assembleMode'] == 'xlo':
+            component = XloComponent(ns, item.components[ns], parent=item)
+            component.addToScene()
 
+            cache = CacheComponent(ns, item.components[ns], parent=item)
+            cache.importCache()
+
+        elif item.components[ns]['assembleMode'] == 'cache':
+            cache = CacheComponent(ns, item.components[ns], parent=item)
+            cache.addToScene()
+
+    #update versions
+    for ns, versions in toUpdate.iteritems():
+        if item.components[ns]['assembleMode'] == 'camera':
+            continue
+
+        if item.components[ns]['assembleMode'] == 'reference':
+            component = ReferenceComponent(ns, item.components[ns], parent=item)
+            componentPath = component.getPublishPath()
+            refOnSceneList[ns].replaceWith(componentPath)
+
+        if item.components[ns]['assembleMode'] == 'xlo':
+            if 'ver' in versions:
+                component = XloComponent(ns, item.components[ns], parent=item)
+                componentPath = component.getPublishPath()
+                refOnSceneList[ns].replaceWith(componentPath)
+
+            if 'cacheVer' in versions:
+                #todo check if need to delete old cache node
+                cache = CacheComponent(ns, item.components[ns], parent=item)
+                cache.importCache()
+
+        if item.components[ns]['assembleMode'] == 'cache':
+            component = CacheComponent(ns, item.components[ns], parent=item)
+            componentPath = component.getPublishPath()
+            refOnSceneList[ns].replaceWith(componentPath)
+
+    # Replace
+    for ns in toReplace:
+        if item.components[ns]['assembleMode'] == 'reference':
+            oldProxyMode = item.components[ns]['task']
+
+            item.components[ns]['task'] = item.components[ns]['proxyMode']
+            component = ReferenceComponent(ns, item.components[ns], parent=item)
+            componentItem = component.getItem()
+            if componentItem.publishVer > 0:
+                refOnSceneList[ns].replaceWith(component.getPublishPath())
+            else:
+                item.components[ns]['task'] = oldProxyMode
+
+    item.putDataToDB()
+
+    logger.info('done sceneChecking!')
 
 def confirmPopUp(msg):
     return pm.confirmDialog(title='PopUp', ma='center', message=msg, button=['OK', 'Cancel'], defaultButton='OK',
@@ -180,136 +222,3 @@ def changeList(*args):
     selString = ','.join(sel)
     pm.layoutDialog(dismiss=selString)
 
-
-def addRef(component_ns, component):
-    if component['assembleMode'] == 'reference':
-        componentMData = database.getItemMData(code=component['code'], task=component['task'],
-                                               itemType=component['type'])
-        ver = 'v%03d_' % component['ver']
-        path = database.getPath(componentMData, dirLocation='publishLocation')
-        componentPath = os.path.join(path[0], ver + path[1])
-        pm.createReference(componentPath, namespace=component_ns)
-
-
-def addCache(cache_ns, component, source):
-    componentMData = database.getItemMData(code=source['code'], task=source['task'], itemType=source['type'])
-    path = database.getPath(componentMData, dirLocation='cacheLocation', ext='')
-    cachePath = os.path.join(*path)
-    cache = componentMData['caches'][cache_ns]
-    ver = 'v%03d_' % cache['cacheVer']
-
-    cacheName = database.templateName(cache) + '_' + cache_ns
-    cacheFileName = ver + cacheName + '.abc'
-    cacheFullPath = os.path.join(cachePath, cacheFileName)
-
-    if component['assembleMode'] == 'cache':
-        pm.createReference(cacheFullPath, namespace=cache_ns)
-    elif component['assembleMode'] == 'xlo':
-        pm.AbcImport(cacheFullPath, mode='import', fitTimeRange=True, setToStartFrame=True, connect='/')
-
-
-def updateRefVersion(component_ns, component, ref):
-    componentMData = database.getItemMData(code=component['code'], task=component['task'],itemType=component['type'])
-
-    # componentMData = database.getItemMData(code=component['code'], task='xlo', itemType=component['type'])
-
-    ver = 'v%03d_' % component['ver']
-    path = database.getPath(componentMData, dirLocation='publishLocation')
-    componentPath = os.path.join(path[0], ver + path[1])
-
-    ref.replaceWith(componentPath)
-
-
-def updateCacheVersion(cache_ns, component, source,  ref):
-    componentMData = database.getItemMData(code=source['code'], task=source['task'], itemType=source['type'])
-    path = database.getPath(componentMData, dirLocation='cacheLocation', ext='')
-    cachePath = os.path.join(*path)
-    cache = componentMData['caches'][cache_ns]
-    ver = 'v%03d_' % cache['cacheVer']
-    cacheName = database.templateName(cache) + '_' + cache_ns
-    cacheFileName = ver + cacheName + '.abc'
-    cacheFullPath = os.path.join(cachePath, cacheFileName)
-
-    if component['assembleMode'] == 'cache':
-        ref.replaceWith(cacheFullPath)
-
-    elif component['assembleMode'] == 'xlo':
-        pm.AbcImport(cacheFullPath, mode='import', fitTimeRange=True, setToStartFrame=True, connect='/')
-
-
-def delRef(refOnSceneList=None, refToDelete=None):
-    for ns in refToDelete:
-        ref = refOnSceneList[ns]
-        print 'WARNING: Removing reference %s' % os.path.basename(ref.path)
-        ref.remove()
-
-
-def isUpdatable(components):
-    hasRefsOrCaches = [x for x in components if
-                       (components[x]['assembleMode'] == 'reference' or components[x]['assembleMode'] == 'cache' or
-                        components[x]['assembleMode'] == 'xlo')]
-
-    if not hasRefsOrCaches:
-        print 'WARNING sceneCheck: no reference, xlo or cache found'
-        return False
-
-    return True
-
-
-# replace ref
-def replaceRef(wrongRef):
-    currentProject = database.getCurrentProject()
-    projName = pm.fileInfo.get('projectName')
-
-    if currentProject != projName:
-        print 'ERROR replaceRef: This file is from a project different from the current project'
-        return
-
-    itemMData = database.getItemMData(fromScene=True)
-    components = itemMData['components']
-    refOnSceneList = pm.getReferences()
-
-    for component_ns in wrongRef:
-        ref = refOnSceneList[component_ns]
-        component = components[component_ns]
-
-        if component['assembleMode'] == 'reference' or component['assembleMode'] == 'xlo':
-            componentMData = database.getItemMData(code=component['code'], task=component['task'],
-                                                   itemType=component['type'])
-            if componentMData['publishVer'] == 0:
-                print 'Component %s not yet published!!' % (component_ns + ':' + component['task'] + component['code'])
-                # todo adicionar opcao para apagar a ref
-                continue
-            else:
-                version = 'v%03d_' % componentMData['publishVer']
-
-            path = database.getPath(componentMData, dirLocation='publishLocation')
-            componentPath = os.path.join(path[0], version + path[1])
-            ref.replaceWith(componentPath)
-
-        elif component['assembleMode'] == 'cache':
-            source = [x for x in itemMData['source'].itervalues()][0]
-            componentMData = database.getItemMData(code=source['code'], task=source['task'], itemType=source['type'])
-
-            path = database.getPath(componentMData, dirLocation='cacheLocation', ext='')
-            cachePath = os.path.join(*path)
-            # pm.namespace( set=':'+componentMData['task'])
-
-            cache_ns = component_ns
-            cache = componentMData['caches'][cache_ns]
-
-            if cache['cacheVer'] == 0:
-                print 'Component not yet published!!'
-                continue
-
-            else:
-                ver = 'v%03d_' % cache['cacheVer']
-
-            cacheName = database.templateName(cache) + '_' + cache_ns
-            cacheFileName = ver + cacheName + '.abc'
-            cacheFullPath = os.path.join(cachePath, cacheFileName)
-
-            ref.replaceWith(cacheFullPath)
-# todo implementar updateCacheVersion
-# todo fazer o xlo
-# todo implementar updateCacheVersion e possivelmente tirar da outra def.

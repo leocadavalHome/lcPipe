@@ -3,7 +3,8 @@ import unicodedata
 import maya.mel as mel
 import pymel.core as pm
 import pymel.core.datatypes as dt
-
+import logging
+logger = logging.getLogger(__name__)
 
 ## Model
 def unlockNormals():
@@ -465,7 +466,7 @@ def geosInsideGeoGroup():
     if geoGrps:
         geoGrp = geoGrps[0]
     else:
-        print 'geo_group doesnt exist on this scene'
+        logger.debug('geo_group doesnt exist on this scene')
         geoGrpErr = True
         return geoGrpErr
 
@@ -480,7 +481,7 @@ def geosInsideGeoGroup():
 
         if not obj.isChildOf(geoGrp):
             geoGrpErr = True
-            print 'some geos outside geo_group'
+            logger.debug('some geos outside geo_group')
             return geoGrpErr
 
     return geoGrpErr
@@ -492,7 +493,7 @@ def fixGeoGroup(*args):
     if geoGrps:
         geoGrp = geoGrps[0]
     else:
-        print 'geo_group doesnt exist on this scene'
+        logger.debug ('geo_group doesnt exist on this scene')
         geoGrp = pm.group(em=True, n='geo_group')
 
     geos = pm.ls(type='surfaceShape')
@@ -628,7 +629,6 @@ def grpHasSulfix(*args):
                 continue
 
             if not trans.name().endswith('_grp'):
-                print trans.name()
                 nameErr = True
                 break
 
@@ -723,7 +723,6 @@ def fixNotLowercase(*args):
         objShape = trans.listRelatives(s=True)
 
         if not objShape:
-            print trans.name()
             if not trans.name().endswith('_grp'):
                 pm.rename(trans, trans.name().lower())
 
@@ -923,7 +922,7 @@ def geoGroupPivotZeroed(*args):
     if geoGrps:
         geoGrp = geoGrps[0]
     else:
-        print 'geo_group doesnt exist on this scene'
+        logger.debug ('geo_group doesnt exist on this scene')
         return True
 
     rp = geoGrp.getRotatePivot()
@@ -940,7 +939,7 @@ def resetGeoGroupPivot(*args):
     if geoGrps:
         geoGrp = geoGrps[0]
     else:
-        print 'geo_group doesnt exist on this scene'
+        logger.debug ('geo_group doesnt exist on this scene')
         return True
 
     geoGrp.zeroTransformPivots()

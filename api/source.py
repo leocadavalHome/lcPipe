@@ -1,4 +1,7 @@
 from lcPipe.api.item import Item
+import logging
+logger = logging.getLogger(__name__)
+
 
 class Source(object):
     def __init__(self, ns, sourceMData, parent=None):
@@ -10,6 +13,9 @@ class Source(object):
         self.ver = sourceMData['ver']
         self.updateMode = sourceMData['updateMode']
         self.assembleMode = sourceMData['assembleMode']
+        self.onSceneParent = sourceMData['onSceneParent']
+        self.xform = sourceMData['xform']
+        self.proxyMode = sourceMData['proxyMode']
 
         if 'cacheVer' in sourceMData:
             self.cacheVer = sourceMData['cacheVer']
@@ -24,6 +30,9 @@ class Source(object):
         componentMData['ver'] = self.ver
         componentMData['updateMode'] = self.updateMode
         componentMData['assembleMode'] = self.assembleMode
+        componentMData['onSceneParent'] = self.onSceneParent
+        componentMData['xform'] = self.xform
+        componentMData['proxyMode'] = self.proxyMode
 
         if self.cacheVer:
             componentMData['cacheVer'] = self.cacheVer
@@ -42,12 +51,13 @@ class Source(object):
         if self.ver != item.publishVer:
             if self.updateMode == 'last':
                 self.ver = item.publishVer
-                print 'version %s updated to %s' % (self.ver, item.publishVer)
+                logger.info('version %s updated to %s' % (self.ver, item.publishVer))
             else:
                 self.ver = int(self.updateMode)
             self.putToParent()
         else:
-            print 'version %s ok' %  self.ver
+            logger.info('version %s ok' %  self.ver)
+        self.parent.putDataToDB ()
 
     def addToScene(self):
         pass

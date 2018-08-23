@@ -1,4 +1,6 @@
 import pymel.core as pm
+import logging
+logger = logging.getLogger(__name__)
 
 class FiltersWidget:
     def __init__(self, itemType='asset'):

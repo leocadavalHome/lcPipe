@@ -4,6 +4,8 @@ import os.path
 import os
 import pymongo
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 # The global variable for database acess
 db = None
@@ -27,7 +29,9 @@ def mongoConnect():
 
 ##Projects
 def getDefaultDict():
-    projDict = {'projectName': '', 'prefix': '', 'workLocation': u'D:/JOBS/PIPELINE/pipeExemple/scenes',
+    projDict = {'projectName': '',
+                'prefix': '',
+                'workLocation': u'D:/JOBS/PIPELINE/pipeExemple/scenes',
                 'publishLocation': u'D:/JOBS/PIPELINE/pipeExemple/publishes',
                 'imagesWorkLocation': u'D:/JOBS/PIPELINE/pipeExemple/sourceimages',
                 'imagesPublishLocation': u'D:/JOBS/PIPELINE/pipeExemple/publishes/sourceimages',
@@ -48,9 +52,12 @@ def getDefaultDict():
                 'nextShot': 1,
                 'renderer': 'vray',
                 'fps': 24,
+                'mayaVersion': '2015',
                 'resolution': [1920, 1080],
                 'workflow': {
                                 'rig': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
+                                                  'source': []},
+                                        'proxy': {'type': 'asset', 'phase': 'preProd', 'short': 'prx',
                                                   'source': []},
                                         'uvs': {'type': 'asset', 'phase': 'preProd', 'short': 'uvs',
                                                 'source': [('model', 'import')]},
@@ -61,23 +68,34 @@ def getDefaultDict():
                                         'xlo': {'type': 'asset', 'phase': 'preProd', 'short': 'xlo',
                                                 'source': [('texture', 'import')]},
                                         'rig': {'type': 'asset', 'phase': 'preProd', 'short': 'rig',
-                                                'source': [('uvs', 'reference'),('blendShape', 'import')]}},
+                                                'source': [('uvs', 'reference'), ('blendShape', 'import')]}},
 
                                 'static': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
+                                                     'source': [('proxy', 'copy')]},
+                                           'proxy': {'type': 'asset', 'phase': 'preProd', 'short': 'prx',
                                                      'source': []},
+                                           'gpu': {'type': 'asset', 'phase': 'preProd', 'short': 'gpu',
+                                                     'source': [('model', 'reference')]},
                                            'uvs': {'type': 'asset', 'phase': 'preProd', 'short': 'uvs',
                                                    'source': [('model', 'import')]},
                                            'texture': {'type': 'asset', 'phase': 'preProd', 'short': 'tex',
-                                                       'source': [('uvs', 'reference')]}},
+                                                       'source': [('uvs', 'reference')]},
+                                           'xlo': {'type': 'asset', 'phase': 'preProd', 'short': 'xlo',
+                                                'source': [('texture', 'import')]}},
+
+                                'group': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
+                                                    'source': []},
+                                          'proxy': {'type': 'asset', 'phase': 'preProd', 'short': 'prx',
+                                                    'source': []},
+                                          'gpu': {'type': 'asset', 'phase': 'preProd', 'short': 'gpu',
+                                                  'source': [('model', 'reference')]}},
+
                                 'camera': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
                                                      'source': []},
                                            'rig': {'type': 'asset', 'phase': 'preProd', 'short': 'rig', 'source': []}},
 
                                 'shotCache': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay','source': [],
-                                                         'components': {'cam': {'code': '9999', 'ver': 1,
-                                                                        'updateMode': 'last', 'task': 'rig',
-                                                                        'assembleMode': 'reference',
-                                                                        'type': 'asset'}}},
+                                                         'components': {}},
                                              'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
                                                            'source': [('layout', 'copy')]},
                                              'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
@@ -86,9 +104,7 @@ def getDefaultDict():
                                                                 'source': [('animation', 'copy')]}},
 
                                 'shotXlo': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay', 'source': [],
-                                                       'components': { 'cam': {'code': '9999', 'ver': 1, 'updateMode': 'last',
-                                                                       'task': 'rig', 'assembleMode': 'reference',
-                                                                       'type': 'asset'}}},
+                                                       'components': {}},
                                             'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
                                                           'source': [('layout', 'copy')]},
                                             'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
@@ -98,10 +114,7 @@ def getDefaultDict():
 
                                 'keyLightShot': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay',
                                                             'source': [],
-                                                            'components': [{'code': '9999', 'ver': 1,
-                                                                            'updateMode': 'last', 'task': 'rig',
-                                                                            'assembleMode': 'reference',
-                                                                            'type': 'asset'}]},
+                                                            'components': []},
                                                  'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
                                                                'source': [('layout', 'copy')]},
                                                  'lighting': {'type': 'shot', 'phase': 'postProd', 'short': 'lit',
@@ -127,6 +140,10 @@ def getCurrentProject():
     global currentProject
     return currentProject
 
+def updateCurrentProjectKey(key, value):
+    global db
+    projectName = getCurrentProject()
+    db.projects.find_one_and_update({'projectName': projectName}, {'$set': {key: value}})
 
 def setCurrentProject(project):
     global currentProject
@@ -181,6 +198,7 @@ def getCollection(itemType, projectName=None):
 
 ##DATABASE
 def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=False):
+
     if fromScene:
         print 'fromScene'
         projName = pm.fileInfo.get('projectName')
@@ -189,14 +207,14 @@ def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=F
         itemType = pm.fileInfo.get('type')
 
         if not projName or not task or not code or not itemType:
-            print 'ERROR getItemData: Cant get item Metadata. Scene has incomplete fileInfo:', projName, task, code, itemType
+            logger.error('Cant get item Metadata. Scene has incomplete fileInfo:%s %s %s %s' % (projName, task, code, itemType))
     else:
         if not task or not code:
-            print 'ERROR getItemData: Cant get item Metadata. Missing item ids on function call:', projName, task, code, itemType
+            logger.error ('Cant get item Metadata. Missing item ids on function call:%s %s %s %s' % (projName, task, code, itemType))
 
         if not itemType:
             itemType = getTaskType(task)
-            print 'WARNING getItemData: getting type from task', task, itemType
+            logger.warn('getItemData: getting type from task %s %s' % (task, itemType))
 
     if projName:
         collection = getCollection(itemType, projName)
@@ -206,14 +224,14 @@ def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=F
     item = collection.find_one({'task': task, 'code': code})
 
     if not item:
-        print 'ERROR getItemData: Cant find item Metadata on database:', projName, task, code, itemType
+        logger.error('Cant find item Metadata on database:%s %s %s %s' % (projName, task, code, itemType))
 
     return item
 
 
-def putItemMData(itemMData, projName=None, task=None, code=None, itemType=None, fromScene=True):
+def putItemMData(itemMData, projName=None, task=None, code=None, itemType=None, fromScene=False):
     if not itemMData:
-        print 'ERROR putItemData: no item metadata in function call:'
+        logger.error('No item metadata in function call')
 
     if fromScene:
         projName = pm.fileInfo.get('projectName')
@@ -222,15 +240,15 @@ def putItemMData(itemMData, projName=None, task=None, code=None, itemType=None, 
         itemType = pm.fileInfo.get('type')
 
         if not projName or not task or not code or not itemType:
-            print 'ERROR putItemData: Cant put item Metadata. Scene has incomplete fileInfo:', projName, task, code, itemType
+            logger.error('Cant put item Metadata. Scene has incomplete fileInfo:%s %s %s %s' % (projName, task, code, itemType))
             return
     else:
         if not task or not code:
-            print 'ERROR putItemData: Cant get item Metadata. Missing item ids on function call:', projName, task, code, itemType
+            logger.error('Cant get item Metadata. Missing item ids on function call:%s %s %s %s' % (projName, task, code, itemType))
 
         if not itemType:
             itemType = getTaskType(task)
-            print 'WARNING putItemData: getting type from task', task, itemType
+            logger.debug('getting type from task %s %s' % (task, itemType))
 
     collection = getCollection(itemType, projectName=projName)
     itemOut = collection.find_one_and_update({'task': task, 'code': code}, {'$set': itemMData})
@@ -393,11 +411,10 @@ def codeCheck(code, itemType):
         nextItem = True
         code = "%04d" % proj['next' + itemType.capitalize()]
 
-    print code, nextItem
     return code, nextItem
 
 
-def createItem(itemType, name, path, workflow, code=None):
+def createItem(itemType, name, path, workflow, code=None, frameRange=None, customData=None):
     global db
     global currentProject
 
@@ -415,7 +432,8 @@ def createItem(itemType, name, path, workflow, code=None):
     for task in itemWorkflow.iterkeys():
         itemsDict[task] = {'name': name, 'code': validatedCode, 'task': task, 'type': itemType, 'workflow': workflow,
                            'projPrefix': proj['prefix'], 'workVer': 0, 'publishVer': 0, 'path': path, 'filename': '',
-                           'status': 'notCreated', 'source': {}, 'components': {}}
+                           'status': 'notCreated', 'source': {}, 'components': {}, 'frameRange': frameRange,
+                           'customData': customData}
 
         fileName = templateName(itemsDict[task])
         itemsDict[task]['filename'] = fileName
@@ -423,9 +441,9 @@ def createItem(itemType, name, path, workflow, code=None):
     for task, value in itemWorkflow.iteritems():
         for sourceTask in value['source']:
             itemsDict[task]['source'][sourceTask[0]] = {'code': validatedCode, 'ver': 1,
-                                                           'updateMode': 'last', 'task': sourceTask[0],
-                                                           'assembleMode': sourceTask[1],
-                                                           'type': itemType}
+                                                        'updateMode': 'last', 'task': sourceTask[0],
+                                                        'assembleMode': sourceTask[1], 'proxyMode': '',
+                                                        'xform': {}, 'onSceneParent': '', 'type': itemType}
         if 'components' in value.keys():
             itemsDict[task]['components'] = value['components']
 
@@ -437,24 +455,26 @@ def createItem(itemType, name, path, workflow, code=None):
 
 
 def removeItem(itemType, code):
-    print 'remove item'
+    logger.info('Remove item %s' % code)
     collection = getCollection(itemType)
     collection.delete_many({'code': code})
 
 
 # Items
-def addComponent(item, ns, componentTask, componentCode, assembleMode, update=True):
+def addComponent(item, ns, componentTask, componentCode, assembleMode, proxyMode='',
+                 xform={}, onSceneParent=None, update=True):
+
     itemType = getTaskType(componentTask)
     compCollection = getCollection(itemType)
 
     componentMData = compCollection.find_one({'task': componentTask, 'code': componentCode})  # hardcode so assets
     componentDict = {'code': componentCode, 'ver': 1, 'updateMode': 'last', 'task': componentTask,
-                     'assembleMode': assembleMode, 'type': componentMData['type']}
+                     'assembleMode': assembleMode, 'proxyMode': proxyMode, 'xform': xform,
+                     'onSceneParent': onSceneParent, 'type': itemType}
 
     nsList = item['components'].keys()
     index = 1
     nsBase = ns
-
     while ns in nsList:
         ns = nsBase + str(index)
         index += 1
@@ -467,6 +487,31 @@ def addComponent(item, ns, componentTask, componentCode, assembleMode, update=Tr
 
     return item
 
+def addSource(item, ns, componentTask, componentCode, assembleMode, proxyMode='',
+                 xform={}, onSceneParent=None, update=True):
+
+    itemType = getTaskType(componentTask)
+    compCollection = getCollection(itemType)
+
+    componentMData = compCollection.find_one({'task': componentTask, 'code': componentCode})  # hardcode so assets
+    componentDict = {'code': componentCode, 'ver': 1, 'updateMode': 'last', 'task': componentTask,
+                     'assembleMode': assembleMode, 'proxyMode': proxyMode, 'xform': xform,
+                     'onSceneParent': onSceneParent, 'type': itemType}
+
+    nsList = item['source'].keys()
+    index = 1
+    nsBase = ns
+    while ns in nsList:
+        ns = nsBase + str(index)
+        index += 1
+
+    item['source'][ns] = componentDict
+
+    if update:
+        itemCollection = getCollection(item['type'])
+        result = itemCollection.find_one_and_update({'task': item['task'], 'code': item['code']}, {'$set': item})
+
+    return item
 
 def removeComponent(item, ns):
     del item['components'][ns]
@@ -481,7 +526,7 @@ def find(code, task, collection):  # old!!
     if item:
         return item
     else:
-        print 'FIND: item not found'
+        logger.error('item not found')
         return
 
 
@@ -515,7 +560,7 @@ def getTaskLong(taskShort):
     if result:
         return result[0]
     else:
-        print 'ERROR getTaskLong: no long name for this task short!'
+        logger.error('No long name for this task short!')
 
 
 def getTaskShort(taskLong):
@@ -529,7 +574,16 @@ def getTaskShort(taskLong):
     if result:
         return result[0]
     else:
-        print 'ERROR getTaskShort: no short name for this task!'
+        logger.error('No short name for this task!')
+
+def getAllTasks (assetType=None):
+    project = getProjectDict()
+    taskList = []
+    for workflow in project['workflow'].itervalues ():
+        for key, value in workflow.iteritems():
+            if value['type'] == assetType:
+                taskList.append(key)
+    return sorted(list(set(taskList)))
 
 
 def getGeoGroupMembers(geoGroup):
@@ -542,7 +596,11 @@ def getCamera():
     cameras = pm.ls(type='camera', l=True)
     startup_cameras = [camera for camera in cameras if pm.camera(camera.parent(0), startupCamera=True, q=True)]
     cameraShape = list(set(cameras) - set(startup_cameras))
-    camera = map(lambda x: x.parent(0), cameraShape)[0]
+    if cameraShape:
+        camera = map(lambda x: x.parent(0), cameraShape)[0]
+    else:
+        camera = None
+
     return camera
 
 
@@ -555,7 +613,7 @@ def getConnectedAlembic(ref):
 
     alembicList = pm.ls(type='AlembicNode')
     if not alembicList:
-        print 'there is no cache assigned'
+        logger.debug('There is no cache assigned')
         return
 
     for alembic in alembicList:
@@ -615,3 +673,38 @@ def getSceneImagesPath(dirLocation='imagesWorkLocation'):
 
     return dirPath
 
+
+def getPhase(itemMData):
+    project = getProjectDict()
+    return project['workflow'][itemMData['workflow']][itemMData['task']]['phase']
+
+
+def getShotCreatedTasks (itemMData):
+    collection = getCollection('shot')
+    cursor = collection.find({'status': {'$nin': ['notCreated']}, 'code': itemMData['code']})
+    result = []
+    for task in cursor:
+        del task['_id']
+        if getPhase(task) == 'prod' and task['task']!='layout':
+            result.append(task)
+    return result
+
+def searchName (name=None):
+    collection = getCollection('asset')
+    cursor = collection.find({'name':name})
+    result = []
+    for item in cursor:
+        del item['_id']
+        result.append(item)
+    return result
+
+def addFolder(foldersToAdd=None, assetType='asset'):
+    projectDict = getProjectDict()
+    assetFolders = projectDict[assetType+'Folders']
+    parent = ''
+    for folder in foldersToAdd:
+        print folder
+        if folder not in assetFolders:
+            assetFolders[folder] = {'parent': parent}
+        parent = folder
+    updateCurrentProjectKey(assetType+'Folders', assetFolders)
