@@ -2,6 +2,8 @@ from lcPipe.publish.modelPublish import *
 from lcPipe.publish.uvPublish import *
 from lcPipe.publish.texPublish import *
 from lcPipe.publish.shotFinalizingPublish import *
+from lcPipe.publish.layoutPublish import *
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -92,12 +94,25 @@ class PublishWidget(object):
             'xlo': {},
             'rig': {},
             'blendShape': {},
+            'layout':  {1.0: {'status': 'run', 'label': 'correct fps', 'check': correctFps,
+                              'fix': [fixFpsNoChangeKey, fixFpsChangeKey]},
+                        2.0: {'status': 'run', 'label': 'correct camera name', 'check': cameraNameCheck,
+                              'fix': [renameCamera]},
+                        3.0: {'status': 'run', 'label': 'correct camera aspect', 'check': cameraAspectCheck,
+                              'fix': [fixCameraAspect, skip]},
+                        4.0: {'status': 'run', 'label': 'no reference unloaded', 'check': NoReferenceOff,
+                              'fix': [removeUnloadedRefs, skip]},
+                        5.0: {'status': 'skip', 'label': 'No sound or Correct name', 'check': checkAudioFile,
+                              'fix': [skip]}
+                        }
             }
 
         self.prePublishProcedures = {
                                 'texture': {1.0: {'prePublish': importReferences}},
                                 'rig': {1.0: {'prePublish': importReferences}},
-                                'shotFinalizing': {1.0: {'prePublish': cacheAnimation},
+                                'layout': {1.0: {'prePublish': doSceneCheck},
+                                           2.0: {'prePublish': doPlayBlast}},
+                                'shotFinalizing': {1.0: {'prePublish': doSceneCheck},
                                                    2.0: {'prePublish': cacheCameraAnimation}}
                                 }
 

@@ -185,6 +185,8 @@ class Item(object):
         fileName = self.getWorkPath(make=True)
         pm.saveAs(fileName)
 
+        # todo copy components
+
     def save(self):
         #add log to item data
         pass

@@ -6,6 +6,7 @@ from lcPipe.api.sceneSource import SceneSource
 from lcPipe.api.cameraComponent import CameraComponent
 import logging
 from collections import OrderedDict
+from lcPipe.api.sound import Sound
 
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
@@ -57,13 +58,19 @@ def build(itemType=None, task=None, code=None, silent=False):
         cameraMData = {'code': '0000', 'ver': cameraItem.publishVer, 'updateMode': 'last',
                       'task': 'rig', 'assembleMode': 'camera', 'proxyMode': 'rig',
                        'onSceneParent': None, 'type': 'asset', 'xform': {}}
-        camera = CameraComponent('cam', cameraMData, parent=item)
 
+        camera = CameraComponent('cam', cameraMData, parent=item)
         camera.wrapData()
+
         if not camera.cameraTransform:
             camera.addToScene()
+
         newComponentsDict['cam'] = camera.getDataDict()
         empty = False
+
+        logger.debug('creating sound...')
+        sound = Sound(item=item)
+        sound.importOnScene()
 
     for ns, sourceMData in itemDict.iteritems():
         source = SceneSource(ns, sourceMData, parent=item)
@@ -109,6 +116,7 @@ def build(itemType=None, task=None, code=None, silent=False):
 
         if item.type == 'shot':
             pm.playbackOptions(ast=item.frameRange[0], aet=item.frameRange[1])
+            # todo check project frame rate to set new shots
             pm.currentUnit(time='film')
 
         item.workVer = 1

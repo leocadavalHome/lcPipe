@@ -66,6 +66,8 @@ class ProjectSettingsWidget():
             pm.textFieldGrp(self.imgPublishLocTxt, e=True, text=selectDir)
         elif opt == 5:
             pm.textFieldGrp( self.cacheLocTxt, e=True, text=selectDir)
+        elif opt == 6:
+            pm.textFieldGrp( self.soundLocTxt, e=True, text=selectDir)
 
     def createProjectSettingsWidget(self):
         if not self.projectName:
@@ -94,6 +96,9 @@ class ProjectSettingsWidget():
         self.imgPublishLocTxt = pm.textFieldButtonGrp(label='Images Publish Location',
                                                       text=self.projDict['imagesPublishLocation'], buttonLabel='...',
                                                       adj=2, cat=(1, 'left', 20),  bc=lambda:self.browseCallback(4))
+        self.soundLocTxt = pm.textFieldButtonGrp(label='sound Location',
+                                                      text=self.projDict['soundLocation'], buttonLabel='...',
+                                                      adj=2, cat=(1, 'left', 20),  bc=lambda:self.browseCallback(6))
         self.cacheLocTxt = pm.textFieldButtonGrp(label='Cache Location', text=self.projDict['cacheLocation'],
                                                  buttonLabel='...', adj=2, cat=(1, 'left', 20), bc=lambda:self.browseCallback(5))
         self.assetCollTxt = pm.textFieldGrp(label='Asset Collection', text=self.projDict['assetCollection'], adj=2,
@@ -109,6 +114,18 @@ class ProjectSettingsWidget():
         self.fpsTxt = pm.textFieldGrp(label='Project Frame Rate',
                                              text=self.projDict['fps'], adj=2,
                                              cat=(1, 'left', 20))
+
+        self.fpsPopUp = pm.popupMenu(p=self.fpsTxt)
+        pm.menuItem(label='12', c=lambda x: pm.textFieldGrp(self.fpsTxt,e=True, text=12))
+        pm.menuItem(label='15', c=lambda x: pm.textFieldGrp(self.fpsTxt,e=True, text=15))
+        pm.menuItem(label='23.978', c=lambda x: pm.textFieldGrp(self.fpsTxt,e=True, text=23.978))
+        pm.menuItem (label='24', c=lambda x: pm.textFieldGrp(self.fpsTxt,e=True, text=24))
+        pm.menuItem(label='25', c=lambda x: pm.textFieldGrp(self.fpsTxt,e=True, text=25))
+        pm.menuItem (label='29.97', c=lambda x: pm.textFieldGrp(self.fpsTxt,e=True, text=29.97))
+        pm.menuItem(label='30', c=lambda x: pm.textFieldGrp(self.fpsTxt,e=True, text=30))
+        pm.menuItem(label='48', c=lambda x: pm.textFieldGrp(self.fpsTxt,e=True, text=48))
+        pm.menuItem(label='50', c=lambda x: pm.textFieldGrp(self.fpsTxt,e=True, text=50))
+        pm.menuItem(label='60', c=lambda x: pm.textFieldGrp(self.fpsTxt,e=True, text=60))
 
         self.mayaVersionOpt = pm.optionMenuGrp(label='Maya Version', cat=(1, 'left', 20))
         pm.menuItem(label='2015')
@@ -165,6 +182,7 @@ class ProjectSettingsWidget():
         self.projDict['publishLocation'] = pm.textFieldButtonGrp(self.publishLocTxt, q=True, text=True)
         self.projDict['imagesWorkLocation'] = pm.textFieldButtonGrp(self.imgWorkLocTxt, q=True, text=True)
         self.projDict['imagesPublishLocation'] = pm.textFieldButtonGrp(self.imgPublishLocTxt, q=True, text=True)
+        self.projDict['soundLocation'] = pm.textFieldButtonGrp(self.soundLocTxt, q=True, text=True)
         self.projDict['cacheLocation'] = pm.textFieldButtonGrp(self.cacheLocTxt, q=True, text=True)
         self.projDict['assetCollection'] = self.projDict['projectName'] + '_asset'
         self.projDict['shotCollection'] = self.projDict['projectName'] + '_shot'

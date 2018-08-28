@@ -5,6 +5,7 @@ from lcPipe.ui.itemWidget import ItemWidget
 from lcPipe.ui.itemListBase import ItemListBase
 import time
 import logging
+import os.path
 logger = logging.getLogger(__name__)
 
 class ItemListWidget(ItemListBase):
@@ -135,15 +136,20 @@ class ItemListWidget(ItemListBase):
 
         if self.type == 'shot':
             range = pm.intFieldGrp('rangeField', p=form, numberOfFields=2, label='start', extraLabel='end', value1=1, value2=48 )
+            #self.soundPath = pm.textFieldButtonGrp('sound', p=form, label='sound', buttonLabel='...',
+            #                                  adj=2, cat=[(1, 'left', 20)], bc=lambda: self.browseCallback(1))
             spacer = 5
             top = 5
             edge = 5
+            # todo adjust create asset(shot) sound layout!
             pm.formLayout (form, edit=True,
                            attachForm=[(row, 'right', edge), (row, 'top', top), (row, 'left', edge),
                                        (row, 'right', edge),
                                        (b1, 'right', edge), (b1, 'bottom', edge), (b2, 'left', edge),
                                        (b2, 'bottom', edge)],
-                           attachNone=[], attachControl=[(range, 'top', spacer, row), (range, 'bottom', spacer, b1)],
+                           attachNone=[], attachControl=[(range, 'top', spacer, row), (range, 'bottom', spacer, row)],
+                                                         # (range, 'bottom', spacer, self.soundPath),
+                                                         # (self.soundPath, 'bottom', spacer, b1)],
                            attachPosition=[(b1, 'right', spacer, 90), (b2, 'left', spacer, 10)])
 
         else:
@@ -169,14 +175,24 @@ class ItemListWidget(ItemListBase):
         code = pm.textFieldGrp('CrAsset_codeField', q=True, tx=True)
 
         if self.type == 'shot':
-            start = pm.intFieldGrp('rangeField', q=True,value1=True)
-            end = pm.intFieldGrp('rangeField', q=True,value2=True)
+            start = pm.intFieldGrp('rangeField', q=True, value1=True)
+            end = pm.intFieldGrp('rangeField', q=True, value2=True)
             itemDict = database.createItem(self.type, name, self.path, workflow, code=code, frameRange=[start, end])
         else:
-            itemDict = database.createItem (self.type, name, self.path, workflow, code=code)
+            itemDict = database.createItem(self.type, name, self.path, workflow, code=code)
 
         if itemDict == 'codeExists':
             return pm.confirmDialog(title='error', ma='center', message='this code already exists', button=['OK'],
                                     defaultButton='OK', dismissString='OK')
 
         pm.layoutDialog(dismiss='ok')
+
+    def browseCallback(self, opt, *args):
+        resultDir = pm.fileDialog2(cap='choose sound', okCaption='Select', fm=1, dialogStyle=2)
+        if resultDir:
+            selectDir = os.path.normpath(resultDir[0])
+        else:
+            return
+
+        if opt == 1:
+            pm.textFieldGrp(self.soundPath, e=True, text=selectDir)

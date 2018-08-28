@@ -35,6 +35,7 @@ def getDefaultDict():
                 'publishLocation': u'D:/JOBS/PIPELINE/pipeExemple/publishes',
                 'imagesWorkLocation': u'D:/JOBS/PIPELINE/pipeExemple/sourceimages',
                 'imagesPublishLocation': u'D:/JOBS/PIPELINE/pipeExemple/publishes/sourceimages',
+                'soundLocation': u'D:/JOBS/PIPELINE/pipeExemple/sound',
                 'cacheLocation': u'D:/JOBS/PIPELINE/pipeExemple/cache/alembic',
                 'assetCollection': '_asset',
                 'shotCollection': '_shot', 'status': 'active',
@@ -51,7 +52,7 @@ def getDefaultDict():
                 'nextAsset': 1,
                 'nextShot': 1,
                 'renderer': 'vray',
-                'fps': 24,
+                'fps': 25,
                 'mayaVersion': '2015',
                 'resolution': [1920, 1080],
                 'workflow': {
@@ -110,19 +111,8 @@ def getDefaultDict():
                                             'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
                                                        'source': [('shotFinalizing', 'xlo')]},
                                             'shotFinalizing': {'type': 'shot', 'phase': 'prod', 'short': 'sfh',
-                                                               'source': [('animation', 'copy')]}},
-
-                                'keyLightShot': {'layout': {'type': 'shot', 'phase': 'prod', 'short': 'lay',
-                                                            'source': [],
-                                                            'components': []},
-                                                 'animation': {'type': 'shot', 'phase': 'prod', 'short': 'ani',
-                                                               'source': [('layout', 'copy')]},
-                                                 'lighting': {'type': 'shot', 'phase': 'postProd', 'short': 'lit',
-                                                              'source': [('shotFinalizing', 'reference')]},
-                                                 'render': {'type': 'shot', 'phase': 'postProd', 'short': 'rnd',
-                                                            'source': [('shotFinalizing', 'cache')]},
-                                                 'shotFinalizing': {'type': 'shot', 'phase': 'prod', 'short': 'sfh',
-                                                                    'source': [('animation', 'copy')]}}}
+                                                               'source': [('animation', 'copy')]}}
+                }
                 }
     return projDict
 

@@ -4,7 +4,7 @@ import sys
 
 from lcPipe.core import database
 from lcPipe.core import check
-from lcPipe.ui import widgets
+from lcPipe.ui import masterWidgets
 from lcPipe.core import ingestion
 
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
@@ -58,10 +58,10 @@ class Session:
             self.publish(type=pm.fileInfo['type'], task=pm.fileInfo['task'], code=pm.fileInfo['code'])
 
     def browser(self):
-        widgets.itemBrowser()
+        masterWidgets.itemBrowser()
 
     def publish(self, type, task, code):
-        pubWidget = widgets.PublishWidget(task=task, code=code, assetType=type)
+        pubWidget = masterWidgets.PublishWidget(task=task, code=code, assetType=type)
         pubWidget.createWin()
 
     def currentPrj(self, *args):

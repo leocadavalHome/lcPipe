@@ -29,13 +29,19 @@ def open (type, task, code, force=False):
     item = Item(task=task, code=code, itemType=type)
     item.open()
 
-def saveAs (type, task, code, force=True):
-    pm.fileInfo['type'] = 'type'
-    pm.fileInfo['task'] = 'task'
-    pm.fileInfo['code'] = 'code'
-
+def saveAs (task=None, code=None, type=None):
     item = Item(task=task, code=code, itemType=type)
-    item.saveAs()
+
+    if item:
+        pm.fileInfo['type'] = item.type
+        pm.fileInfo['task'] = item.task
+        pm.fileInfo['code'] = item.code
+
+        item.saveAs()
+
+        item.status='created'
+        item.putDataToDB()
+
 
 def takeSnapShot(itemMData=None, thumbPath=None):
     if itemMData and not thumbPath:

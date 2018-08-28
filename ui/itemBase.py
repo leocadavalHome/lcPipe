@@ -50,7 +50,7 @@ class ItemBase(object):
         else:
             if self.parentWidget.selectedItem:
                 pm.layout(self.parentWidget.selectedItem.name, e=True,
-                                  backgroundColor=self.parentWidget.selectedItem.color)
+                          backgroundColor=self.parentWidget.selectedItem.color)
                 self.parentWidget.selectedItem.selected = False
             pm.layout(self.name, e=True, backgroundColor=(.27, .27, .27))
             self.parentWidget.selectedItem = self

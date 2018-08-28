@@ -12,7 +12,7 @@ from lcPipe.api.item import Item
 from lcPipe.ui.itemListBase import ItemListBase
 import logging
 logger = logging.getLogger(__name__)
-
+logger.setLevel(10)
 """
 
 """
@@ -152,7 +152,7 @@ class PublishAsWidget (publish.PublishWidget):
 
 
 class AssetPrompt:
-    ##todo fazer funcionar o asset Prompt generico
+    ##done fazer funcionar o asset Prompt generico
         def __init__(self):
             self.createAssetPrompt()
 
@@ -170,16 +170,16 @@ class AssetPrompt:
             for assetType in typesAsset:
                 pm.menuItem (label=assetType)
             pm.menuItem (divider=True)
-            typesShot = database.getAllTasks ('shot')
+            typesShot = database.getAllTasks('shot')
             for assetType in typesShot:
-                pm.menuItem (label=assetType)
+                pm.menuItem(label=assetType)
 
-            pm.symbolButton (image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/small.png',
+            pm.symbolButton(image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/small.png',
                              c=lambda x, y=2: self.changeViewCallback (y))
-            pm.symbolButton (image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/big.png',
+            pm.symbolButton(image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/big.png',
                              c=lambda x, y=1: self.changeViewCallback (y))
 
-            pane = pm.paneLayout (p=form, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)], shp=0)
+            pane = pm.paneLayout(p=form, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)], shp=0)
 
             self.folderTreeWidget = FolderTreeWidget ('asset')
             self.folderTreeWidget.createFolderTree (pane)
@@ -201,15 +201,20 @@ class AssetPrompt:
             b2 = pm.button(p=f, l='OK', c=lambda x: self.okCallback(self.itemListWidget.selectedItem))
 
             pm.formLayout(form, edit=True,
-                           attachForm=[(pane, 'left', 5), (pane, 'bottom', 5), (pane, 'right', 5),
+                          attachForm=[(pane, 'left', 5), (pane, 'right', 5),
                                        (col2, 'top', 5), (col2, 'left', 5), (col2, 'right', 5),
                                        (b1, 'right', 5), (b1, 'bottom', 5), (b2, 'left', 5), (b2, 'bottom', 5)
                                        ],
-                           attachControl=[(pane, 'top', 5, col2)],
-                           attachPosition=[(b1, 'right', 5, 90), (b2, 'left', 5, 10)], attachNone=())
+                          attachControl=[(pane, 'top', 5, col2), (pane, 'bottom', 5, b1)],
+                          attachPosition=[(b1, 'right', 5, 90), (b2, 'left', 5, 10)],
+                          attachNone=())
 
         def okCallback (self, selected):
-            logger.debug(selected.name())
+            logger.debug(selected.name)
+            if selected:
+                logger.debug('task %s, code %s' % (selected.task, selected.code))
+
+            version.saveAs(task=selected.task, code=selected.code)
             pm.layoutDialog(dismiss='ok')
 
         def changeViewCallback(self, opt):
@@ -226,9 +231,3 @@ class AssetPrompt:
 
             self.itemListWidget.task = newTaskToSearch
             self.itemListWidget.refreshList(path=self.itemListWidget.path, task=self.itemListWidget.task)
-
-            def createAssetCallBack(self, component, *args):
-                if component:
-                    print component
-
-                    pm.layoutDialog(dismiss='ok')

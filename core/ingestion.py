@@ -235,7 +235,6 @@ def ingestGroups(pathSrc, pathTgt):
 
         groupFullPath = os.path.join(versionPath, version)
         groupFile = pm.getFileList(folder=groupFullPath)[0]
-        groupFullPath = os.path.join(groupFullPath, groupFile)
 
         ingestionDict = {'name': fileName, 'version': maxVer, 'sourcePath': groupFullPath,
                          'assetType': 'group', 'task': 'proxy', 'setAssemble': os.path.split(pathSrc)[-1]}
@@ -246,7 +245,7 @@ def ingestGroups(pathSrc, pathTgt):
         itemProxy = Item(task='proxy', code=itemMData['proxy']['code'])
         itemModel = Item(task='model', code=itemMData['model']['code'])
 
-        descDict = readDescription(groupFullPath, 1, maxDepth=0, searchInGroupAsset=True)
+        descDict = readDescription(groupFile, groupFullPath, 1, maxDepth=0, searchInGroupAsset=True)
         for component in descDict:
             logger.debug('add %s to %s' % (component['name'], fileName))
             itemList = database.searchName(component['name'])
@@ -276,16 +275,17 @@ def ingestSet(descFileName, pathSrc, pathTgt):
     itemMData = database.createItem(itemType='asset', name=fileName, path=pathTgt, workflow='group',
                                     customData={'ingestData': ingestionDict})
 
-    progressWin = ProgressWindowWidget (title='Set', maxValue=2)
-    addComponentsToSet(item=itemMData['proxy'], onSceneParent='', components=descDict, proxyMode='proxy')
-    progressWin.progressUpdate (1)
+    addComponentsToSet(item=itemMData['proxy'], onSceneParent='', components=descDict, proxyMode='proxy' )
     addComponentsToSet(item=itemMData['model'], onSceneParent='', components=descDict, proxyMode='model')
-    progressWin.progressUpdate (1)
-    progressWin.closeWindow ()
+
+
 
 
 def addComponentsToSet(item=None, onSceneParent='', components=[], groupComponents=True, proxyMode='proxy'):
+    progressWin = ProgressWindowWidget (title=onSceneParent, maxValue=len(components))
+
     for obj in components:
+        progressWin.progressUpdate (1)
         if obj['subType'] == 'sceneGroup':
             groupMData = database.addSource(item=item, ns=onSceneParent+'Ref',
                                             componentCode=obj['name'],
@@ -327,6 +327,7 @@ def addComponentsToSet(item=None, onSceneParent='', components=[], groupComponen
                 if obj['components']:
                     addComponentsToSet(item=item, onSceneParent=obj['name']+str(obj['instanceNumber']),
                                        components=obj['components'], proxyMode=proxyMode)
+    progressWin.closeWindow()
 
 
 def browseCallBack(*args):
