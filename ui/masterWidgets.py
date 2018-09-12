@@ -49,8 +49,8 @@ class itemBrowser:
         for assetType in typesShot:
             pm.menuItem(label=assetType)
 
-        pm.symbolButton(image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/small.png', c=lambda x, y=2: self.changeViewCallback(y))
-        pm.symbolButton(image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/big.png', c=lambda x, y=1: self.changeViewCallback(y))
+        pm.symbolButton(image=r'small.png', c=lambda x, y=2: self.changeViewCallback(y))
+        pm.symbolButton(image=r'big.png', c=lambda x, y=1: self.changeViewCallback(y))
 
         pane = pm.paneLayout(p=form, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)], shp = 0)
 
@@ -174,9 +174,9 @@ class AssetPrompt:
             for assetType in typesShot:
                 pm.menuItem(label=assetType)
 
-            pm.symbolButton(image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/small.png',
+            pm.symbolButton(image=r'small.png',
                              c=lambda x, y=2: self.changeViewCallback (y))
-            pm.symbolButton(image=r'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/big.png',
+            pm.symbolButton(image=r'big.png',
                              c=lambda x, y=1: self.changeViewCallback (y))
 
             pane = pm.paneLayout(p=form, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)], shp=0)

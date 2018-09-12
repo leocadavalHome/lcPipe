@@ -3,6 +3,7 @@ import os.path
 from lcPipe.core import database
 from lcPipe.api.item import Item
 import logging
+
 logger = logging.getLogger(__name__)
 
 def checkModified():
@@ -66,7 +67,7 @@ def getThumb( itemMData = None):
         return thumbPath
     else:
         if itemMData['type'] == 'asset':
-            return 'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/block.png'
+            return 'block.png'
         elif itemMData['type'] == 'shot':
-            return 'D:/JOBS/PIPELINE/pipeExemple/scenes/icons/film.png'
+            return 'film.png'
 

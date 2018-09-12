@@ -6,10 +6,10 @@ logger.setLevel(10)
 
 
 class Sound:
-    def __init__(self, item=None, soundPath=None):
-        self.item = item
+    def __init__(self, parent=None, soundPath=None):
+        self.item = parent
 
-        if not soundPath and item:
+        if not soundPath and parent:
             self.soundPath = self.getFromSoundDir()
         else:
             self.soundPath = soundPath

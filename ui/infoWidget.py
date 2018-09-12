@@ -19,7 +19,7 @@ class InfoWidget():
     def createInfo(self, parent):
         self.parentWidget = parent
         self.widgetName = pm.rowLayout(p=self.parentWidget, nc=2, adj=2)
-        pm.picture(p=self.widgetName, image=u'D:\JOBS\PIPELINE\pipeExemple\scenes\icons\block.png', w=90, h=90)
+        pm.picture(p=self.widgetName, image=u'block.png', w=90, h=90)
         self.col = pm.columnLayout('col', adjustableColumn=True)
         self.statusField = pm.textFieldGrp('statusInfo', label='Status', cw=(1, 50), text='', adj=2,
                                            cat=(1, 'left', 5), editable=False)

@@ -5,6 +5,7 @@ import lcPipe.core.database as database
 import lcPipe.core.check as check
 from lcPipe.api.item import Item
 from lcPipe.publish.playblaster import PlayBlaster
+from lcPipe.api.cameraComponent import CameraComponent
 
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
@@ -40,93 +41,95 @@ def checkAudioFile(*args):
 def correctFps (*args):
     projectDict = database.getProjectDict()
     sceneFps = pm.currentUnit(q=True, time=True)
-
     if projectDict['fps'] != sceneFps:
         return True
 
 
 def fixFpsNoChangeKey(*args):
     projectDict = database.getProjectDict()
+    item = Item(fromScene=True)
     pm.currentUnit(time=projectDict['fps'], ua=False)
+    logger.debug(item.frameRange)
+    pm.playbackOptions(ast=item.frameRange[0], aet=item.frameRange[1])
     return 'ok'
 
 
 def fixFpsChangeKey(*args):
     projectDict = database.getProjectDict()
+    item = Item(fromScene=True)
     pm.currentUnit(time=projectDict['fps'], ua=True)
+    logger.debug(item.frameRange)
+    pm.playbackOptions(ast=item.frameRange[0],min=item.frameRange[0], aet=item.frameRange[1], max= item.frameRange[1])
     return 'ok'
+
+def correctTimeRange(*args):
+    item = Item(fromScene=True)
+
+    sceneStart = pm.playbackOptions (ast=True, q=True)
+    sceneEnd = pm.playbackOptions (aet=True, q=True)
+
+    if item.frameRange[0]!=sceneStart or item.frameRange[1]!=sceneEnd:
+        return True
+
+
+def fixTimeRange(*args):
+    item = Item(fromScene=True)
+    pm.playbackOptions(ast=item.frameRange[0], min=item.frameRange[0], aet=item.frameRange[1], max=item.frameRange[1])
+    return 'ok'
+
 
 def cameraAspectCheck(*args):
     item = Item(fromScene=True)
-    try:
-        camera = pm.PyNode('cam:'+item.projPrefix + item.code + '_' + item.name + '_camera')
-    except RuntimeError:
-        logger.warn('no camera found')
-        return True
-    projectDict = database.getProjectDict()
+    camera = CameraComponent(ns='cam', parent=item)
 
+    projectDict = database.getProjectDict()
     width, height = projectDict['resolution']
 
     projectAspect = float(width)/float(height)
-    cameraAspect = camera.horizontalFilmAperture / camera.verticalFilmAperture
 
-    if abs(projectAspect-cameraAspect) > 0.01:
+    if abs(projectAspect-camera.cameraAspect) > 0.01:
         return True
 
 def fixCameraAspect(*args):
     item = Item(fromScene=True)
-    try:
-        camera = pm.PyNode('cam:'+item.projPrefix + item.code + '_' + item.name + '_camera')
-    except RuntimeError:
-        logger.warn('no camera found')
-        return True
+    camera = CameraComponent(ns='cam', parent=item)
+
     projectDict = database.getProjectDict()
 
     width, height = projectDict['resolution']
     projectAspect = float (width) / float (height)
 
-    camera.horizontalFilmAperture = camera.verticalFilmAperture * projectAspect
+    camera.cameraAspect = projectAspect
 
 
 def cameraNameCheck (*args):
-    cameras = pm.ls(type='camera', l=True, r=True)
-    startup_cameras = [camera for camera in cameras if pm.camera (camera.parent (0), startupCamera=True, q=True)]
-    cameraShape = list(set(cameras) - set (startup_cameras))
-    if not cameraShape:
-        return True
-    camera = map(lambda x: x.parent (0), cameraShape)[0]
-
     item = Item(fromScene=True)
+    camera = CameraComponent(ns='cam', parent=item)
+
     correctCameraName = 'cam:'+item.projPrefix + item.code + '_' + item.name + '_camera'
-    if camera != correctCameraName:
+
+    if camera.cameraTransform != correctCameraName:
         return True
 
 
 def renameCamera(*args):
-    cameras = pm.ls(type='camera', l=True, r=True)
-    startup_cameras = [camera for camera in cameras if pm.camera (camera.parent (0), startupCamera=True, q=True)]
-    cameraShape = list(set(cameras) - set(startup_cameras))
-    if not cameraShape:
-        return None
-    camera = map(lambda x: x.parent(0), cameraShape)[0]
-
     item = Item(fromScene=True)
-    correctCameraName = 'cam:' + item.projPrefix + item.code + '_' + item.name + '_camera'
-    pm.rename(camera, correctCameraName)
+    camera = CameraComponent(ns='cam', parent=item)
+    camera.renameToScene()
     return 'ok'
 
 def NoReferenceOff(*args):
 
     allReferences = pm.getReferences()
 
-    for ref in allReferences:
+    for ref in allReferences.itervalues():
         if not ref.isLoaded():
             return True
 
 def removeUnloadedRefs (*args):
     allReferences = pm.getReferences()
 
-    for ref in allReferences:
+    for ref in allReferences.itervalues():
         if not ref.isLoaded():
             try:
                 ref.remove()
@@ -145,12 +148,22 @@ def doPlayBlast(*args):
     item = Item(fromScene=True)
     sound = pm.ls(item.name+'Sound', type='sound')
 
-    moviePath = os.path.join(r'D:\JOBS\PIPELINE\pipeExemple\movies', item.fileName+'Preview.mov') # todo remove this hard code
-
+    moviePath = os.path.join(r'D:\JOBS\PIPELINE\pipeExemple\movies', item.filename+'Preview.mov') # todo remove this hard code
+    logger.debug(projectDict['resolution'])
     if sound:
         pblast = PlayBlaster(item=item, sound=sound[0], moviePath=moviePath, resolution=projectDict['resolution'])
     else:
-        pblast = PlayBlaster(item=item, moviePath=moviePath)
+        pblast = PlayBlaster(item=item, moviePath=moviePath, resolution=projectDict['resolution'])
 
     pblast.doPlayBlast()
 
+# todo exportar camera (como??)
+
+def doExportCam(*args):
+    item = Item(fromScene=True)
+    camera = CameraComponent(ns='cam', parent=item)
+    exportPath = camera.getCameraPublishPath(make=True)
+
+    sceneCam = pm.ls('cam:*', assemblies=True)
+    pm.select(sceneCam)
+    pm.exportSelected(exportPath)

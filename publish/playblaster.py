@@ -7,6 +7,7 @@ logger.setLevel(10)
 class PlayBlaster:
 
     def __init__(self, item=None, sound=None, moviePath=None, resolution=None):
+
         self.item = item
         self.moviePath = moviePath
         self.sound = sound
@@ -17,6 +18,8 @@ class PlayBlaster:
         self.quality = 100
         self._camOptions = []
         self._hudOptions = []
+
+        logger.debug ('resolution %s in %s' % (self.resolution, resolution))
 
     def doPlayBlast(self):
         pm.setFocus(self._modelPanel)
@@ -48,9 +51,10 @@ class PlayBlaster:
         self._camera = camera
 
     def setViewOptions(self):
+        logger.debug('resolution %s' % self.resolution)
         self._modelPanel = pm.modelPanel(label='playBlaster', to=True, menuBarVisible=False, cam=self._camera)
         modelEditor = pm.modelPanel(self._modelPanel, q=True, me=True)
-        pm.window (self._modelPanel + 'Window', e=True, w=self.resolution[0] / 2, h=self.resolution[1] / 2)
+        pm.window(self._modelPanel + 'Window', e=True, w=self.resolution[0] / 2, h=self.resolution[1] / 2)
         pm.modelEditor(modelEditor, e=True, allObjects=True, polymeshes=True, nurbsSurfaces=True,
                        subdivSurfaces=True, grid=True, nurbsCurves=False, displayAppearance='smoothShaded',
                        displayTextures=False, hud=True, imagePlane=True, rendererName='Viewport 2')
@@ -92,7 +96,7 @@ class PlayBlaster:
 
     def setupHUD(self):
         # todo restore huds after playblast
-        logger.debug ('sceneName')
+        logger.debug('sceneName')
 
         if not (pm.headsUpDisplay ('HUDSceneName', q=True, exists=True)):
             self.freeHUDblock (0,0)

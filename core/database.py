@@ -7,7 +7,7 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
-# The global variable for database acess
+# The global variable for database access
 db = None
 currentProject = None
 
@@ -47,12 +47,13 @@ def getDefaultDict():
                                 'ep002': {'parent': ''},
                                 'ep003': {'parent': ''},
                                 'seq0001': {'parent': 'ep001'}},
+                'cameraNameTemplate': ['$prefix', '$code', '_', '$name'],
                 'assetNameTemplate': ['$prefix', '$code', '_', '$name', '_', '$task'],
                 'cacheNameTemplate': ['$prefix', '$code', '$task'],
                 'nextAsset': 1,
                 'nextShot': 1,
                 'renderer': 'vray',
-                'fps': 25,
+                'fps': '25fps',
                 'mayaVersion': '2015',
                 'resolution': [1920, 1080],
                 'workflow': {
@@ -634,12 +635,15 @@ def referenceInfo(refFile):
 
 
 def getPath(item, dirLocation='workLocation', ext='ma'):
+
     project = getProjectDict()
+
     location = project[dirLocation]
     taskFolder = item['task']
+    filename = item['filename']
+
     folderPath = os.path.join(*item['path'])
     phase = project['workflow'][item['workflow']][item['task']]['phase']
-    filename = item['filename']
 
     if ext:
         ext = '.' + ext

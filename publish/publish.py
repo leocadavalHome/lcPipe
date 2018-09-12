@@ -3,9 +3,13 @@ from lcPipe.publish.uvPublish import *
 from lcPipe.publish.texPublish import *
 from lcPipe.publish.shotFinalizingPublish import *
 from lcPipe.publish.layoutPublish import *
-
 import logging
 logger = logging.getLogger(__name__)
+logger.setLevel(10)
+
+
+# todo trocar hardcode por resources icons
+
 
 def skip(*args):
     for a in args:
@@ -96,6 +100,8 @@ class PublishWidget(object):
             'blendShape': {},
             'layout':  {1.0: {'status': 'run', 'label': 'correct fps', 'check': correctFps,
                               'fix': [fixFpsNoChangeKey, fixFpsChangeKey]},
+                        1.5: {'status': 'run', 'label': 'correct time range', 'check': correctTimeRange,
+                              'fix': [fixTimeRange]},
                         2.0: {'status': 'run', 'label': 'correct camera name', 'check': cameraNameCheck,
                               'fix': [renameCamera]},
                         3.0: {'status': 'run', 'label': 'correct camera aspect', 'check': cameraAspectCheck,
@@ -104,16 +110,48 @@ class PublishWidget(object):
                               'fix': [removeUnloadedRefs, skip]},
                         5.0: {'status': 'skip', 'label': 'No sound or Correct name', 'check': checkAudioFile,
                               'fix': [skip]}
-                        }
+                        },
+            'animation': {1.0: {'status': 'run', 'label': 'correct fps', 'check': correctFps,
+                             'fix': [fixFpsNoChangeKey, fixFpsChangeKey]},
+                       1.5: {'status': 'run', 'label': 'correct time range', 'check': correctTimeRange,
+                             'fix': [fixTimeRange]},
+                       2.0: {'status': 'run', 'label': 'correct camera name', 'check': cameraNameCheck,
+                             'fix': [renameCamera]},
+                       3.0: {'status': 'run', 'label': 'correct camera aspect', 'check': cameraAspectCheck,
+                             'fix': [fixCameraAspect, skip]},
+                       4.0: {'status': 'run', 'label': 'no reference unloaded', 'check': NoReferenceOff,
+                             'fix': [removeUnloadedRefs, skip]},
+                       5.0: {'status': 'skip', 'label': 'No sound or Correct name', 'check': checkAudioFile,
+                             'fix': [skip]}
+                       },
+            'shotFinalizing': {1.0: {'status': 'run', 'label': 'correct fps', 'check': correctFps,
+                                'fix': [fixFpsNoChangeKey, fixFpsChangeKey]},
+                          1.5: {'status': 'run', 'label': 'correct time range', 'check': correctTimeRange,
+                                'fix': [fixTimeRange]},
+                          2.0: {'status': 'run', 'label': 'correct camera name', 'check': cameraNameCheck,
+                                'fix': [renameCamera]},
+                          3.0: {'status': 'run', 'label': 'correct camera aspect', 'check': cameraAspectCheck,
+                                'fix': [fixCameraAspect, skip]},
+                          4.0: {'status': 'run', 'label': 'no reference unloaded', 'check': NoReferenceOff,
+                                'fix': [removeUnloadedRefs, skip]},
+                          5.0: {'status': 'skip', 'label': 'No sound or Correct name', 'check': checkAudioFile,
+                                'fix': [skip]}
+                          }
             }
 
         self.prePublishProcedures = {
                                 'texture': {1.0: {'prePublish': importReferences}},
                                 'rig': {1.0: {'prePublish': importReferences}},
                                 'layout': {1.0: {'prePublish': doSceneCheck},
-                                           2.0: {'prePublish': doPlayBlast}},
+                                           2.0: {'prePublish': doPlayBlast},
+                                           3.0: {'prePublish': doExportCam}},
+                                'animation': {1.0: {'prePublish': doSceneCheck},
+                                              2.0: {'prePublish': doPlayBlast},
+                                              3.0: {'prePublish': doExportCam}},
                                 'shotFinalizing': {1.0: {'prePublish': doSceneCheck},
-                                                   2.0: {'prePublish': cacheCameraAnimation}}
+                                                   2.0: {'prePublish': cacheCameraAnimation},
+                                                   3.0: {'prePublish': doPlayBlast},
+                                                   4.0: {'prePublish': doExportCam}}
                                 }
 
         if task in self.checkProcedures.keys():
@@ -153,7 +191,7 @@ class PublishWidget(object):
 
         for id in order:
             self.checksWidgets[id] = pm.iconTextButton(p=self.col, style='iconAndTextHorizontal',
-                                                       image1='D:JOBS/PIPELINE/pipeExemple/scenes/icons/empty.png',
+                                                       image1='empty.png',
                                                        label=self.checksDict[id]['label'])
         pm.showWindow(self.win)
 
@@ -171,12 +209,12 @@ class PublishWidget(object):
             if result:
                 if self.checksDict[id]['status'] == 'skip':
                     pm.iconTextButton(self.checksWidgets[id], e=True,
-                                      image1='D:JOBS/PIPELINE/pipeExemple/scenes/icons/skip.png',
+                                      image1='skip.png',
                                       label=self.checksDict[id]['label'] + '')
                 else:
                     sucess = False
                     pm.iconTextButton(self.checksWidgets[id], e=True,
-                                      image1='D:JOBS/PIPELINE/pipeExemple/scenes/icons/fix.png',
+                                      image1='fix.png',
                                       label=self.checksDict[id]['label'] + ' failled')
 
                 if not self.checksDict[id]['fix']:
@@ -189,7 +227,7 @@ class PublishWidget(object):
 
             else:
                 pm.iconTextButton(self.checksWidgets[id], e=True,
-                                  image1='D:JOBS/PIPELINE/pipeExemple/scenes/icons/valid.png',
+                                  image1='valid.png',
                                   label=self.checksDict[id]['label'] + ' Ok')
 
         if sucess:
@@ -200,11 +238,11 @@ class PublishWidget(object):
 
         if x == 'ok':
             pm.iconTextButton(self.checksWidgets[id], e=True,
-                              image1='D:JOBS/PIPELINE/pipeExemple/scenes/icons/valid.png',
+                              image1='valid.png',
                               label=self.checksDict[id]['label'] + ' Ok')
         elif x == 'skip':
             pm.iconTextButton(self.checksWidgets[id], e=True,
-                              image1='D:JOBS/PIPELINE/pipeExemple/scenes/icons/skip.png',
+                              image1='skip.png',
                               label=self.checksDict[id]['label'] + ' skipped')
 
             self.checksDict[id]['status'] = 'skip'
