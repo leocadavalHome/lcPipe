@@ -3,6 +3,7 @@ from lcPipe.publish.uvPublish import *
 from lcPipe.publish.texPublish import *
 from lcPipe.publish.shotFinalizingPublish import *
 from lcPipe.publish.layoutPublish import *
+from lcPipe.publish.blendPublish import *
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
@@ -31,7 +32,7 @@ class PublishWidget(object):
                         3.0: {'status': 'run','label': 'All geometry in geo_group', 'check': geosInsideGeoGroup,
                               'fix': [fixGeoGroup,skip]},
                         4.0: {'status': 'run','label': 'No Construction History', 'check': noConstructionHistory,
-                              'fix': [deleteHistory]},
+                              'fix': [deleteHistory, skip]},
                         5.0: {'status': 'run','label': 'No Intermediate Shapes', 'check': noIntermediateShapes,
                               'fix': [deleteIntermediateShapes, selectIntermediateShapes]},
 
@@ -71,11 +72,11 @@ class PublishWidget(object):
 
                         },
             'uvs':     {1.0: {'status': 'run','label': 'No namespace', 'check': noNameSpaces, 'fix': [deleteNameSpaces]},
-                        2.0: {'status': 'run','label': 'All geometry in geo_group', 'check': geosInsideGeoGroup, 'fix': [fixGeoGroup]},
-                        3.0: {'status': 'run','label': 'No Construction History', 'check': noConstructionHistory, 'fix': [deleteHistory]},
+                        2.0: {'status': 'run','label': 'All geometry in geo_group', 'check': geosInsideGeoGroup, 'fix': [fixGeoGroup,skip]},
+                        3.0: {'status': 'run','label': 'No Construction History', 'check': noConstructionHistory, 'fix': [deleteHistory, skip]},
                         4.0: {'status': 'run','label': 'No Intermediate Shapes', 'check': noIntermediateShapes,
                               'fix': [deleteIntermediateShapes, selectIntermediateShapes]},
-                        5.0: {'status': 'run', 'label': 'Valid Names', 'check': validNames, 'fix': [fixInvalidNames, selectInvalidNames]},
+                        5.0: {'status': 'run', 'label': 'Valid Names', 'check': validNames, 'fix': [fixInvalidNames, selectInvalidNames, skip]},
                         6.0: {'status': 'run', 'label': 'No Duplicated Names', 'check': duplicatedNames,
                               'fix': [fixDuplicatedNames, selectDuplicatedNames]},
                         7.0: {'status': 'run', 'label': 'Valid Shape Names', 'check': validShapeNames,
@@ -91,13 +92,28 @@ class PublishWidget(object):
 
 
             'texture': {1.0: {'status': 'run', 'label': 'all textures on Default Work dir', 'check': imagesOnDir,
-                               'fix': [copyImagesToDir]},
+                              'fix': [copyImagesToDir, skip]},
                          2.0: {'status': 'run', 'label': 'No object with default shader', 'check': noObjWithDefaultShader,
                               'fix': [selObjWithDefaultShader]},
+
                         },
             'xlo': {},
             'rig': {},
-            'blendShape': {},
+            'blendShape': {1.0: {'status': 'run', 'label': 'No display layers', 'check': noDisplayLayers,
+                                 'fix': [delDisplayLayers]},
+                           2.0: {'status': 'run', 'label': 'No namespace', 'check': noNameSpaces,
+                                 'fix': [deleteNameSpaces]},
+                           3.0: {'status': 'run', 'label': 'No Construction History', 'check': noConstructionHistory,
+                                 'fix': [deleteHistory, skip]},
+                           5.0: {'status': 'run', 'label': 'No Intermediate Shapes', 'check': noIntermediateShapes,
+                                 'fix': [deleteIntermediateShapes, selectIntermediateShapes]},
+                           6.0: {'status': 'run', 'label': 'All geometry in bsp_group', 'check': geosInsideBsbGroup,
+                                 'fix': [fixBspGroup, skip]},
+                           7.0: {'status': 'run', 'label': 'Valid Names', 'check': validNames,
+                                 'fix': [fixInvalidNames, selectInvalidNames, skip]},
+                           8.0: {'status': 'run', 'label': 'No Duplicated Names', 'check': duplicatedNames,
+                                 'fix': [fixDuplicatedNames, selectDuplicatedNames]}
+                           },
             'layout':  {1.0: {'status': 'run', 'label': 'correct fps', 'check': correctFps,
                               'fix': [fixFpsNoChangeKey, fixFpsChangeKey]},
                         1.5: {'status': 'run', 'label': 'correct time range', 'check': correctTimeRange,
@@ -191,7 +207,7 @@ class PublishWidget(object):
 
         for id in order:
             self.checksWidgets[id] = pm.iconTextButton(p=self.col, style='iconAndTextHorizontal',
-                                                       image1='empty.png',
+                                                       image1='emptyPub.png',
                                                        label=self.checksDict[id]['label'])
         pm.showWindow(self.win)
 

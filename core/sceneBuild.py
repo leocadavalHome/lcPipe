@@ -105,8 +105,9 @@ def build(itemType=None, task=None, code=None, silent=False):
 
         if item.type == 'shot':
             proj = database.getProjectDict()
-            pm.playbackOptions(ast=item.frameRange[0], aet=item.frameRange[1])
             pm.currentUnit(time=proj['fps'])
+            pm.playbackOptions(ast=item.frameRange[0], min=item.frameRange[0],
+                               aet=item.frameRange[1], max=item.frameRange[1])
 
         item.workVer = 1
         item.status = 'created'

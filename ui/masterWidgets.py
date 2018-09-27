@@ -37,7 +37,8 @@ class itemBrowser:
         self.projectSelectWidget.createProjectSelect(col2)
 
         pm.rowLayout(nc=3, adj=1)
-        self.typeOpt = pm.optionMenuGrp(label='Item Type', changeCommand=self.changeTypeCallback, cat=[[1,'left',5],[2,'left',-80]])
+        self.typeOpt = pm.optionMenuGrp(label='Item Type', changeCommand=self.changeTypeCallback,
+                                        cat=[[1,'left',5],[2,'left',-80]])
         pm.menuItem(label='asset')
         pm.menuItem(label='shot')
         pm.menuItem(divider=True)

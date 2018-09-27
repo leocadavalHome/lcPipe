@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 class ComponentListWidget(ItemListBase):
     def __init__(self):
         self.item = None
+        self.taskToList = ['rig', 'uvs']
         super(ComponentListWidget, self).__init__()
 
     def addMenus(self):
@@ -18,7 +19,7 @@ class ComponentListWidget(ItemListBase):
         pm.menuItem(label='add item', c=self.addItemCallBack)
 
     def dropCallback(self, dragControl, dropControl, messages, x, y, dragType):
-        if messages[0] == 'rig' or messages[0] == 'uvs':
+        if messages[0] in self.taskToList:
             database.addComponent(self.item, 'ref', messages[0], messages[1], 'reference')
             self.refreshList(itemMData=self.item)
         else:
@@ -35,7 +36,8 @@ class ComponentListWidget(ItemListBase):
 
     def refreshList(self, path=None, task=None, code=None, itemMData=None):
         color = (0, 0, 0)
-        createdColor = (.5, .5, .20)
+        createdColor = (0, .5, .20)
+        notCreatedColor = (.2, .2, .2)
 
         if not itemMData:
             print 'ERROR: No search item!!'
@@ -60,13 +62,6 @@ class ComponentListWidget(ItemListBase):
                 continue
 
             name = ns + ':' + database.getTaskShort(result['task']) + result['code'] + '_' + result['name']
-
-            if result['task'] == 'rig':
-                createdColor = (0, .5, .20)
-            elif result['task'] == 'uvs':
-                createdColor = (.5, .5, .20)
-
-            notCreatedColor = (.2, .2, .2)
 
             status = result['status']
             if status == 'notCreated':
@@ -108,14 +103,14 @@ class ComponentListWidget(ItemListBase):
         itemListWidget = ItemListBase()
         itemListWidget.projectName = self.projectName
         itemListWidget.createList(pane)
-        itemListWidget.refreshList(path=[], task=['uvs', 'rig'])
+        itemListWidget.refreshList(path=[], task=self.taskToList)
 
         infoWidget = InfoWidget()
         infoWidget.createInfo(pane)
 
         folderTreeWidget.itemListWidget = itemListWidget
         folderTreeWidget.itemListWidget.type = 'asset'
-        folderTreeWidget.itemListWidget.task = ['uvs', 'rig']
+        folderTreeWidget.itemListWidget.task = self.taskToList
         itemListWidget.infoWidget = infoWidget
 
         b1 = pm.button(p=f, l='Cancel', c='pm.layoutDialog( dismiss="Abort" )')

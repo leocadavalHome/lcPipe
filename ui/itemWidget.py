@@ -4,6 +4,7 @@ from lcPipe.core import sceneBuild
 from lcPipe.core import database
 from lcPipe.ui.itemBase import ItemBase
 from lcPipe.ui.shotManager import ShotManager
+from lcPipe.ui.componenttManager import ComponentManager
 import logging
 logger = logging.getLogger(__name__)
 
@@ -52,19 +53,21 @@ class ItemWidget(ItemBase):
             if resp == 'Yes':
                 sceneBuild.build(itemType, self.task, self.code)
 
-    def shotManagerCallback(self, *args):
+    def componentManagerCallback(self, *args):
         itemMData = self.getItem()
-        shotMng = ShotManager(itemMData)
+        shotMng = ComponentManager(itemMData)
         shotMng.projectName = self.parentWidget.projectName
-        shotMng.createShotManager()
+        shotMng.createComponentManager()
 
     def addMenus(self):
         pm.popupMenu(parent=self.widgetName)
 
         if self.task == 'asset':
+            pm.menuItem (label='component manager', c=self.componentManagerCallback)
             pm.menuItem(label='remove asset', c=self.removeCallback)
+
         elif self.task == 'shot':
-            pm.menuItem(label='shot manager', c=self.shotManagerCallback)
+            pm.menuItem (label='component manager', c=self.componentManagerCallback)
             pm.menuItem(label='remove shot', c=self.removeCallback)
         else:
             pm.menuItem(label='build', c=self.buildCallback)

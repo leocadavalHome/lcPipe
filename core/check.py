@@ -9,6 +9,8 @@ import time
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(10)
+
 
 def checkVersions():
     """
@@ -64,7 +66,8 @@ def sceneRefCheck(silent=False):
     refOnSceneList = pm.getReferences()
     toDelete = [x for x in refOnSceneList if x not in item.components]
     toAdd = [x for x in item.components if x not in refOnSceneList and x != 'cam']
-    toReplace = [x for x in item.components if item.components[x]['task'] != item.components[x]['proxyMode']]
+    toReplace = [x for x in item.components if (item.components[x]['task'] != item.components[x]['proxyMode']
+                                                and item.components[x]['proxyMode'] != "")]
     refToCheckUpdate = [x for x in refOnSceneList if x not in toDelete and x not in toReplace]
     toUpdate = {}
 
@@ -149,6 +152,7 @@ def sceneRefCheck(silent=False):
             cache.addToScene()
 
     #update versions
+    logger.debug ('toUpdate:%s' % toUpdate)
     for ns, versions in toUpdate.iteritems():
         if item.components[ns]['assembleMode'] == 'camera':
             continue
@@ -175,6 +179,7 @@ def sceneRefCheck(silent=False):
             refOnSceneList[ns].replaceWith(componentPath)
 
     # Replace
+    logger.debug('toReplace:%s' % toReplace)
     for ns in toReplace:
         if item.components[ns]['assembleMode'] == 'reference':
             oldProxyMode = item.components[ns]['task']

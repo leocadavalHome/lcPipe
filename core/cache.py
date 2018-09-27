@@ -136,7 +136,7 @@ def cacheCamera(task, code):
         shot.caches['cam'] = {'code': '0000', 'ver': 1, 'updateMode': 'last', 'task': 'rig',
                               'assembleMode': 'camera', 'type': 'asset', 'cacheVer': 0, 'name': ''}
 
-    camera = CameraComponent('cam', shot.caches['cam'], parent=shot)
+    camera = CameraComponent(ns='cam', parent=shot)
     camera.wrapData()
     if not camera.cameraTransform:
         pm.confirmDialog(title='No Camera', ma='center', icon='information', message='No camera to cache', button=['OK'],

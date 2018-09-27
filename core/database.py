@@ -73,7 +73,7 @@ def getDefaultDict():
                                                 'source': [('uvs', 'reference'), ('blendShape', 'import')]}},
 
                                 'static': {'model': {'type': 'asset', 'phase': 'preProd', 'short': 'mod',
-                                                     'source': [('proxy', 'copy')]},
+                                                     'source': []},
                                            'proxy': {'type': 'asset', 'phase': 'preProd', 'short': 'prx',
                                                      'source': []},
                                            'gpu': {'type': 'asset', 'phase': 'preProd', 'short': 'gpu',
@@ -453,7 +453,7 @@ def removeItem(itemType, code):
 
 # Items
 def addComponent(item, ns, componentTask, componentCode, assembleMode, proxyMode='',
-                 xform={}, onSceneParent=None, update=True):
+                 xform={}, onSceneParent='', update=True):
 
     itemType = getTaskType(componentTask)
     compCollection = getCollection(itemType)
@@ -479,7 +479,7 @@ def addComponent(item, ns, componentTask, componentCode, assembleMode, proxyMode
     return item
 
 def addSource(item, ns, componentTask, componentCode, assembleMode, proxyMode='',
-                 xform={}, onSceneParent=None, update=True):
+                 xform={}, onSceneParent='', update=True):
 
     itemType = getTaskType(componentTask)
     compCollection = getCollection(itemType)

@@ -153,7 +153,7 @@ def selectLaminaFaces(*args):
 ##################################
 
 def noConstructionHistory():
-    geos = pm.ls(geometry=True)
+    geos = pm.ls(type='surfaceShape')
     hasHist = False
 
     for geo in geos:
@@ -162,8 +162,10 @@ def noConstructionHistory():
             continue
 
         hist = geo.history()
+
         hist = [x for x in hist if not x == geo]
-        hist = [x for x in hist if not (pm.objectType(x) == 'groupId' or pm.objectType(x) == 'shadingEngine')]
+        hist = [x for x in hist if not (pm.objectType(x, isa='groupId') or pm.objectType(x, isa='shadingEngine')
+                                        or pm.objectType(x, isa='shadingDependNode'))]
 
         if hist:
             hasHist = True
@@ -173,8 +175,11 @@ def noConstructionHistory():
 
 
 def deleteHistory(*args):
-    geos = pm.ls(type='surfaceShape')
-    pm.delete(geos, ch=True)
+    try:
+        geos = pm.ls(type='surfaceShape')
+        pm.delete(geos, ch=True)
+    except:
+        return
 
     return 'ok'
 
@@ -416,6 +421,7 @@ def noShaders():
 
         for SGGeo in SGGeos:
             if SGGeo.name() != 'initialShadingGroup':
+                print SGGeo.name()
                 shaderErr = True
 
     return shaderErr
@@ -424,17 +430,18 @@ def noShaders():
 def fixShaders():
     geos = pm.ls(type='surfaceShape')
     inicialSG = pm.PyNode('initialShadingGroup')
-    for geo in geos:
 
+    for geo in geos:
         if geo.isIntermediate():
             continue
 
         obj = geo.listRelatives(p=True, type='transform')[0]
-        SGGeos = pm.listConnections(obj, type='shadingEngine')
+        SGGeos = pm.listConnections(geo, type='shadingEngine')
+        print SGGeos
         for SGGeo in SGGeos:
             if SGGeo.name() != 'initialShadingGroup':
-                pm.sets(inicialSG, forceElement=geo)
-
+                 x = pm.sets(inicialSG,e=True, forceElement=geo)
+                 print x
     return 'ok'
 
 
@@ -723,8 +730,7 @@ def fixNotLowercase(*args):
         objShape = trans.listRelatives(s=True)
 
         if not objShape:
-            if not trans.name().endswith('_grp'):
-                pm.rename(trans, trans.name().lower())
+            pm.rename(trans, trans.name().lower())
 
     return 'ok'
 
@@ -953,17 +959,19 @@ def noVertexTransforms(*args):
 
     if not meshList:
         return []
-
-    # Check Vertex Transforms
-    for meshShape in meshList:
-        if meshShape.isIntermediate():
-            continue
-        # Check NonZero Values
-        # if [i for sublist in mc.getAttr(meshShape+'.pnts[*]') for i in sublist if abs(i) > 0.0000000001]:
-        hasTrasnforms = meshShape.getAttr('pnts', mi=True)
-        if hasTrasnforms:
-            if len(hasTrasnforms) > 1:
-                return True
+    try:
+        # Check Vertex Transforms
+        for meshShape in meshList:
+            if meshShape.isIntermediate():
+                continue
+            # Check NonZero Values
+            # if [i for sublist in mc.getAttr(meshShape+'.pnts[*]') for i in sublist if abs(i) > 0.0000000001]:
+            hasTrasnforms = meshShape.getAttr('pnts', mi=True)
+            if hasTrasnforms:
+                if len(hasTrasnforms) > 1:
+                    return True
+    except:
+        logger.info('vertex test got an error')
 
     return False
 
@@ -975,13 +983,16 @@ def freezeVertices(*args):
     for mesh in meshes:
         if mesh.isIntermediate():
             continue
-
-        # Freeze Vertices
-        hasTrasnforms = mesh.getAttr('pnts', mi=True)
-        if len(hasTrasnforms) > 1:
-            pm.polyMoveVertex(mesh)
-            pm.delete(mesh, ch=True)
-            pm.select(cl=True)
+        try:
+            # Freeze Vertices
+            hasTrasnforms = mesh.getAttr('pnts', mi=True)
+            if len(hasTrasnforms) > 1:
+                pm.polyMoveVertex(mesh)
+                pm.delete(mesh, ch=True)
+                pm.select(cl=True)
+        except:
+            logger.info('freeze vertices fail')
+            return 'fail'
     # Return Result
     return 'ok'
 
