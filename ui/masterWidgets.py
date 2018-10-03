@@ -13,6 +13,7 @@ from lcPipe.ui.itemListBase import ItemListBase
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
+
 """
 
 """
@@ -155,11 +156,14 @@ class PublishAsWidget (publish.PublishWidget):
 class AssetPrompt:
     ##done fazer funcionar o asset Prompt generico
         def __init__(self):
+            self.window = None
             self.createAssetPrompt()
 
         def createAssetPrompt(self):
-            form = pm.setParent(q=True)
+            self.window = pm.window ()
+            form = pm.formLayout(numberOfDivisions=100)
             f = pm.formLayout (form, e=True, width=150)
+
             col2 = pm.columnLayout (p=f, adjustableColumn=True)
             pm.rowLayout (nc=3, adj=1)
             self.typeOpt = pm.optionMenuGrp (label='Item Type', changeCommand=self.changeTypeCallback,
@@ -170,7 +174,7 @@ class AssetPrompt:
             typesAsset = database.getAllTasks('asset')
             for assetType in typesAsset:
                 pm.menuItem (label=assetType)
-            pm.menuItem (divider=True)
+            pm.menuItem(divider=True)
             typesShot = database.getAllTasks('shot')
             for assetType in typesShot:
                 pm.menuItem(label=assetType)
@@ -182,23 +186,25 @@ class AssetPrompt:
 
             pane = pm.paneLayout(p=form, configuration='top3', ps=[(1, 20, 80), (2, 80, 80), (3, 100, 20)], shp=0)
 
-            self.folderTreeWidget = FolderTreeWidget ('asset')
-            self.folderTreeWidget.createFolderTree (pane)
-            self.folderTreeWidget.getFolderTree ()
+            logger.debug('setup ok')
 
-            self.itemListWidget = ItemListWidget ()
-            self.itemListWidget.createList (pane)
-            self.itemListWidget.refreshList (path=[], task='asset')
+            self.folderTreeWidget = FolderTreeWidget('asset')
+            self.folderTreeWidget.createFolderTree(pane)
+            self.folderTreeWidget.getFolderTree()
+
+            self.itemListWidget = ItemListWidget()
+            self.itemListWidget.createList(pane)
+            self.itemListWidget.refreshList(path=[], task='asset')
 
             self.infoWidget = InfoWidget ()
-            self.infoWidget.createInfo (pane)
+            self.infoWidget.createInfo(pane)
 
             self.folderTreeWidget.itemListWidget = self.itemListWidget
             self.folderTreeWidget.itemListWidget.type = 'asset'
             self.folderTreeWidget.itemListWidget.task = 'asset'
             self.itemListWidget.infoWidget = self.infoWidget
 
-            b1 = pm.button(p=f, l='Cancel', c='pm.layoutDialog( dismiss="Abort" )')
+            b1 = pm.button(p=f, l='Cancel', c=self.cancelCallback)
             b2 = pm.button(p=f, l='OK', c=lambda x: self.okCallback(self.itemListWidget.selectedItem))
 
             pm.formLayout(form, edit=True,
@@ -210,13 +216,30 @@ class AssetPrompt:
                           attachPosition=[(b1, 'right', 5, 90), (b2, 'left', 5, 10)],
                           attachNone=())
 
-        def okCallback (self, selected):
-            logger.debug(selected.name)
-            if selected:
-                logger.debug('task %s, code %s' % (selected.task, selected.code))
+            pm.showWindow (self.window)
 
-            version.saveAs(task=selected.task, code=selected.code)
-            pm.layoutDialog(dismiss='ok')
+        def cancelCallback(self, *args):
+            pm.deleteUI(self.window)
+
+        def okCallback (self, selected, *args):
+            if selected:
+                logger.debug(selected.name)
+                logger.debug('task %s, code %s' % (selected.task, selected.code))
+                resp = pm.confirmDialog (title='Confirm',
+                                         message='Are you sure to save the current file as task: %s, code: %s ?' % (selected.task, selected.code),
+                                         button=['Yes', "No", 'Cancel'], defaultButton='Yes',
+                                         cancelButton='No', dismissString='No')
+
+                if resp=='Yes':
+                    version.saveAs(task=selected.task, code=selected.code)
+                    logger.info ('saved!!')
+
+                pm.deleteUI(self.window)
+            else:
+                logger.debug('nothing selected')
+                pm.confirmDialog(title='Warning', ma='center',
+                                 message='Please select a task!',
+                                 button=['OK'], defaultButton='OK', dismissString='OK')
 
         def changeViewCallback(self, opt):
             self.itemListWidget.viewOption = opt

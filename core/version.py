@@ -32,6 +32,7 @@ def open (type, task, code, force=False):
 
 def saveAs (task=None, code=None, type=None):
     item = Item(task=task, code=code, itemType=type)
+    item.components = []
 
     if item:
         pm.fileInfo['type'] = item.type
@@ -40,7 +41,7 @@ def saveAs (task=None, code=None, type=None):
 
         item.saveAs()
 
-        item.status='created'
+        item.status = 'created'
         item.putDataToDB()
 
 

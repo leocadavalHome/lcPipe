@@ -19,6 +19,42 @@ class SceneSource(Source):
 
         root = pm.group(empty=True, n=self.code)
 
+        if len(self.xform) == 3:
+            if root:
+                rootGrp = pm.group(em=True, n=self.ns+':root_grp')
+                cntrlGrp = pm.group(em=True, n=self.ns+':control_grp')
+                transformGrp = pm.group (em=True, n=self.ns + ':transform_grp')
+
+                pm.parent(root, transformGrp)
+
+                bbox = transformGrp.getBoundingBox()
+                radius = max(bbox.width(), bbox.depth())/2
+
+                crv1 = pm.circle(n=self.ns+':innerControl', c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=radius, d=3, ut=0, ch=0)[0]
+                crv2 = pm.circle(n=self.ns+':midControl', c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=radius*1.1, d=3, ut=0, ch=0)[0]
+                crv3 = pm.circle(n=self.ns+':outerControl', c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=radius*1.2, d=3, ut=0, ch=0)[0]
+
+                pm.parent(crv1, crv2)
+                pm.parent(crv2, crv3)
+                pm.parent(crv3, cntrlGrp)
+                pm.parent(cntrlGrp, transformGrp, rootGrp)
+
+                pm.parentConstraint (crv1, transformGrp, mo=False)
+                pm.scaleConstraint (crv1, transformGrp, mo=False)
+
+                transform = self.xform['innerControl']
+                pm.xform (crv1, m=transform['xform'], rp=transform['rotatePivot'], sp=transform['scalePivot'])
+                transform = self.xform['midControl']
+                pm.xform (crv2, m=transform['xform'], rp=transform['rotatePivot'], sp=transform['scalePivot'])
+                transform = self.xform['outerControl']
+                pm.xform (crv3, m=transform['xform'], rp=transform['rotatePivot'], sp=transform['scalePivot'])
+
+                root = rootGrp
+
+        elif len(self.xform) == 1:
+            transform = self.xform['groupControl']
+            pm.xform (root, m=transform['xform'], rp=transform['rotatePivot'], sp=transform['scalePivot'])
+
         if self.onSceneParent:
             onSceneParentSearch = pm.ls(self.onSceneParent, r=True)
             if onSceneParentSearch and len(onSceneParentSearch) == 1:
@@ -26,23 +62,6 @@ class SceneSource(Source):
                 pm.parent(root, onSceneParent)
             else:
                 logger.warn('Found no onSceneParent %s' % onSceneParentSearch)
-
-        if self.xform:
-            n = dt.Matrix()
-            n.setToIdentity()
-            for transform in self.xform.itervalues():
-                logger.debug(self.xform)
-                logger.debug(transform)
-                tempNode = pm.group(empty=True)
-                pm.xform(tempNode, m=transform['xform'], rp=transform['rotatePivot'], sp=transform['scalePivot'])
-                m = tempNode.getMatrix()
-                n = n * m
-                pm.delete(tempNode)
-
-            #workaround to transform groupAssets
-            root.setTransformation(n)
-
-
 
     def addReferenceToScene(self):
         """
@@ -63,23 +82,37 @@ class SceneSource(Source):
             nodes += x.nodes()
         roots = pm.ls(nodes, assemblies=True)
 
-        if self.xform:
+        if len(self.xform) == 3:
             if roots:
-                n = dt.Matrix()
-                n.setToIdentity()
-                for transform in self.xform.itervalues():
-                    tempNode = pm.group(empty=True)
-                    pm.xform(tempNode, m=transform['xform'], rp=transform['rotatePivot'], sp=transform['scalePivot'])
-                    m = tempNode.getMatrix()
-                    n = n * m
-                    pm.delete(tempNode)
+                rootGrp = pm.group(em=True, n=self.ns+':root_grp')
+                cntrlGrp = pm.group(em=True, n=self.ns+':control_grp')
+                transformGrp = pm.group (em=True, n=self.ns + ':transform_grp')
 
-                #workaround to transform groupAssets
-                originalPar = roots[0].getParent()
-                root = pm.group(roots)
-                root.setTransformation(n)
-                pm.parent(roots, originalPar)
-                pm.delete(root)
+                pm.parent (roots, transformGrp)
+
+                bbox = transformGrp.getBoundingBox()
+                radius = max(bbox.width(), bbox.depth())/2
+
+                crv1 = pm.circle(n=self.ns+':innerControl', c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=radius, d=3, ut=0, ch=0)[0]
+                crv2 = pm.circle(n=self.ns+':midControl', c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=radius*1.1, d=3, ut=0, ch=0)[0]
+                crv3 = pm.circle(n=self.ns+':outerControl', c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=radius*1.2, d=3, ut=0, ch=0)[0]
+
+                pm.parent(crv1, crv2)
+                pm.parent(crv2, crv3)
+                pm.parent(crv3, cntrlGrp)
+                pm.parent(cntrlGrp, transformGrp, rootGrp)
+
+                pm.parentConstraint (crv1, transformGrp, mo=False)
+                pm.scaleConstraint (crv1, transformGrp, mo=False)
+
+                transform = self.xform['innerControl']
+                pm.xform (crv1, m=transform['xform'], rp=transform['rotatePivot'], sp=transform['scalePivot'])
+                transform = self.xform['midControl']
+                pm.xform (crv2, m=transform['xform'], rp=transform['rotatePivot'], sp=transform['scalePivot'])
+                transform = self.xform['outerControl']
+                pm.xform (crv3, m=transform['xform'], rp=transform['rotatePivot'], sp=transform['scalePivot'])
+
+                roots = rootGrp
 
         if self.onSceneParent:
             onSceneParentSearch = pm.ls(self.onSceneParent, r=True)

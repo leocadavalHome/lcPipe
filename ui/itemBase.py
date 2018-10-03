@@ -63,10 +63,15 @@ class ItemBase(object):
 
     def removeCallback(self, *args):
         logger.debug('remove Item')
-        itemType = database.getTaskType(self.task)
-        database.removeItem(itemType, self.code)
-        pm.evalDeferred('cmds.deleteUI("' + self.widgetName + '")')
-        self.parentWidget.itemList.remove(self)
+        resp = pm.confirmDialog (title='Confirm',
+                                 message='Are you sure to remove this asset? No Undo!',
+                                 button=['Yes', "No", 'Cancel'], defaultButton='Yes',
+                                 cancelButton='No', dismissString='No')
+        if resp == 'Yes':
+            itemType = database.getTaskType(self.task)
+            database.removeItem(itemType, self.code)
+            pm.evalDeferred('cmds.deleteUI("' + self.widgetName + '")')
+            self.parentWidget.itemList.remove(self)
 
     def addToLayout(self, option):
         if option == 1:

@@ -65,9 +65,12 @@ class ProjectSettingsWidget():
         elif opt == 4:
             pm.textFieldGrp(self.imgPublishLocTxt, e=True, text=selectDir)
         elif opt == 5:
-            pm.textFieldGrp( self.cacheLocTxt, e=True, text=selectDir)
+            pm.textFieldGrp(self.cacheLocTxt, e=True, text=selectDir)
         elif opt == 6:
-            pm.textFieldGrp( self.soundLocTxt, e=True, text=selectDir)
+            pm.textFieldGrp(self.soundLocTxt, e=True, text=selectDir)
+        elif opt == 7:
+            pm.textFieldGrp(self.movieLocTxt, e=True, text=selectDir)
+
 
     def createProjectSettingsWidget(self):
         if not self.projectName:
@@ -99,6 +102,9 @@ class ProjectSettingsWidget():
         self.soundLocTxt = pm.textFieldButtonGrp(label='sound Location',
                                                       text=self.projDict['soundLocation'], buttonLabel='...',
                                                       adj=2, cat=(1, 'left', 20),  bc=lambda:self.browseCallback(6))
+        self.movieLocTxt = pm.textFieldButtonGrp(label='Playblast Location',
+                                                      text=self.projDict['playblastLocation'], buttonLabel='...',
+                                                      adj=2, cat=(1, 'left', 20),  bc=lambda:self.browseCallback(7))
         self.cacheLocTxt = pm.textFieldButtonGrp(label='Cache Location', text=self.projDict['cacheLocation'],
                                                  buttonLabel='...', adj=2, cat=(1, 'left', 20), bc=lambda:self.browseCallback(5))
         self.assetCollTxt = pm.textFieldGrp(label='Asset Collection', text=self.projDict['assetCollection'], adj=2,
@@ -184,6 +190,7 @@ class ProjectSettingsWidget():
         self.projDict['imagesPublishLocation'] = pm.textFieldButtonGrp(self.imgPublishLocTxt, q=True, text=True)
         self.projDict['soundLocation'] = pm.textFieldButtonGrp(self.soundLocTxt, q=True, text=True)
         self.projDict['cacheLocation'] = pm.textFieldButtonGrp(self.cacheLocTxt, q=True, text=True)
+        self.projDict['playblastLocation'] = pm.textFieldButtonGrp(self.movieLocTxt, q=True, text=True)
         self.projDict['assetCollection'] = self.projDict['projectName'] + '_asset'
         self.projDict['shotCollection'] = self.projDict['projectName'] + '_shot'
         nameTemplateString = pm.textFieldGrp(self.nameTemplTxt, q=True, text=True)

@@ -66,7 +66,7 @@ def readGroupAsset(path, level, maxDepth=0, basePath=None):
     logger.debug ('path: %s ' % path)
     logger.debug ('basepath: %s ' % basePath)
     replacePath = os.path.normpath(os.path.join(basePath, 'wolftv'))
-    jsonPath = path.replace('.\wolftv', replacePath)
+    jsonPath = path.replace('T:\jobs\wolftv', replacePath)
     logger.debug ('jsonPath: %s ' % jsonPath)
 
     if not os.path.isfile(jsonPath):

@@ -35,6 +35,7 @@ class Session:
         pm.menuItem(label="Browser", command=self.browserCallback)
         pm.menuItem(label="Publish Scene", command=self.publishCallback)
         pm.menuItem(label="Update Scene", command=self.sceneCheckCallback)
+        pm.menuItem(label="Save Scene As", command=self.saveAs)
         #pm.menuItem(label="scriptJob Update Scene", command=self.scriptJobSceneCheckCallback)
         #pm.menuItem(label="scriptJob kill", command=self.killall)
         pm.menuItem(label="Flying Bark Data Ingestion Tool", command=self.fbDataIngestionCallback)
@@ -86,10 +87,10 @@ class Session:
                 text = pm.promptDialog (query=True, text=True)
                 database.addProject (projectName=text, prefix=text[:2])
 
-    def saveAs(self):
+    def saveAs(self, *args):
         #open a browser
         #save file as selected task
-        pass
+        x = masterWidgets.AssetPrompt()
 
     def scriptJobSceneCheckCallback(self,*args):
         from lcPipe.core import check

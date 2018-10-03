@@ -7,6 +7,7 @@ from lcPipe.api.cameraComponent import CameraComponent
 import logging
 from collections import OrderedDict
 from lcPipe.api.sound import Sound
+from lcPipe.ui.progressWidget import ProgressWindowWidget
 
 logger = logging.getLogger(__name__)
 logger.setLevel(10)
@@ -61,13 +62,18 @@ def build(itemType=None, task=None, code=None, silent=False):
         sound = Sound(parent=item)
         sound.importOnScene()
 
+    progressWin = ProgressWindowWidget (title='Groups', maxValue=len(itemDict))
     for ns, sourceMData in itemDict.iteritems():
+        progressWin.progressUpdate (1)
         source = SceneSource(ns, sourceMData, parent=item)
         if source.assembleMode == 'createGroup':
             source.createGroup()
         empty = False
+    progressWin.closeWindow ()
 
+    progressWin = ProgressWindowWidget (title='Components', maxValue=len (itemDict))
     for ns, sourceMData in itemDict.iteritems():
+        progressWin.progressUpdate (1)
         source = SceneSource(ns, sourceMData, parent=item)
         sourceItem = source.getItem()
 
@@ -93,6 +99,7 @@ def build(itemType=None, task=None, code=None, silent=False):
 
         elif source.assembleMode == 'xlo':
             newComponentsDict = source.addXloToScene()
+    progressWin.closeWindow ()
 
     item.components = newComponentsDict
 

@@ -147,8 +147,7 @@ def doPlayBlast(*args):
 
     item = Item(fromScene=True)
     sound = pm.ls(item.name+'Sound', type='sound')
-
-    moviePath = os.path.join(r'D:\JOBS\PIPELINE\pipeExemple\movies', item.filename+'Preview.mov') # todo remove this hard code
+    moviePath = os.path.join(projectDict['playblastLocation'], item.filename+'Preview.mov')
     logger.debug(projectDict['resolution'])
     if sound:
         pblast = PlayBlaster(item=item, sound=sound[0], moviePath=moviePath, resolution=projectDict['resolution'])

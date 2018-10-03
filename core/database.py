@@ -36,6 +36,7 @@ def getDefaultDict():
                 'imagesWorkLocation': u'D:/JOBS/PIPELINE/pipeExemple/sourceimages',
                 'imagesPublishLocation': u'D:/JOBS/PIPELINE/pipeExemple/publishes/sourceimages',
                 'soundLocation': u'D:/JOBS/PIPELINE/pipeExemple/sound',
+                'playblastLocation': u'D:/JOBS/PIPELINE/pipeExemple/movies',
                 'cacheLocation': u'D:/JOBS/PIPELINE/pipeExemple/cache/alembic',
                 'assetCollection': '_asset',
                 'shotCollection': '_shot', 'status': 'active',
