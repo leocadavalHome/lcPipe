@@ -1,20 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="3fb03bee-850b-478e-b030-bb3e54be3c8c" name="Default" comment="save shaders">
-      <change afterPath="$PROJECT_DIR$/tests/descr" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/filePrompt.py" afterDir="false" />
+    <list default="true" id="3fb03bee-850b-478e-b030-bb3e54be3c8c" name="Default" comment="ingestion">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/api/sceneSource.py" beforeDir="false" afterPath="$PROJECT_DIR$/api/sceneSource.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/database.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/ingestion.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/ingestion.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/sceneBuild.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/sceneBuild.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/version.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/version.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/publish/layoutPublish.py" beforeDir="false" afterPath="$PROJECT_DIR$/publish/layoutPublish.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/itemBase.py" beforeDir="false" afterPath="$PROJECT_DIR$/ui/itemBase.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/masterWidgets.py" beforeDir="false" afterPath="$PROJECT_DIR$/ui/masterWidgets.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ui/projectSettingsWidget.py" beforeDir="false" afterPath="$PROJECT_DIR$/ui/projectSettingsWidget.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -59,14 +48,14 @@
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="dummy" value="9" />
-          <entry key="py" value="5733" />
-          <entry key="txt" value="13" />
+          <entry key="py" value="5832" />
+          <entry key="txt" value="25" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="PLAIN_TEXT" value="22" />
-          <entry key="Python" value="5733" />
+          <entry key="PLAIN_TEXT" value="34" />
+          <entry key="Python" value="5832" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -133,8 +122,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/api/sceneSource.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1775">
-              <caret line="97" column="45" selection-start-line="97" selection-start-column="45" selection-end-line="97" selection-end-column="45" />
+            <state relative-caret-position="875">
+              <caret line="43" column="58" lean-forward="true" selection-start-line="43" selection-start-column="58" selection-end-line="43" selection-end-column="58" />
             </state>
           </provider>
         </entry>
@@ -268,8 +257,8 @@
     <packageJsonPaths />
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="378" />
-    <option name="y" value="42" />
+    <option name="x" value="256" />
+    <option name="y" value="22" />
     <option name="width" value="2222" />
     <option name="height" value="1233" />
   </component>
@@ -630,7 +619,14 @@
       <option name="project" value="LOCAL" />
       <updated>1538048449849</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="ingestion">
+      <created>1538542309449</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1538542309450</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TodoView">
@@ -643,7 +639,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="378" y="42" width="2222" height="1233" extended-state="0" />
+    <frame x="256" y="22" width="2222" height="1233" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49776787" visible="true" weight="0.13966225" />
@@ -720,12 +716,12 @@
     <MESSAGE value="ajuste no layout do browser" />
     <MESSAGE value="update system" />
     <MESSAGE value="update de cenas e workflow de cameras" />
-    <MESSAGE value="ingestion" />
     <MESSAGE value="xform" />
     <MESSAGE value="ingestion ui" />
     <MESSAGE value="publish procedures production" />
     <MESSAGE value="save shaders" />
-    <option name="LAST_COMMIT_MESSAGE" value="save shaders" />
+    <MESSAGE value="ingestion" />
+    <option name="LAST_COMMIT_MESSAGE" value="ingestion" />
   </component>
   <component name="XDebuggerManager">
     <watches-manager>
@@ -1097,8 +1093,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/api/sceneSource.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1775">
-          <caret line="97" column="45" selection-start-line="97" selection-start-column="45" selection-end-line="97" selection-end-column="45" />
+        <state relative-caret-position="875">
+          <caret line="43" column="58" lean-forward="true" selection-start-line="43" selection-start-column="58" selection-end-line="43" selection-end-column="58" />
         </state>
       </provider>
     </entry>

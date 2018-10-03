@@ -29,7 +29,11 @@ class SceneSource(Source):
 
                 bbox = transformGrp.getBoundingBox()
                 radius = max(bbox.width(), bbox.depth())/2
+                if radius < .1:
+                    logger.debug (radius)
 
+                if radius < .01:
+                    radius = 10
                 crv1 = pm.circle(n=self.ns+':innerControl', c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=radius, d=3, ut=0, ch=0)[0]
                 crv2 = pm.circle(n=self.ns+':midControl', c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=radius*1.1, d=3, ut=0, ch=0)[0]
                 crv3 = pm.circle(n=self.ns+':outerControl', c=(0, 0, 0), nr=(0, 1, 0), sw=360, r=radius*1.2, d=3, ut=0, ch=0)[0]
