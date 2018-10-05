@@ -3,6 +3,7 @@ import os.path
 from lcPipe.core import database
 from lcPipe.api.item import Item
 import logging
+from lcPipe.api.cameraComponent import CameraComponent
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +32,18 @@ def open (type, task, code, force=False):
     item.open()
 
 def saveAs (task=None, code=None, type=None):
+    openItem = Item(fromScene=True)
+    print openItem
+    if openItem.noData:
+        print 'noData'
+        comps=[]
+    else:
+        print openItem.components
+        comps=openItem.components
+
+
     item = Item(task=task, code=code, itemType=type)
-    item.components = []
+    item.components = comps
 
     if item:
         pm.fileInfo['type'] = item.type
@@ -43,6 +54,38 @@ def saveAs (task=None, code=None, type=None):
 
         item.status = 'created'
         item.putDataToDB()
+
+
+def saveAsNextShot():
+    item = Item (fromScene=True)
+    code = '%04d' % (int (pm.fileInfo['code']) + 1)
+    task = pm.fileInfo['task']
+
+    nextItem = database.getItemMData (task=task, code=code)
+    if not nextItem:
+        resp = pm.confirmDialog (title='No Asset Data', message='No shot found on next code. Create?',
+                                 button=['Yes', "No", 'Cancel'], defaultButton='Yes',
+                                 cancelButton='Cancel', dismissString='Cancel')
+        if resp == 'Yes':
+            try:
+                num = int (item.name[-3:]) + 1
+                numSulfix = '%03d' % num
+                fileName = item.name[:-3] + numSulfix
+            except (ValueError, TypeError):
+                numSulfix = '000'
+                fileName = item.name + numSulfix
+
+            sceneStart = pm.playbackOptions (ast=True, q=True)
+            sceneEnd = pm.playbackOptions (aet=True, q=True)
+
+            itemMData = database.createItem (itemType='shot', name=fileName, code=code, path=item.path,
+                                             frameRange=[sceneStart, sceneEnd], workflow=item.workflow)
+
+    saveAs(task=task, code=code)
+
+    item = Item (fromScene=True)
+    camera = CameraComponent (ns='cam', parent=item)
+    camera.renameToScene ()
 
 
 def takeSnapShot(itemMData=None, thumbPath=None):

@@ -199,10 +199,10 @@ def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=F
         itemType = pm.fileInfo.get('type')
 
         if not projName or not task or not code or not itemType:
-            logger.error('Cant get item Metadata. Scene has incomplete fileInfo:%s %s %s %s' % (projName, task, code, itemType))
+            logger.warn('Cant get item Metadata. Scene has incomplete fileInfo:%s %s %s %s' % (projName, task, code, itemType))
     else:
         if not task or not code:
-            logger.error ('Cant get item Metadata. Missing item ids on function call:%s %s %s %s' % (projName, task, code, itemType))
+            logger.warn('Cant get item Metadata. Missing item ids on function call:%s %s %s %s' % (projName, task, code, itemType))
 
         if not itemType:
             itemType = getTaskType(task)
@@ -216,7 +216,7 @@ def getItemMData(projName=None, task=None, code=None, itemType=None, fromScene=F
     item = collection.find_one({'task': task, 'code': code})
 
     if not item:
-        logger.error('Cant find item Metadata on database:%s %s %s %s' % (projName, task, code, itemType))
+        logger.warn('Cant find item Metadata on database:%s %s %s %s' % (projName, task, code, itemType))
 
     return item
 

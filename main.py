@@ -2,6 +2,7 @@ import pymel.core as pm
 import logging
 import sys
 
+from lcPipe.core import version
 from lcPipe.core import database
 from lcPipe.core import check
 from lcPipe.ui import masterWidgets
@@ -36,9 +37,13 @@ class Session:
         pm.menuItem(label="Publish Scene", command=self.publishCallback)
         pm.menuItem(label="Update Scene", command=self.sceneCheckCallback)
         pm.menuItem(label="Save Scene As", command=self.saveAs)
+        pm.menuItem(d=True)
         #pm.menuItem(label="scriptJob Update Scene", command=self.scriptJobSceneCheckCallback)
         #pm.menuItem(label="scriptJob kill", command=self.killall)
+        pm.menuItem(label="Layout - Save Next Shot", command=self.layoutSaveNext)
+        pm.menuItem(d=True)
         pm.menuItem(label="Flying Bark Data Ingestion Tool", command=self.fbDataIngestionCallback)
+
 
     def fbDataIngestionCallback(self, *args):
         ingestion.fbIngestTool()
@@ -91,6 +96,9 @@ class Session:
         #open a browser
         #save file as selected task
         x = masterWidgets.AssetPrompt()
+
+    def layoutSaveNext(self, *args):
+        version.saveAsNextShot()
 
     def scriptJobSceneCheckCallback(self,*args):
         from lcPipe.core import check

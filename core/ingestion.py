@@ -157,12 +157,15 @@ def insertFileInfo(path, projectName=None, task=None, code=None, type=None):
         scene_file.writelines(newLines)
 
 
-def ingestPieces(pathSrc, pathTgt):
+def ingestPieces(pathSrc=None, pathTgt=None, selList=None):
     setPiecesPath = r'wolftv\asset\set_piece'
     proxyModelPath = r'modeling\proxy_model\source'
 
-    setPiecesFullPath = os.path.join(pathSrc, setPiecesPath)
+    setPiecesFullPath = pathSrc
     fileList = pm.getFileList(folder=setPiecesFullPath)
+
+    if selList:
+        fileList = [x for x in fileList if x in selList]
 
     progressWin = ProgressWindowWidget(title='set pieces', maxValue=len(fileList))
 
@@ -170,6 +173,11 @@ def ingestPieces(pathSrc, pathTgt):
 
         logger.info('importing %s to pipeLine' % piece)
         progressWin.progressUpdate(1)
+
+        itemExist = database.searchName(piece)
+        if itemExist:
+            logger.info ('already exists! skipping %s' % piece)
+            continue
 
         fileName = piece
         versionPath = os.path.join(setPiecesFullPath, fileName, proxyModelPath)
@@ -261,8 +269,28 @@ def ingestGroups(pathSrc, pathTgt):
                                                          proxyMode='model', xform=component['xform'], onSceneParent='')
     progressWin.closeWindow()
 
-def ingestSet(descFileName, pathSrc, pathTgt):
+
+def listSetPieces(descDict):
+    setPieceList = []
+    for a in descDict:
+        if 'subType' in a:
+            if a['subType']=='set_piece':
+                setPieceList.append(a['name'])
+        if a['components']:
+            componentsSetPieceList = listSetPieces (a['components'])
+            setPieceList += componentsSetPieceList
+    return setPieceList
+
+
+def ingestSet(descFileName=None, pathSrc=None, pathTgt=None,
+              selectiveIngest=False, pathPieceSrc=None, pathPieceTgt=['setPiece']):
+
     descDict = readDescription(descFileName, pathSrc, level=1, maxDepth=0, searchInGroupAsset=True)
+
+    if selectiveIngest:
+        setPieceList = listSetPieces(descDict)
+        database.addFolder(pathPieceTgt)
+        ingestPieces(pathPieceSrc, pathPieceTgt, selList=setPieceList)
 
     descName, file_extension = os.path.splitext(descFileName)
     fileName = descName.split('_')[0]
@@ -270,15 +298,13 @@ def ingestSet(descFileName, pathSrc, pathTgt):
 
     ingestionDict = {'name': fileName, 'version': ver, 'sourcePath': pathSrc,
                      'assetType': 'group', 'task': 'proxy', 'setAssemble': ''}
-
+    database.addFolder(pathTgt)
     database.incrementNextCode('asset', fromBegining=True)
     itemMData = database.createItem(itemType='asset', name=fileName, path=pathTgt, workflow='group',
                                     customData={'ingestData': ingestionDict})
 
     addComponentsToSet(item=itemMData['proxy'], onSceneParent='', components=descDict, proxyMode='proxy' )
     addComponentsToSet(item=itemMData['model'], onSceneParent='', components=descDict, proxyMode='model')
-
-
 
 
 def addComponentsToSet(item=None, onSceneParent='', components=[], groupComponents=True, proxyMode='proxy'):

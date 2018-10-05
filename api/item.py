@@ -34,7 +34,7 @@ class Item(object):
 
             self.noData=False
         else:
-            logger.error("The item found no data %s %s %s %s" % (self.projectName, self.task, self.code, self.type))
+            logger.warn("The item found no data %s %s %s %s" % (self.projectName, self.task, self.code, self.type))
 
 
     def _getDataFromDB(self):

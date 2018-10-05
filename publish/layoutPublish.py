@@ -100,7 +100,7 @@ def fixCameraAspect(*args):
     projectAspect = float (width) / float (height)
 
     camera.cameraAspect = projectAspect
-
+    return 'ok'
 
 def cameraNameCheck (*args):
     item = Item(fromScene=True)

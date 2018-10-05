@@ -46,6 +46,7 @@ def build(itemType=None, task=None, code=None, silent=False):
             break
 
     logger.debug(itemDict)
+    maxValue=max(len (itemDict),1)
 
     if item.type == 'shot':
         logger.debug('creating camera...')
@@ -62,7 +63,7 @@ def build(itemType=None, task=None, code=None, silent=False):
         sound = Sound(parent=item)
         sound.importOnScene()
 
-    progressWin = ProgressWindowWidget (title='Groups', maxValue=len(itemDict))
+    progressWin = ProgressWindowWidget (title='Groups', maxValue=maxValue)
     for ns, sourceMData in itemDict.iteritems():
         progressWin.progressUpdate (1)
         source = SceneSource(ns, sourceMData, parent=item)
@@ -71,7 +72,7 @@ def build(itemType=None, task=None, code=None, silent=False):
         empty = False
     progressWin.closeWindow ()
 
-    progressWin = ProgressWindowWidget (title='Components', maxValue=len (itemDict))
+    progressWin = ProgressWindowWidget (title='Components', maxValue=maxValue)
     for ns, sourceMData in itemDict.iteritems():
         progressWin.progressUpdate (1)
         source = SceneSource(ns, sourceMData, parent=item)
