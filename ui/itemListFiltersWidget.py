@@ -1,6 +1,6 @@
 import pymel.core as pm
 from lcPipe.core import database
-from lcPipe.core import version
+from lcPipe.core import fileFunctions
 from lcPipe.ui.itemWidget import ItemWidget
 
 from lcPipe.ui.itemListBase import ItemListBase
@@ -76,7 +76,7 @@ class ItemListFiltersWidget(ItemListBase):
             elif status == 'created':
                 color = createdColor
 
-            thumbPath = version.getThumb(itemMData)
+            thumbPath = fileFunctions.getThumb(itemMData)
             x = ItemWidget(name=name, itemName=itemMData['name'], imgPath=thumbPath, label=taskLabel, status=itemMData['status'],
                            parentWidget=self, color=color)
             x.infoWidget = self.infoWidget

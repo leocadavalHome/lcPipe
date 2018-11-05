@@ -4,8 +4,10 @@ from lcPipe.core import database
 from lcPipe.api.item import Item
 import logging
 from lcPipe.api.cameraComponent import CameraComponent
+import json
 
 logger = logging.getLogger(__name__)
+logger.setLevel(10)
 
 def checkModified():
     import maya.cmds as cmds
@@ -18,7 +20,7 @@ def checkModified():
     return resp
 
 
-def open (type, task, code, force=False):
+def openFile (type, task, code, force=False):
     if not force:
         resp = checkModified()
 
@@ -29,16 +31,13 @@ def open (type, task, code, force=False):
             return
 
     item = Item(task=task, code=code, itemType=type)
-    item.open()
+    item.openServer()
 
-def saveAs (task=None, code=None, type=None):
+def saveFileAs (task=None, code=None, type=None):
     openItem = Item(fromScene=True)
-    print openItem
     if openItem.noData:
-        print 'noData'
         comps=[]
     else:
-        print openItem.components
         comps=openItem.components
 
 
@@ -50,10 +49,55 @@ def saveAs (task=None, code=None, type=None):
         pm.fileInfo['task'] = item.task
         pm.fileInfo['code'] = item.code
 
-        item.saveAs()
+        item.saveAsServer()
 
         item.status = 'created'
         item.putDataToDB()
+
+
+def saveFileLocal():
+    openItem = Item(fromScene=True)
+    openItem.saveAsLocal()
+
+    project = database.getProjectDict()
+    mDataDir = os.path.join(project['localWorkLocation'],'mData')
+    if not os.path.exists(mDataDir):
+        os.makedirs(mDataDir)
+
+    jsonProjFile = []
+    projData = {'projectName': project['projectName'], 'assetFolders': project['assetFolders'],
+                'shotFolders': project['shotFolders'], 'allAssetTasks': database.getAllTasks('asset'),
+                'allShotTasks': database.getAllTasks('shot')}
+
+    if not os.path.isfile(os.path.join(mDataDir, 'project.json')):
+        jsonProjFile.append(projData)
+        with open(os.path.join(mDataDir, 'project.json'), 'w') as f:
+            json.dump(jsonProjFile, f)
+    else:
+        with open(os.path.join(mDataDir, 'project.json')) as f:
+            jsonProjFile = json.load(f)
+
+        searchProj = [x for x in jsonProjFile if x['projectName'] == project['projectName']]
+
+        if not searchProj:
+            jsonProjFile.append(projData)
+            with open(os.path.join(mDataDir, 'project.json'), 'w') as f:
+                json.dump(jsonProjFile, f)
+
+    fileName = openItem.type+'_'+openItem.task+'_'+openItem.code+'.json'
+    jsonPath = os.path.join(mDataDir, fileName)
+
+    logger.debug('jsonPath: %s ' % jsonPath)
+
+    mData = openItem.getDataDict()
+
+    with open(jsonPath, 'w') as f:
+        json.dump(mData, f)
+
+
+def saveFileServer():
+    openItem = Item(fromScene=True)
+    openItem.saveAsServer()
 
 
 def saveAsNextShot():
@@ -81,7 +125,7 @@ def saveAsNextShot():
             itemMData = database.createItem (itemType='shot', name=fileName, code=code, path=item.path,
                                              frameRange=[sceneStart, sceneEnd], workflow=item.workflow)
 
-    saveAs(task=task, code=code)
+    saveFileAs(task=task, code=code)
 
     item = Item (fromScene=True)
     camera = CameraComponent (ns='cam', parent=item)

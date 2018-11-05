@@ -156,7 +156,7 @@ class Item(object):
         version = 'v%03d_' % self.publishVer
         return os.path.join(path[0], version + path[1])
 
-    def getWorkPath(self, make=False):
+    def getServerWorkPath(self, make=False):
         """
         Return the work path for this item. If make is true, it will create the directory if it doesnt exist
         :param make: Boolean
@@ -170,26 +170,39 @@ class Item(object):
 
         return os.path.join(*path)
 
-    def open(self):
+    def getLocalWorkPath(self, make=False):
+        """
+        Return the work path for this item. If make is true, it will create the directory if it doesnt exist
+        :param make: Boolean
+        :return: String
+        """
+        path = self.getPath(dirLocation='localWorkLocation')
+
+        if make:
+            if not os.path.exists(path[0]):
+                os.makedirs(path[0])
+
+        return os.path.join(*path)
+
+
+    def openServer(self):
         """
         open the file on disk relative to this item
         :return:
         """
-        pm.openFile(self.getWorkPath(), f=True)
+        pm.openFile(self.getServerWorkPath(), f=True)
 
-    def saveAs(self):
+    def saveAsServer(self):
         """
         Save the currently open as a version of this item
         :return:
         """
-        fileName = self.getWorkPath(make=True)
+        fileName = self.getServerWorkPath(make=True)
         pm.saveAs(fileName)
 
-        # todo copy components
-
-    def save(self):
-        #add log to item data
-        pass
+    def saveAsLocal(self):
+        fileName = self.getLocalWorkPath(make=True)
+        pm.saveAs(fileName)
 
     def publish(self):
         """

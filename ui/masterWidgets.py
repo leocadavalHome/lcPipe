@@ -3,7 +3,7 @@ import os.path
 import pymel.core as pm
 from lcPipe.core import database
 from lcPipe.publish import publish
-from lcPipe.core import version
+from lcPipe.core import fileFunctions
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.itemListWidget import ItemListWidget
@@ -112,7 +112,7 @@ class PublishWidget(publish.PublishWidget):
         item = Item(task=self.task, code=self.code, itemType=self.type)
 
         item.publish()
-        version.takeSnapShot(item.getDataDict())
+        fileFunctions.takeSnapShot(item.getDataDict())
         self.closeWin()
 
         logger.debug('publish ver %s, at %s' % (item.publishVer, item.getPublishPath()))
@@ -121,7 +121,7 @@ class PublishWidget(publish.PublishWidget):
                                 button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
 
         if resp == 'Ok':
-            version.open(type=item.type, task=item.task, code= item.code,force=True)
+            fileFunctions.openFile(type=item.type, task=item.task, code= item.code, force=True)
         else:
             pm.newFile(f=True, new=True)
 
@@ -139,7 +139,7 @@ class PublishAsWidget (publish.PublishWidget):
         item = Item(task=self.task, code=self.code, itemType=self.type)
         item.proxyMode = self.proxyMode
         item.publishAs()
-        version.takeSnapShot(item.getDataDict())
+        fileFunctions.takeSnapShot(item.getDataDict())
         self.closeWin()
 
         logger.debug('publish ver %s, at %s' % (item.publishVer, item.getPublishPath()))
@@ -148,7 +148,7 @@ class PublishAsWidget (publish.PublishWidget):
                                 button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
 
         if resp == 'Ok':
-            version.open(type=item.type, task=item.task, code=item.code, force=True)
+            fileFunctions.openFile(type=item.type, task=item.task, code=item.code, force=True)
         else:
             pm.newFile(f=True, new=True)
 
@@ -231,7 +231,7 @@ class AssetPrompt:
                                          cancelButton='No', dismissString='No')
 
                 if resp=='Yes':
-                    version.saveAs(task=selected.task, code=selected.code)
+                    fileFunctions.saveFileAs(task=selected.task, code=selected.code)
                     logger.info ('saved!!')
 
                 pm.deleteUI(self.window)

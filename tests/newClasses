@@ -1,0 +1,12 @@
+from lcPipe.classes.session import Session
+from lcPipe.classes.project import Project
+
+pipelineSession = Session(user='leo', password='', projectName='lala')
+print pipelineSession.currentProject
+
+
+pipelineSession.createProject('lulu', 'lu')
+pipelineSession.deleteProject('lulu')
+
+x = pipelineSession.readProject('lala')
+print x.getProjectDict()

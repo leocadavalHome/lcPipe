@@ -62,11 +62,9 @@ def readGroup (group, level, maxDepth=0, searchInGroupAsset=True, basePath=None)
             'xform': {'groupControl': {'rotatePivot': [0, 0, 0], 'scalePivot': [0, 0, 0], 'xform': assetXform}},
             'components': componentContent}
 
+
 def readGroupAsset(path, level, maxDepth=0, basePath=None):
-    logger.debug ('path: %s ' % path)
-    logger.debug ('basepath: %s ' % basePath)
-    replacePath = os.path.normpath(os.path.join(basePath, 'wolftv'))
-    jsonPath = path.replace('T:\jobs\wolftv', replacePath)
+    jsonPath = path
     logger.debug ('jsonPath: %s ' % jsonPath)
 
     if not os.path.isfile(jsonPath):
@@ -114,28 +112,9 @@ def search(components, level=0, maxDepth=0, searchInGroupAsset=True, basePath=No
     return returnList
 
 
-def printDescription (x):
-    for a in x:
-        if 'subType' in a:
-            print a['name']
-            print a['subType']
-        for b in a['components']:
-            print '-->',b['name']
-            if 'subType' in b:
-                print '-->', b['subType']
-            for c in b['components']:
-                print '    -->', c['name']
-                if 'subType' in c:
-                    print '    -->', c['subType']
-                for d in c['components']:
-                    print '        -->', d['name'], d['subType']
-                    if 'subType' in d:
-                        print '        -->', d['subType']
-
-
 def insertFileInfo(path, projectName=None, task=None, code=None, type=None):
     if not os.path.exists(path):
-        print 'file not exists'
+        logger.info('file not exists')
         return
 
     newLines = []
@@ -158,19 +137,23 @@ def insertFileInfo(path, projectName=None, task=None, code=None, type=None):
 
 
 def ingestPieces(pathSrc=None, pathTgt=None, selList=None):
-    setPiecesPath = r'wolftv\asset\set_piece'
     proxyModelPath = r'modeling\proxy_model\source'
-
     setPiecesFullPath = pathSrc
     fileList = pm.getFileList(folder=setPiecesFullPath)
 
     if selList:
-        fileList = [x for x in fileList if x in selList]
+        ingestList = [x for x in fileList if x in selList]
+        if len(ingestList) != len (selList):
+            resp = pm.confirmDialog (title='Missing', message='Missing some set pieces. Continue?',
+                                     button=['Yes', "No", 'Cancel'], defaultButton='Yes',
+                                     cancelButton='Cancel', dismissString='Cancel')
+            if not resp == 'Yes':
+                return 'error'
+    else:
+        ingestList = fileList
 
     progressWin = ProgressWindowWidget(title='set pieces', maxValue=len(fileList))
-
-    for piece in fileList:
-
+    for piece in ingestList:
         logger.info('importing %s to pipeLine' % piece)
         progressWin.progressUpdate(1)
 
@@ -183,13 +166,28 @@ def ingestPieces(pathSrc=None, pathTgt=None, selList=None):
         versionPath = os.path.join(setPiecesFullPath, fileName, proxyModelPath)
         versionsAvailable = pm.getFileList(folder = versionPath)
         maxVer = 0
+        version = None
+
+        if not versionsAvailable:
+            continue
+
         for ver in versionsAvailable:
             verNum = int(ver[1:])
             maxVer = max(maxVer, verNum)
             version = 'v%03d' % maxVer
 
+        if not version:
+            logger.error('No version for %s' % piece)
+            continue
+
         pieceFullPath = os.path.join(versionPath, version)
-        pieceFile = pm.getFileList(folder=pieceFullPath)[0]
+
+        try:
+            pieceFile = pm.getFileList(folder=pieceFullPath)[0]
+        except ValueError:
+            logger.error('No file found for %s' % piece)
+            continue
+
         pieceFullPath = os.path.join(pieceFullPath, pieceFile)
 
         ingestionDict = {'name': fileName, 'version': maxVer, 'sourcePath': pieceFullPath,
@@ -203,7 +201,7 @@ def ingestPieces(pathSrc=None, pathTgt=None, selList=None):
         item.status = 'created'
         item.putDataToDB()
 
-        workPath = item.getWorkPath(make=True)
+        workPath = item.getServerWorkPath(make=True)
         shutil.copyfile(pieceFullPath, workPath)
 
         prj = database.getCurrentProject()
@@ -219,12 +217,16 @@ def ingestPieces(pathSrc=None, pathTgt=None, selList=None):
     progressWin.closeWindow()
 
 def ingestGroups(pathSrc, pathTgt):
-    groupPath = r'wolftv\asset\group'
+    groupPath = r'group'
     proxyModelPath = r'modeling\proxy_model\desc'
 
     groupsFullPath = os.path.join(pathSrc, groupPath)
     logger.debug('groupFullPath: %s' % groupsFullPath)
-    fileList = pm.getFileList (folder=groupsFullPath)
+    fileList = pm.getFileList(folder=groupsFullPath)
+
+    if not fileList:
+        logger.error('No file Found!')
+        return
 
     progressWin = ProgressWindowWidget(title='groups', maxValue=len (fileList))
 
@@ -235,7 +237,12 @@ def ingestGroups(pathSrc, pathTgt):
         fileName = group
         versionPath = os.path.join(groupsFullPath, fileName, proxyModelPath)
         versionsAvailable = pm.getFileList(folder=versionPath)
+        version = 0
         maxVer = 0
+
+        if not versionsAvailable:
+            continue
+
         for ver in versionsAvailable:
             verNum = int(ver[1:])
             maxVer = max(maxVer, verNum)
@@ -274,7 +281,7 @@ def listSetPieces(descDict):
     setPieceList = []
     for a in descDict:
         if 'subType' in a:
-            if a['subType']=='set_piece':
+            if a['subType'] == 'set_piece':
                 setPieceList.append(a['name'])
         if a['components']:
             componentsSetPieceList = listSetPieces (a['components'])
@@ -290,7 +297,9 @@ def ingestSet(descFileName=None, pathSrc=None, pathTgt=None,
     if selectiveIngest:
         setPieceList = listSetPieces(descDict)
         database.addFolder(pathPieceTgt)
-        ingestPieces(pathPieceSrc, pathPieceTgt, selList=setPieceList)
+        result = ingestPieces(pathPieceSrc, pathPieceTgt, selList=setPieceList)
+        if result == 'error':
+            return
 
     descName, file_extension = os.path.splitext(descFileName)
     fileName = descName.split('_')[0]
@@ -360,102 +369,95 @@ def browseCallBack(*args):
     resultDir = pm.fileDialog2 (cap='choose directory', okCaption='Select', fm=3, dialogStyle=2)
     if resultDir:
         pm.textField ('pathTxtField', e=True, tx=os.path.normpath (resultDir[0]))
-        listSets ()
+        listSets()
 
 
 def listSets():
     searchDir = pm.textField ('pathTxtField', q=True, tx=True)
-    sets = next (os.walk (searchDir))[1]
+    sets = next (os.walk (os.path.join(searchDir, 'set')))[1]
     pm.textScrollList ('setScrollList', e=True, ra=True)
     pm.textScrollList ('setScrollList', e=True, append=sets)
 
 
 def selectSetCallback(*args):
-    sel = pm.textScrollList ('setScrollList', q=True, si=True)
-    searchDir = pm.textField ('pathTxtField', q=True, tx=True)
+    sel = pm.textScrollList('setScrollList', q=True, si=True)
+    searchDir = pm.textField('pathTxtField', q=True, tx=True)
+    pm.text ('descriptionPathTxt', e=True, l='')
+    pm.text ('descriptionNameTxt', e=True, l='')
+
     if sel:
-        groupDir = os.path.join (searchDir, sel[0], 'wolftv', 'asset', 'group')
-        print groupDir
+        groupDir = os.path.join (searchDir, 'group')
         if os.path.isdir (groupDir):
             pm.text ('groupTxt', e=True, l='   found!')
         else:
             pm.text ('groupTxt', e=True, l='   no diretory found')
 
-        set_pieceDir = os.path.join (searchDir, sel[0], 'wolftv', 'asset', 'set_piece')
-        print set_pieceDir
+        set_pieceDir = os.path.join (searchDir, 'set_piece')
         if os.path.isdir (set_pieceDir):
             pm.text ('pieceTxt', e=True, l='   found!')
         else:
             pm.text ('pieceTxt', e=True, l='   no diretory found')
 
-        descriptionFileDir = os.path.join (searchDir, sel[0])
-        descList = pm.getFileList (folder=descriptionFileDir, filespec='*.json')
-        if len (descList) == 1:
-            pm.text ('descriptionTxt', e=True, l='   found!')
-        elif len (descList) > 1:
-            pm.text ('descriptionTxt', e=True, l='   more than one found!')
+        versionPath = os.path.join(searchDir, 'set', sel[0], r'modeling\proxy_model\desc')
+        versionsAvailable = pm.getFileList(folder=versionPath)
+        maxVer = 0
+        version = None
+
+        if versionsAvailable:
+            for ver in versionsAvailable:
+                verNum = int(ver[1:])
+                maxVer = max(maxVer, verNum)
+                version = 'v%03d' % maxVer
+
+            descriptionFileDir = os.path.join (versionPath, version)
+            descList = pm.getFileList (folder=descriptionFileDir, filespec='*.json')
+
+            if len (descList) == 1:
+                pm.text ('descriptionTxt', e=True, l='   found!')
+                pm.text ('descriptionPathTxt', e=True, l=descriptionFileDir)
+                pm.text ('descriptionNameTxt', e=True, l=descList[0])
+            elif len (descList) > 1:
+                pm.text ('descriptionTxt', e=True, l='   more than one found!')
+            else:
+                pm.text ('descriptionTxt', e=True, l='   no json file found!')
         else:
-            pm.text ('descriptionTxt', e=True, l='   no json file found!')
+            pm.text ('descriptionTxt', e=True, l='   no file found!')
 
 
 def importCallback(*args):
-    sel = pm.textScrollList ('setScrollList', q=True, si=True)
-    searchDir = pm.textField ('pathTxtField', q=True, tx=True)
+    sel = pm.textScrollList('setScrollList', q=True, si=True)
+    searchDir = pm.textField('pathTxtField', q=True, tx=True)
+    descName = pm.text('descriptionNameTxt', q=True, l=True)
+    descPath = pm.text('descriptionPathTxt', q=True, l=True)
+    pathTgt = ['set']
+    pathPieceTgt = ['setPiece']
+    piecePath = os.path.join (searchDir,'set_piece')
+
     if sel:
-        if pm.text('pieceTxt', q=True, label=True) == '   found!':
-            resp = pm.confirmDialog(title='Import set_pieces', ma='center',
-                                    message='Import Set_Pieces?',
-                                    button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
-            if resp == 'Ok':
-                pathTgt = ['set', sel[0], 'setPiece']
-                pathSrc = os.path.join(searchDir, sel[0])
-                database.addFolder(['set', sel[0], 'setPiece'])
-                ingestPieces(pathSrc, pathTgt)
+        ingestSet(descFileName=descName, pathSrc=descPath, pathTgt=pathTgt, selectiveIngest=True,
+                  pathPieceSrc=piecePath, pathPieceTgt=pathPieceTgt)
 
-        if pm.text('groupTxt', q=True, label=True) == '   found!':
-            resp = pm.confirmDialog(title='Import Groups', ma='center',
-                                    message='Import Group?',
-                                    button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
-            if resp == 'Ok':
-                pathTgt = ['set', sel[0], 'group']
-                pathSrc = os.path.join(searchDir, sel[0])
-                database.addFolder(['set', sel[0], 'group'])
-                ingestGroups(pathSrc, pathTgt)
-
-        if pm.text('descriptionTxt', q=True, label=True) == '   found!':
-            resp = pm.confirmDialog(title='Import File Description', ma='center',
-                                    message='Import File Description?',
-                                    button=['Ok', 'No'], defaultButton='Ok', dismissString='No')
-            if resp == 'Ok':
-                descriptionFileDir = os.path.join(searchDir, sel[0])
-                descList = pm.getFileList (folder=descriptionFileDir, filespec='*.json')
-                if len(descList) == 1:
-                    descFileName = descList[0]
-                    pathTgt = ['set', sel[0]]
-                    pathSrc = os.path.join(searchDir, sel[0])
-                    database.addFolder(['set', sel[0]])
-                    ingestSet(descFileName, pathSrc, pathTgt)
-    pm.deleteUI ('FlyingBarkIngestTool', window=True)
+    pm.deleteUI('FlyingBarkIngestTool', window=True)
 
 def cancelCallback(*args):
-    pm.deleteUI ('FlyingBarkIngestTool', window=True)
+    pm.deleteUI('FlyingBarkIngestTool', window=True)
 
 
 def fbIngestTool():
-    if pm.window ('FlyingBarkIngestTool', exists=True):
-        pm.deleteUI ('FlyingBarkIngestTool', window=True)
+    if pm.window('FlyingBarkIngestTool', exists=True):
+        pm.deleteUI('FlyingBarkIngestTool', window=True)
 
-    pm.window ('FlyingBarkIngestTool')
+    pm.window ('FlyingBarkIngestTool', w=300,h=400, sizeable = False)
     pm.columnLayout ()
     pm.rowLayout (nc=3)
     pm.text (l='PATH')
-    pm.textField ('pathTxtField', w=205)
+    pm.textField ('pathTxtField', w=390, tx=r'T:\jobs\wolftv\asset')
     pm.button (l='...', c=browseCallBack)
     pm.setParent ('..')
     pm.separator (h=20)
     pm.text (label='SETS')
     pm.separator (h=5)
-    pm.textScrollList ('setScrollList', h=150, sc=selectSetCallback)
+    pm.textScrollList('setScrollList',w=444, h=150, sc=selectSetCallback)
     pm.separator (h=10)
     pm.rowLayout (nc=2)
     pm.text (label='GROUP DIR')
@@ -471,8 +473,13 @@ def fbIngestTool():
     pm.text (label='DESCRIPTION FILE')
     pm.text ('descriptionTxt', l='')
     pm.setParent ('..')
+    pm.separator (h=10)
+    pm.text ('descriptionPathTxt',ww=True, l='')
+    pm.separator (h=10)
+    pm.text ('descriptionNameTxt', l='')
     pm.separator (h=20)
     pm.rowLayout (nc=2)
-    pm.button ('Import', label='Import', w=125, h=50, c=importCallback)
-    pm.button ('CancelBtn', label='Close', w=125, h=50, c=cancelCallback)
+    pm.button ('Import', label='Import', w=222, h=50, c=importCallback)
+    pm.button ('CancelBtn', label='Close', w=222, h=50, c=cancelCallback)
+    listSets()
     pm.showWindow ()

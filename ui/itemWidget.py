@@ -1,5 +1,5 @@
 import pymel.core as pm
-from lcPipe.core import version
+from lcPipe.core import fileFunctions
 from lcPipe.core import sceneBuild
 from lcPipe.core import database
 from lcPipe.ui.itemBase import ItemBase
@@ -26,7 +26,7 @@ class ItemWidget(ItemBase):
             return pm.confirmDialog(title='error', ma='center', message='This scene is not build yet',
                                     button=['OK'], defaultButton='OK', dismissString='OK')
 
-        version.open(type=itemMData['type'], task=itemMData['task'], code=itemMData['code'])
+        fileFunctions.openFile(type=itemMData['type'], task=itemMData['task'], code=itemMData['code'])
 
     def buildCallback(self, *args):
         itemMData = self.getItem()

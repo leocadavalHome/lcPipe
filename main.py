@@ -2,7 +2,7 @@ import pymel.core as pm
 import logging
 import sys
 
-from lcPipe.core import version
+from lcPipe.core import fileFunctions
 from lcPipe.core import database
 from lcPipe.core import check
 from lcPipe.ui import masterWidgets
@@ -98,7 +98,7 @@ class Session:
         x = masterWidgets.AssetPrompt()
 
     def layoutSaveNext(self, *args):
-        version.saveAsNextShot()
+        fileFunctions.saveAsNextShot()
 
     def scriptJobSceneCheckCallback(self,*args):
         from lcPipe.core import check

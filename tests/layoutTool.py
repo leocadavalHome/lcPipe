@@ -1,6 +1,6 @@
 import pymel.core as pm
 from lcPipe.core import database
-from lcPipe.core import version
+from lcPipe.core import fileFunctions
 from lcPipe.api.cameraComponent import CameraComponent
 from lcPipe.api.item import Item
 
@@ -29,12 +29,9 @@ def saveAsNextShot():
             itemMData = database.createItem(itemType='shot', name=fileName, code=code, path=item.path,
                                             frameRange=[sceneStart, sceneEnd], workflow=item.workflow)
 
-    version.saveAs(task=task, code=code)
+    fileFunctions.saveFileAs(task=task, code=code)
 
     item = Item(fromScene=True)
     camera = CameraComponent(ns='cam', parent=item)
-    camera.renameToScene()]
+    camera.renameToScene()
 
-ingestSet(descFileName=r'howlingtonClassroom_modeling_proxy_model_desc.v006.json',
-          pathSrc=r'T:\FromFB\howlingtonClassroom', pathTgt=['set'], selectiveIngest=True,
-          pathPieceSrc=r'T:\FromFB\howlingtonClassroom\wolftv\asset\set_piece', pathPieceTgt=['setPiece'])

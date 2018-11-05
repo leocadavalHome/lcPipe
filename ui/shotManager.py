@@ -2,7 +2,7 @@ import pymel.core as pm
 from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.componentListWidget import ComponentListWidget
 from lcPipe.core import check
-from lcPipe.core import version
+from lcPipe.core import fileFunctions
 import logging
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class ShotManager:
                                  button=['Open', "Don't Open", 'Cancel'], defaultButton='Save',
                                  cancelButton='Cancel', dismissString='Cancel')
         if resp == 'Open':
-            version.open(task=self.itemMData['task'], code=self.itemMData['code'], type=self.itemMData['type'])
+            fileFunctions.openFile(task=self.itemMData['task'], code=self.itemMData['code'], type=self.itemMData['type'])
             check.sceneRefCheck (silent=True)
             pm.deleteUI (self.win)
 

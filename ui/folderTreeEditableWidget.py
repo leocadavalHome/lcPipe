@@ -10,7 +10,9 @@ class FolderTreeEditableWidget(FolderTreeBase):
     def createFolderTree(self, parent):
         self.parentWidget = parent
         self.widgetName = pm.treeView(p=self.parentWidget, numberOfButtons=0, abr=False)
-        pm.treeView(self.widgetName, e=True, selectionChangedCommand=self.selChangedCallBack, allowDragAndDrop=True, editLabelCommand=self.editNameCallback, itemRenamedCommand = self.renameCallback)
+        pm.treeView(self.widgetName, e=True, selectionChangedCommand=self.selChangedCallBack,
+                    allowDragAndDrop=True, editLabelCommand=self.editNameCallback,
+                    itemRenamedCommand=self.renameCallback)
         self.createMenus()
         self.getFolderTree()
 

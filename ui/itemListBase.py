@@ -1,6 +1,6 @@
 import pymel.core as pm
 from lcPipe.core import database
-from lcPipe.core import version
+from lcPipe.core import fileFunctions
 from lcPipe.ui.itemBase import ItemBase
 import logging
 logger = logging.getLogger(__name__)
@@ -11,7 +11,6 @@ class ItemListBase(object):
     def __init__(self):
         self.parentWidget = None
         self.widgetName = None
-
         self.folderTreeWidget = None
         self.infoWidget = None
         self.itemList = []
@@ -96,7 +95,7 @@ class ItemListBase(object):
             elif status == 'created':
                 color = createdColor
 
-            thumbPath = version.getThumb(itemMData)
+            thumbPath = fileFunctions.getThumb(itemMData)
             x = ItemBase(name=name, itemName=itemMData['name'], imgPath=thumbPath, label=taskLabel, status=itemMData['status'],
                          parentWidget=self, color=color)
             x.infoWidget = self.infoWidget

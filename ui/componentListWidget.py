@@ -1,6 +1,6 @@
 import pymel.core as pm
 from lcPipe.core import database
-from lcPipe.core import version
+from lcPipe.core import fileFunctions
 from lcPipe.ui.componentWidget import ComponentWidget
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
@@ -69,7 +69,7 @@ class ComponentListWidget(ItemListBase):
             elif status == 'created':
                 color = createdColor
 
-            thumbPath = version.getThumb(result)
+            thumbPath = fileFunctions.getThumb(result)
             x = ComponentWidget(name=name, itemName=result['name'], imgPath=thumbPath, label=result['task'],
                                 status=result['status'], parentWidget=self, color=color)
 

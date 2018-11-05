@@ -123,7 +123,7 @@ def build(itemType=None, task=None, code=None, silent=False):
         item.putDataToDB()
 
         sceneDirPath = item.getPath()[0]
-        sceneFullPath = item.getWorkPath()
+        sceneFullPath = item.getServerWorkPath()
 
         if not os.path.exists(sceneDirPath):
             os.makedirs(sceneDirPath)

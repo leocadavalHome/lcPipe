@@ -32,6 +32,7 @@ def getDefaultDict():
     projDict = {'projectName': '',
                 'prefix': '',
                 'workLocation': u'D:/JOBS/PIPELINE/pipeExemple/scenes',
+                'localWorkLocation': u'D:/JOBS/PIPELINE/pipeExemple/local',
                 'publishLocation': u'D:/JOBS/PIPELINE/pipeExemple/publishes',
                 'imagesWorkLocation': u'D:/JOBS/PIPELINE/pipeExemple/sourceimages',
                 'imagesPublishLocation': u'D:/JOBS/PIPELINE/pipeExemple/publishes/sourceimages',

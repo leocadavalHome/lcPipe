@@ -3,7 +3,7 @@ import os.path
 import pymel.core as pm
 from lcPipe.core import database
 from lcPipe.publish import publish
-from lcPipe.core import version
+from lcPipe.core import fileFunctions
 from lcPipe.ui.folderTreeWidget import FolderTreeWidget
 from lcPipe.ui.infoWidget import InfoWidget
 from lcPipe.ui.itemListWidget import ItemListWidget
@@ -92,7 +92,7 @@ class AssetPrompt:
                                          cancelButton='No', dismissString='No')
 
                 if resp=='Yes':
-                    version.saveAs(task=selected.task, code=selected.code)
+                    fileFunctions.saveFileAs(task=selected.task, code=selected.code)
                     logger.info ('saved!!')
 
                 pm.deleteUI(self.window)

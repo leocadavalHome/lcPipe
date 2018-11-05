@@ -15,7 +15,8 @@ class FolderTreeBase(object):
     def createFolderTree(self, parent):
         self.parentWidget = parent
         self.widgetName = pm.treeView(p=self.parentWidget, numberOfButtons=0, abr=False)
-        pm.treeView(self.widgetName, e=True, selectionChangedCommand=self.selChangedCallBack, allowDragAndDrop=False, editLabelCommand=self.editNameCallback)
+        pm.treeView(self.widgetName, e=True, selectionChangedCommand=self.selChangedCallBack,
+                    allowDragAndDrop=False, editLabelCommand=self.editNameCallback)
         self.getFolderTree()
 
     def createMenus(self):

@@ -1,14 +1,14 @@
 import pymel.core as pm
 import os, sys
-from shiboken import wrapInstance
+from shiboken2 import wrapInstance
 import maya.OpenMayaUI as omui
-from PySide import QtGui, QtCore
+from PySide2 import QtGui, QtCore, QtWidgets
 
 def getMayaWindow():
     ptr = omui.MQtUtil.mainWindow()
-    return wrapInstance(long(ptr), QtGui.QWidget)
+    return wrapInstance(long(ptr), QtWidgets.QWidget)
 
-class QCustomQWidget (QtGui.QWidget):
+class QCustomQWidget (QtWidgets.QWidget):
     def __init__ (self, parent = None):
         super(QCustomQWidget, self).__init__(parent)
         self.textQVBoxLayout = QtGui.QVBoxLayout()
