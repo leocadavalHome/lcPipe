@@ -1,0 +1,15 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>big.png</file>
+    <file>block.png</file>
+    <file>branch-closed.png</file>
+    <file>branch-open.png</file>
+    <file>empty.png</file>
+    <file>film.png</file>
+    <file>fix.png</file>
+    <file>invalid.png</file>
+    <file>skip.png</file>
+    <file>small.png</file>
+    <file>valid.png</file>
+  </qresource>
+</RCC>
