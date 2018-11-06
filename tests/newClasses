@@ -1,12 +1,21 @@
 from lcPipe.classes.session import Session
 from lcPipe.classes.project import Project
+from lcPipe.classes.task import Task
 
 pipelineSession = Session(user='leo', password='', projectName='lala')
 print pipelineSession.currentProject
 
+taskDict = {'name': 'teste', 'code': '0001', 'task': 'model', 'itemType': 'asset', 'workflow': 'rig',
+            'path': ['character', 'principal'], 'frameRange': [1, 200], 'customData': None,
+            'status': 'notCreated', 'source': {}, 'components': {}, 'workVer': 0, 'publishVer': 0}
+pipelineSession.createTask(**taskDict)
 
-pipelineSession.createProject('lulu', 'lu')
-pipelineSession.deleteProject('lulu')
+taskInstance = pipelineSession.readTask(task='model', code='0001')
 
-x = pipelineSession.readProject('lala')
-print x.getProjectDict()
+
+pipelineSession.updateTask(task='model', code='0001', name='bla')
+
+
+task = Task(**taskDict)
+
+print taskInstance.name

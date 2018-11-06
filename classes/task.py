@@ -1,37 +1,36 @@
 class Task(object):
-    def __init__(self, projectName=None, task=None, code=None, itemType=None, fromScene=False):
+    def __init__(self, projectName=None, _id=None, code=None, task=None, itemType=None, name=None, path=None,
+                 workflow=None, frameRange=None, customData=None, status=None, workVer=0, publishVer=0,
+                 source=None, components=None, caches=None):
 
         self.projectName = projectName
         self.code = code
         self.task = task
-        self.type = itemType
-        self.name = None
+        self.itemType = itemType
+        self.name = name
 
-        self.workflow = None
-        self.projPrefix = None
-        self.path = []
-        self.filename = None
-        self.frameRange = []
+        self.workflow = workflow
+        self.path = path
 
-        self.status = None
-        self.workVer = None
-        self.publishVer = None
-        self.source = {}
-        self.components = {}
-        self.caches = {}
-        self.noData = True
-        self.customData = {}
-        self.fromScene = fromScene
+        self.frameRange = frameRange
+        self.customData = customData
+
+        self.status = status
+        self.workVer = workVer
+        self.publishVer = publishVer
+        self.source = source
+        self.components = components
+        self.caches = caches
 
     def _validate(self):
         pass
 
-    def getItemDict(self):
-        pass
+    def getTaskDict(self):
+        return __dict__
 
     #components
     def listComponents(self):
-        pass
+        return self.components
 
     def readComponent(self):
         pass

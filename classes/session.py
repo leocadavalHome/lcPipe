@@ -4,7 +4,7 @@ import pymongo
 import pymongo.errors
 import logging
 from lcPipe.classes.project import Project
-from lcPipe.classes.item import Item
+from lcPipe.classes.task import Task
 
 logger = logging.getLogger(__name__)
 
@@ -80,9 +80,7 @@ class Session(object):
             logger.error('Cant read project data %s'% projectName)
 
     def updateProject(self, projectName, **projectDict):
-        projDict = self.readProject(projectName).getProjectDict()
-        projDict.update(**projectDict)
-        self.db.projects.find_one_and_update ({'projectName': projectName}, {'$set': projDict})
+        self.db.projects.find_one_and_update({'projectName': projectName}, {'$set': projectDict})
 
     def deleteProject(self, projectName):
         proj = self.readProject(projectName)
@@ -102,17 +100,48 @@ class Session(object):
             logger.error('Non existent project: %s' % projectName)
 
     #items
-    def createItem(self, projectName=None, code=None, itemType=None,  **itemDict):
-        item = Item(projectName, **itemDict)
+    def createTask(self, **taskDict):
+        taskInstance = Task(projectName=self.currentProject, **taskDict)
+        collection = self.db.get_collection(self.currentProject + '_' + taskInstance.itemType)
+        exist = collection.find_one({'task': taskInstance.task, 'code': taskInstance.code})
+        if not exist:
+            collection.insert_one(taskInstance.__dict__)
+        else:
+            logger.error('task %s already exists' % taskInstance.code)
 
-    def readItem(self):
-        pass
+    def readTask(self, task=None, code=None):
+        itemType = self.getTaskType(task)
+        collection = self.db.get_collection(self.currentProject + '_' + itemType)
+        taskDict = collection.find_one({'task': task, 'code': code})
+        if taskDict:
+            taskInstance = Task(**taskDict)
+            return taskInstance
+        else:
+            logger.error('Cant find task')
 
-    def updateItem(self):
-        pass
-
-    def deleteItem(self):
-        pass
-
+    def updateTask(self, task=None, code=None, **taskDict):
+        itemType = self.getTaskType(task)
+        collection = self.db.get_collection(self.currentProject + '_' + itemType)
+        collection.find_one_and_update({'task': task, 'code': code}, {'$set': taskDict})
 
 
+    def deleteTask(self, task=None, code=None):
+        itemType = self.getTaskType(task)
+        collection = self.db.get_collection(self.currentProject + '_' + itemType)
+        collection.delete_one({'task': task, 'code': code})
+
+
+    def getTaskType(self,task):
+        if task == 'asset' or task == 'shot':
+            return task
+
+        resultTasks = []
+        for workflow in self.project.workflows.itervalues():
+            for key, values in workflow.iteritems():
+                if key == task:
+                    resultTasks.append(values['type'])
+
+        if resultTasks:
+            return resultTasks[0]
+        else:
+            print 'ERROR getTaskType: no task type found!'
