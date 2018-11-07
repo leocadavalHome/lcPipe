@@ -1,21 +1,38 @@
 from lcPipe.classes.session import Session
-from lcPipe.classes.project import Project
 from lcPipe.classes.task import Task
+from lcPipe.classes.project import Project
 
 pipelineSession = Session(user='leo', password='', projectName='lala')
 print pipelineSession.currentProject
 
+##test Project
+x = pipelineSession.readProject(projectName='lala')
+print x.projectName
+pipelineSession.createProject(projectName='bla', prefix='bl')
+y = pipelineSession.readProject(projectName='bla')
+print y.projectName
+print y.status
+pipelineSession.updateProject(projectName='bla', status='active')
+y = pipelineSession.readProject(projectName='bla')
+print y.status
+pipelineSession.deleteProject(projectName='bla')
+
+#test task
 taskDict = {'name': 'teste', 'code': '0001', 'task': 'model', 'itemType': 'asset', 'workflow': 'rig',
             'path': ['character', 'principal'], 'frameRange': [1, 200], 'customData': None,
             'status': 'notCreated', 'source': {}, 'components': {}, 'workVer': 0, 'publishVer': 0}
-pipelineSession.createTask(**taskDict)
-
-taskInstance = pipelineSession.readTask(task='model', code='0001')
-
-
-pipelineSession.updateTask(task='model', code='0001', name='bla')
+t = pipelineSession.project.createTask(**taskDict)
+t = pipelineSession.project.readTask(task='model', code='0001')
+pipelineSession.project.updateTask(task='model', code='0001', name='bla')
+pipelineSession.project.deleteTask(task='model', code='0001')
 
 
-task = Task(**taskDict)
-
-print taskInstance.name
+t.createComponent(ns='teste')
+print t.components
+c = t.readComponent(ns='teste')
+print c
+componentDict = {'code': '0002', 'ver': 1, 'updateMode': 'last', 'task': 'model',
+                 'assembleMode': 'reference', 'proxyMode': 'model', 'xform': None,
+                 'onSceneParent': None, 'itemType': 'asset'}
+t.updateComponent(ns='teste', **componentDict)
+pipelineSession.project.updateTask(t.__dict__)

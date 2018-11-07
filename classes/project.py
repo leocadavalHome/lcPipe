@@ -1,5 +1,14 @@
-class Project(object):
+import pymel.core as pm
+import sys
+import pymongo
+import pymongo.errors
+import logging
+from lcPipe.classes.connection import MongoDBConnection
+from lcPipe.classes.task import Task
 
+logger = logging.getLogger(__name__)
+
+class Project(object):
     def __init__(self, projectName, prefix, **projectDict):
         self.projectName = projectName
         self.prefix = prefix
@@ -11,7 +20,7 @@ class Project(object):
         self.settings = {}
         self.workflows = {}
 
-        self.setDefaultProject()
+        self.setDefaultData()
 
         if projectDict:
             self.setProjectValues(**projectDict)
@@ -26,7 +35,60 @@ class Project(object):
     def setProjectValues(self, **projectDict):
         self.__dict__.update(**projectDict)
 
-    def setDefaultProject(self):
+    #items
+    def createTask(self, **taskDict):
+        con = MongoDBConnection()
+        taskInstance = Task(projectName=self.projectName, **taskDict)
+        collection = con.db.get_collection(self.projectName + '_' + taskInstance.itemType)
+        exist = collection.find_one({'task': taskInstance.task, 'code': taskInstance.code})
+        if not exist:
+            collection.insert_one(taskInstance.__dict__)
+            return taskInstance
+        else:
+            logger.error('task %s already exists' % taskInstance.code)
+
+    def readTask(self, task=None, code=None):
+        con = MongoDBConnection()
+        itemType = self.getTaskType(task)
+        collection = con.db.get_collection(self.projectName + '_' + itemType)
+        taskDict = collection.find_one({'task': task, 'code': code})
+        if taskDict:
+            taskInstance = Task(**taskDict)
+            return taskInstance
+        else:
+            logger.error('Cant find task')
+
+    def updateTask(self, task=None, code=None, **taskDict):
+        con = MongoDBConnection()
+        itemType = self.getTaskType(task)
+        collection = con.db.get_collection(self.projectName + '_' + itemType)
+        collection.find_one_and_update({'task': task, 'code': code}, {'$set': taskDict})
+
+
+    def deleteTask(self, task=None, code=None):
+        con = MongoDBConnection()
+        itemType = self.getTaskType(task)
+        collection = con.db.get_collection(self.projectName + '_' + itemType)
+        collection.delete_one({'task': task, 'code': code})
+
+
+    def getTaskType(self,task):
+        if task == 'asset' or task == 'shot':
+            return task
+
+        resultTasks = []
+        for workflow in self.workflows.itervalues():
+            for key, values in workflow.iteritems():
+                if key == task:
+                    resultTasks.append(values['type'])
+
+        if resultTasks:
+            return resultTasks[0]
+        else:
+            print 'ERROR getTaskType: no task type found!'
+
+
+    def setDefaultData(self):
 
         self.locations = {
             'workLocation': u'D:/JOBS/PIPELINE/pipeExemple/scenes',

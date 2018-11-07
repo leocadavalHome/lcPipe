@@ -1,3 +1,10 @@
+
+from lcPipe.classes.component import Component
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class Task(object):
     def __init__(self, projectName=None, _id=None, code=None, task=None, itemType=None, name=None, path=None,
                  workflow=None, frameRange=None, customData=None, status=None, workVer=0, publishVer=0,
@@ -26,23 +33,33 @@ class Task(object):
         pass
 
     def getTaskDict(self):
-        return __dict__
+        return self.__dict__
 
     #components
     def listComponents(self):
         return self.components
 
-    def readComponent(self):
-        pass
+    def readComponent(self, ns=None):
+        return Component(**self.components[ns])
 
-    def createComponent(self):
-        pass
+    def createComponent(self, ns=None, **componentDict):
+        if ns in self.components:
+            logger.error('Namespace %s already exists' % ns)
+            return
+        else:
+            comp = Component(**componentDict)
+            self.components[ns] = comp.__dict__
+            return comp
 
-    def deleteComponent(self):
-        pass
+    def deleteComponent(self, ns=None):
+        del (self.components[ns])
 
-    def updateComponent(self):
-        pass
+    def updateComponent(self, ns=None, **componentDict):
+        if ns in self.components:
+            print 'updating'
+            self.components[ns].update(componentDict)
+        else:
+            logger.error('Component %s non existent' % ns)
 
     #itemFile
     def getItemFile(self):

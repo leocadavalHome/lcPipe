@@ -1,24 +1,24 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 class Component(object):
-    def __init__(self, ns, componentMData, parent=None):
+    def __init__(self, ns=None, code=None, task=None, itemType=None, version=None, updateMode=None,
+                 assembleMode=None, onSceneParent=None, xform=None, proxyMode=None, cacheVer=None):
 
         self.ns = ns
-        self.parent = parent
-        self.code = componentMData['code']
-        self.task = componentMData['task']
-        self.type = componentMData['type']
-        self.version = componentMData['version']
-        self.updateMode = componentMData['updateMode']
-        self.assembleMode = componentMData['assembleMode']
-        self.onSceneParent = componentMData['onSceneParent']
-        self.xform = componentMData['xform']
-        self.proxyMode = componentMData['proxyMode']
+        self.code = code
+        self.task = task
+        self.itemType = itemType
+        self.version = version
+        self.updateMode = updateMode
+        self.assembleMode = assembleMode
+        self.onSceneParent = onSceneParent
+        self.xform = xform
+        self.proxyMode = proxyMode
+        self.cacheVer = cacheVer
 
-        if 'cacheVer' in componentMData:
-            self.cacheVer = componentMData['cacheVer']
-        else:
-            self.cacheVer = None
-
-    def _validadte(self):
+    def _validate(self):
         pass
 
     def updateVersion(self):
