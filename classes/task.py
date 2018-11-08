@@ -1,5 +1,6 @@
-
+import copy
 from lcPipe.classes.component import Component
+from lcPipe.classes.componentFile import ComponentFile
 import logging
 
 logger = logging.getLogger(__name__)
@@ -47,8 +48,10 @@ class Task(object):
             logger.error('Namespace %s already exists' % ns)
             return
         else:
-            comp = Component(**componentDict)
-            self.components[ns] = comp.__dict__
+            comp = Component(ns=ns, **componentDict)
+            noNSDict = copy.deepcopy(comp.__dict__)
+            del (noNSDict['ns'])
+            self.components[ns] = noNSDict
             return comp
 
     def deleteComponent(self, ns=None):
@@ -56,13 +59,12 @@ class Task(object):
 
     def updateComponent(self, ns=None, **componentDict):
         if ns in self.components:
-            print 'updating'
             self.components[ns].update(componentDict)
         else:
             logger.error('Component %s non existent' % ns)
 
     #itemFile
-    def getItemFile(self):
-        pass
+    def createTaskFile(self, location):
+        compFile = ComponentFile(path)
 
 

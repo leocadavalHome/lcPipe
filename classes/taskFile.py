@@ -1,9 +1,16 @@
+import copy
+from lcPipe.classes.componentFile import ComponentFile
+import pymel.core as pm
+import logging
+
+logger = logging.getLogger(__name__)
 
 class TaskFile (object):
 
     def __init__(self):
-        self.sourceItem = None
+        self.sourceTask = None
         self.path = None
+        self.filename = None
         self.isOpen = None
 
     def _validade(self):

@@ -58,18 +58,19 @@ class Project(object):
         else:
             logger.error('Cant find task')
 
-    def updateTask(self, task=None, code=None, **taskDict):
+    def updateTask(self, taskInstance, **taskDict):
         con = MongoDBConnection()
-        itemType = self.getTaskType(task)
+        itemType = self.getTaskType(taskInstance.task)
         collection = con.db.get_collection(self.projectName + '_' + itemType)
-        collection.find_one_and_update({'task': task, 'code': code}, {'$set': taskDict})
+        taskInstance.__dict__.update(taskDict)
+        collection.find_one_and_update({'task': taskInstance.task, 'code': taskInstance.code},
+                                       {'$set': taskInstance.__dict__})
 
-
-    def deleteTask(self, task=None, code=None):
+    def deleteTask(self, taskInstance):
         con = MongoDBConnection()
-        itemType = self.getTaskType(task)
+        itemType = self.getTaskType(taskInstance.task)
         collection = con.db.get_collection(self.projectName + '_' + itemType)
-        collection.delete_one({'task': task, 'code': code})
+        collection.delete_one({'task': taskInstance.task, 'code': taskInstance.code})
 
 
     def getTaskType(self,task):
